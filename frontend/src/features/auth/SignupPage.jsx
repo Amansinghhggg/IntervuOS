@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -42,10 +42,16 @@ const signupSchema = z
 const SignupPage = () => {
   const { signup, googleLogin } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [resumeFile, setResumeFile] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(null);
+
+  const getRedirectRoute = (role) => {
+    if (location.state?.from) return location.state.from;
+    return role === "employer" ? "/employer/dashboard" : "/candidate/mock-interview";
+  };
 
   const {
     register,
@@ -67,11 +73,7 @@ const SignupPage = () => {
     try {
       const data = await googleLogin(credentialResponse.credential, selectedRole);
       toast.success("Account created via Google!");
-      if (data.user.role === "employer") {
-        navigate("/employer/dashboard");
-      } else {
-        navigate("/candidate/mock-interview");
-      }
+      navigate(getRedirectRoute(data.user.role), { replace: true });
     } catch (error) {
       toast.error(error.response?.data?.message || "Google signup failed.");
     } finally {
@@ -118,11 +120,7 @@ const SignupPage = () => {
       setUploadProgress(100);
 
       toast.success("Account created successfully!");
-      if (data.user.role === "employer") {
-        navigate("/employer/dashboard");
-      } else {
-        navigate("/candidate/mock-interview");
-      }
+      navigate(getRedirectRoute(data.user.role), { replace: true });
     } catch (error) {
       clearInterval(progressInterval);
       toast.error(
@@ -449,6 +447,7 @@ const SignupPage = () => {
               Already have an account?{" "}
               <Link
                 to="/login"
+                state={{ from: location.state?.from }}
                 className="text-[var(--color-primary-md3)] hover:text-white transition-colors ml-1"
               >
                 Sign in

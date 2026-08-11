@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import ProtectedRoute from "../ui/shared/ProtectedRoute";
 import LoginPage from "../features/auth/LoginPage";
@@ -30,6 +30,7 @@ import { Loader2 } from "lucide-react";
 
 function App() {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -49,6 +50,10 @@ function App() {
     return "/candidate/mock-interview";
   };
 
+  const getRedirectRoute = () => {
+    return location.state?.from || getRoleDefaultRoute();
+  };
+
   return (
     <>
       <Routes>
@@ -62,7 +67,7 @@ function App() {
           path="/login"
           element={
             user ? (
-              <Navigate to={getRoleDefaultRoute()} replace />
+              <Navigate to={getRedirectRoute()} replace />
             ) : (
               <LoginPage />
             )
@@ -72,7 +77,7 @@ function App() {
           path="/signup"
           element={
             user ? (
-              <Navigate to={getRoleDefaultRoute()} replace />
+              <Navigate to={getRedirectRoute()} replace />
             ) : (
               <SignupPage />
             )

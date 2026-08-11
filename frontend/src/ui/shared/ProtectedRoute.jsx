@@ -1,10 +1,11 @@
 import { useEffect } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { Loader2 } from "lucide-react";
 
 const ProtectedRoute = ({ children, role }) => {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
   useEffect(() => {
     if (role === "candidate" || user?.role === "candidate") {
@@ -23,7 +24,7 @@ const ProtectedRoute = ({ children, role }) => {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location.pathname + location.search }} replace />;
   }
 
   if (!user.role) {

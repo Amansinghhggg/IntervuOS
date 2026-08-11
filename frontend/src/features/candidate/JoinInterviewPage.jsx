@@ -23,8 +23,13 @@ const JoinInterviewPage = () => {
         interviewCode: code.trim(),
       });
       if (data.success) {
-        toast.success("Successfully joined the interview!");
-        navigate(`/candidate/interviews/${data.interview._id}`);
+        if (data.interview?.status === "Requested") {
+          toast.success(data.interview.message || "Join request sent! Awaiting employer approval.");
+          navigate("/candidate/dashboard");
+        } else {
+          toast.success("Successfully joined the interview!");
+          navigate(`/candidate/interviews/${data.interview._id}`);
+        }
       }
     } catch (error) {
       toast.error(

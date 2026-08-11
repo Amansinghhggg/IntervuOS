@@ -15,7 +15,8 @@ import {
   Award,
   Layers,
   UserCheck,
-  Coins
+  Coins,
+  XCircle
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { PageHeader } from "../../ui/primitives/PageHeader";
@@ -58,7 +59,7 @@ const CandidateDashboard = () => {
   }, []);
 
   const assignedInterviews = interviews.filter(interview => {
-    return interview.candidateStatus === "Pending" && interview.status !== "completed";
+    return (interview.candidateStatus === "Pending" || interview.candidateStatus === "Requested") && interview.status !== "completed";
   });
 
   const inProgressInterviews = interviews.filter(interview => {
@@ -74,6 +75,10 @@ const CandidateDashboard = () => {
   const missedInterviews = interviews.filter(interview => {
     const status = interview.candidateStatus?.toLowerCase();
     return interview.status === "completed" && status !== "completed";
+  });
+
+  const rejectedInterviews = interviews.filter(interview => {
+    return interview.candidateStatus === "Rejected";
   });
 
   const handleStartInterview = (interviewId) => {
@@ -184,6 +189,62 @@ const CandidateDashboard = () => {
               </motion.section>
             )}
 
+            {/* Rejected Join Requests */}
+            {rejectedInterviews.length > 0 && (
+              <motion.section initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
+                <GlassCard padding="p-0" className="border-rose-500/30">
+                  <div className="p-6 border-b border-[var(--color-outline-variant)]/30 bg-rose-500/5">
+                    <SectionHeader
+                      icon={XCircle}
+                      title="Rejected Join Requests"
+                      subtitle="Campaign join requests that were not approved by the employer."
+                      className="mb-0"
+                    />
+                  </div>
+
+                  <div className="overflow-x-auto w-full">
+                    <table className="w-full text-left border-collapse min-w-[600px]">
+                      <thead>
+                        <tr className="border-b border-[var(--color-outline-variant)]/30 bg-[var(--color-surface-container-highest)]/10">
+                          <th className="py-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-on-surface-variant)]">Organization</th>
+                          <th className="py-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-on-surface-variant)]">Role</th>
+                          <th className="py-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-on-surface-variant)]">Status & Note</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rejectedInterviews.map((interview) => (
+                          <tr key={interview._id} className="border-b border-[var(--color-outline-variant)]/20 hover:bg-[var(--color-surface-container-highest)]/10 transition-colors">
+                            <td className="py-4 px-6">
+                              <div className="font-bold text-sm text-[var(--color-on-surface)] mb-0.5">{interview.title}</div>
+                              {interview.employer && (
+                                <div className="text-[10px] font-black tracking-widest text-[var(--color-on-surface-variant)] uppercase">Shared By: {interview.employer.name}</div>
+                              )}
+                            </td>
+                            <td className="py-4 px-6">
+                              <span className="flex items-center gap-2 text-xs text-[var(--color-on-surface-variant)] font-semibold">
+                                <Briefcase className="w-3.5 h-3.5 text-[var(--color-primary-md3)]" />
+                                {interview.jobRole}
+                              </span>
+                            </td>
+                            <td className="py-4 px-6">
+                              <div className="flex flex-col gap-1">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest bg-rose-500/10 text-rose-400 border border-rose-500/20 w-fit">
+                                  Request Declined
+                                </span>
+                                <p className="text-[11px] text-[var(--color-on-surface-variant)] font-medium">
+                                  Your request to join this campaign was declined by the employer. Please contact the employer to request re-enrollment or access.
+                                </p>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </GlassCard>
+              </motion.section>
+            )}
+
             {/* Assigned Interviews */}
             <motion.section initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
               <GlassCard padding="p-0">
@@ -239,17 +300,26 @@ const CandidateDashboard = () => {
                               </span>
                             </td>
                             <td className="py-4 px-6 text-right">
-                              <button
-                                onClick={() => handleStartInterview(interview._id)}
-                                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-                                  inProgressInterviews.length > 0
-                                    ? 'bg-[var(--color-surface-variant)] text-[var(--color-on-surface-variant)] opacity-50 cursor-not-allowed'
-                                    : 'bg-[var(--color-primary-md3)] text-white hover:bg-[var(--color-primary-md3)]/90 shadow-md shadow-[var(--color-primary-md3)]/20'
-                                }`}
-                              >
-                                Start Interview
-                                <ArrowRight className="w-3.5 h-3.5" />
-                              </button>
+                              {interview.candidateStatus === "Requested" ? (
+                                <button
+                                  disabled
+                                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all bg-[var(--color-surface-variant)] text-[var(--color-on-surface-variant)] opacity-70 cursor-not-allowed border border-[var(--color-outline-variant)]/30"
+                                >
+                                  Awaiting Approval
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => handleStartInterview(interview._id)}
+                                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                                    inProgressInterviews.length > 0
+                                      ? 'bg-[var(--color-surface-variant)] text-[var(--color-on-surface-variant)] opacity-50 cursor-not-allowed'
+                                      : 'bg-[var(--color-primary-md3)] text-white hover:bg-[var(--color-primary-md3)]/90 shadow-md shadow-[var(--color-primary-md3)]/20'
+                                  }`}
+                                >
+                                  Start Interview
+                                  <ArrowRight className="w-3.5 h-3.5" />
+                                </button>
+                              )}
                             </td>
                           </tr>
                         ))}

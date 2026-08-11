@@ -83,6 +83,7 @@ const createInterviewSchema = z.object({
     .string()
     .max(1000, "Instructions cannot exceed 1000 characters")
     .optional(),
+  requireApproval: z.boolean().default(true),
 });
 
 const CreateInterviewPage = () => {
@@ -206,6 +207,7 @@ const CreateInterviewPage = () => {
     defaultValues: {
       experienceLevel: "Fresher",
       duration: 30,
+      requireApproval: true,
     },
   });
 
@@ -564,6 +566,27 @@ const CreateInterviewPage = () => {
                       </p>
                     )}
                   </div>
+                </div>
+
+                {/* Require Approval Toggle */}
+                <div className="flex items-center justify-between p-4 bg-[var(--color-surface-container-highest)]/20 border border-[var(--color-outline-variant)]/30 rounded-xl">
+                  <div>
+                    <label className="text-sm font-bold text-[var(--color-on-surface)] flex items-center gap-2 mb-1">
+                      <ShieldAlert className="w-4 h-4 text-[var(--color-primary-md3)]" />
+                      Require Approval to Join
+                    </label>
+                    <p className="text-[11px] text-[var(--color-on-surface-variant)]">
+                      If enabled, candidates joining via code must be manually approved by you before they can start.
+                    </p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer ml-4 shrink-0">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      {...register("requireApproval")}
+                    />
+                    <div className="w-11 h-6 bg-[var(--color-surface-variant)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--color-primary-md3)] shadow-inner"></div>
+                  </label>
                 </div>
               </div>
             </GlassCard>

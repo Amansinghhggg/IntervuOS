@@ -8,6 +8,7 @@ import {
   deleteInterview,
   getAssignedInterviews,
   joinInterview,
+  handleJoinRequest,
   startInterview,
   submitInterview,
   getInterviewQuestions,
@@ -40,6 +41,9 @@ router.post("/:id/candidates/:candidateId/re-enroll", authorize("employer"), reE
 // Employer Resume endpoints
 router.get("/:interviewId/candidates/:candidateId/resume", protect, getCandidateResume);
 router.get("/:interviewId/candidates/:candidateId/resume/download", protect, downloadCandidateResume);
+
+// Employer Request endpoint
+router.patch("/:id/requests", authorize("employer"), handleJoinRequest);
 
 // Candidate Routes
 router.get("/candidate/assigned", authorize("candidate"), getAssignedInterviews);

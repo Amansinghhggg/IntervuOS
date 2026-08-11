@@ -9,7 +9,7 @@ const candidateSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["Pending", "In Progress", "Completed"],
+    enum: ["Pending", "In Progress", "Completed", "Requested", "Rejected"],
     default: "Pending",
   },
   joinedAt: {
@@ -111,6 +111,10 @@ const interviewSchema = new mongoose.Schema(
     isVerified: {
       type: Boolean,
       default: false,
+    },
+    requireApproval: {
+      type: Boolean,
+      default: true,
     },
     maxCandidates: {
       type: Number,

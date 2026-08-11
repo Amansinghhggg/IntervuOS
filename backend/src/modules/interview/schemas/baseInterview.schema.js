@@ -13,7 +13,7 @@ export const candidateSubSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["Pending", "In Progress", "In-Progress", "Completed", "Expired", "Cancelled"],
+    enum: ["Pending", "In Progress", "In-Progress", "Completed", "Expired", "Cancelled", "Requested", "Rejected"],
     default: "Pending",
   },
   joinedAt: {
@@ -104,6 +104,10 @@ export const baseInterviewFields = {
     type: String,
     enum: ["static", "gemini", "groq"],
     default: "gemini",
+  },
+  requireApproval: {
+    type: Boolean,
+    default: true,
   },
   assignedCandidates: [candidateSubSchema],
 };

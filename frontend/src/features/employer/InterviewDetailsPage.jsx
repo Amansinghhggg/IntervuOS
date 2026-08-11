@@ -162,8 +162,22 @@ const InterviewDetailsPage = () => {
       Pending: "bg-[var(--color-surface-variant)] text-[var(--color-on-surface-variant)] border-[var(--color-outline-variant)]/30",
       "In Progress": "bg-[var(--color-warning)]/10 text-[var(--color-warning)] border-[var(--color-warning)]/20",
       Completed: "bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20",
+      Requested: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+      Rejected: "bg-[var(--color-error)]/10 text-[var(--color-error)] border-[var(--color-error)]/20",
     };
     return styles[status] || styles.Pending;
+  };
+
+  const handleJoinRequest = async (email, action) => {
+    try {
+      const { data } = await api.patch(`/interviews/${id}/requests`, { email, action });
+      if (data.success) {
+        toast.success(`Request ${action}d successfully`);
+        setInterview(data.interview);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || `Failed to ${action} request`);
+    }
   };
 
   if (loading) {
@@ -433,14 +447,27 @@ const InterviewDetailsPage = () => {
                             </span>
                           </td>
                           <td className="py-5 px-8 text-right space-x-3 whitespace-nowrap">
-                            {candidate.status === "Completed" && (
-                              <button onClick={() => navigate(`/employer/interviews/${id}/results/${candidate.resultId}`)} className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--color-primary-md3)]/10 hover:bg-[var(--color-primary-md3)]/20 text-[var(--color-primary-md3)] border border-[var(--color-primary-md3)]/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
-                                View Result
-                              </button>
+                            {candidate.status === "Requested" ? (
+                              <>
+                                <button onClick={() => handleJoinRequest(candidate.email, "approve")} className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+                                  Approve
+                                </button>
+                                <button onClick={() => handleJoinRequest(candidate.email, "reject")} className="inline-flex items-center gap-2 px-3 py-1.5 bg-[var(--color-error)]/10 hover:bg-[var(--color-error)]/20 text-[var(--color-error)] border border-[var(--color-error)]/20 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+                                  Reject
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                {candidate.status === "Completed" && (
+                                  <button onClick={() => navigate(`/employer/interviews/${id}/results/${candidate.resultId}`)} className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--color-primary-md3)]/10 hover:bg-[var(--color-primary-md3)]/20 text-[var(--color-primary-md3)] border border-[var(--color-primary-md3)]/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+                                    View Result
+                                  </button>
+                                )}
+                                <button onClick={() => removeCandidate(candidate.email)} className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-transparent hover:bg-[var(--color-error)]/10 text-[var(--color-on-surface-variant)] hover:text-[var(--color-error)] transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </>
                             )}
-                            <button onClick={() => removeCandidate(candidate.email)} className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-transparent hover:bg-[var(--color-error)]/10 text-[var(--color-on-surface-variant)] hover:text-[var(--color-error)] transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
-                              <Trash2 className="w-4 h-4" />
-                            </button>
                           </td>
                         </tr>
                       ))}

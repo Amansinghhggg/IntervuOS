@@ -228,6 +228,32 @@ const joinInterview = async (req, res, next) => {
   }
 };
 
+// @desc    Employer approves or rejects a candidate's join request
+// @route   PATCH /api/interviews/:id/requests
+// @access  Employer only
+const handleJoinRequest = async (req, res, next) => {
+  try {
+    const { email, action } = req.body;
+    
+    if (!email || !action) {
+      return res.status(400).json({ success: false, message: "Email and action are required." });
+    }
+
+    const interview = await interviewService.handleJoinRequest(req.params.id, req.user._id, email, action);
+    
+    res.status(200).json({
+      success: true,
+      message: `Candidate request ${action}d successfully.`,
+      interview
+    });
+  } catch (error) {
+    if (error.message.includes("not found")) {
+      return res.status(404).json({ success: false, message: error.message });
+    }
+    next(error);
+  }
+};
+
 // @desc    Candidate gets the current active interview session (IntervuOS)
 // @route   GET /api/interviews/:id/session
 // @access  Candidate only
@@ -851,5 +877,6 @@ export {
   getInterviewResult,
   uploadRecording,
   reEnrollCandidate,
-  reEnrollByResultId
+  reEnrollByResultId,
+  handleJoinRequest
 };

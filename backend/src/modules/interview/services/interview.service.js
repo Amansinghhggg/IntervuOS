@@ -34,6 +34,7 @@ class InterviewService {
       instructions: validatedData.instructions,
       questionMode: validatedData.questionMode || "AI_GENERATED",
       customQuestions: validatedData.customQuestions || [],
+      requireApproval: validatedData.requireApproval !== undefined ? validatedData.requireApproval : true,
       interviewCode,
       employer: employerId,
       assignedCandidates,
@@ -91,11 +92,11 @@ class InterviewService {
     if (validatedData.candidateEmails) {
       const existingEmails = interview.assignedCandidates.map(c => c.email.toLowerCase());
       const uniqueNewEmails = [...new Set(validatedData.candidateEmails.map(e => e.toLowerCase()))];
-      
+
       const newCandidates = uniqueNewEmails
         .filter(email => !existingEmails.includes(email))
         .map(email => ({ email, status: "Pending" }));
-      
+
       interview.assignedCandidates.push(...newCandidates);
       delete validatedData.candidateEmails;
     }
@@ -141,7 +142,7 @@ class InterviewService {
       .populate("employer", "name")
       .sort({ createdAt: -1 })
       .lean();
-      
+
     return interviews.map(interview => {
       const candidateInfo = interview.assignedCandidates?.find(c => c.email === candidateEmail);
       delete interview.assignedCandidates; // Protect other candidates' data
@@ -167,9 +168,11 @@ class InterviewService {
       throw new Error("Interview is not verified by admin yet and cannot be joined");
     }
 
-    const isAssigned = interview.assignedCandidates.some(
+    const candidateIndex = interview.assignedCandidates.findIndex(
       (c) => c.email.toLowerCase() === candidateEmail.toLowerCase()
     );
+    const isAssigned = candidateIndex !== -1;
+    let candidateStatus = "Pending";
 
     if (!isAssigned) {
       if (interview.maxCandidates !== null && interview.maxCandidates !== undefined && interview.maxCandidates > 0) {
@@ -177,12 +180,26 @@ class InterviewService {
           throw new Error(`Maximum candidate limit reached for this interview (Maximum: ${interview.maxCandidates})`);
         }
       }
+
+      candidateStatus = interview.requireApproval !== false ? "Requested" : "Pending";
+
       // Auto-enroll candidate if they have the code
       interview.assignedCandidates.push({
         email: candidateEmail,
-        status: "Pending",
+        status: candidateStatus,
       });
       await interview.save();
+    } else {
+      candidateStatus = interview.assignedCandidates[candidateIndex].status;
+    }
+
+    if (candidateStatus === "Requested") {
+      return {
+        status: "Requested",
+        message: "Join request sent. Awaiting employer approval.",
+      };
+    } else if (candidateStatus === "Rejected") {
+      throw new Error("Your request to join this interview was rejected.");
     }
 
     const interviewData = interview.toObject();
@@ -194,6 +211,37 @@ class InterviewService {
     }
 
     return interviewData;
+  }
+
+  async handleJoinRequest(interviewId, employerId, candidateEmail, action) {
+    const interview = await Interview.findOne({ _id: interviewId, employer: employerId });
+
+    if (!interview) {
+      throw new Error("Interview not found or unauthorized");
+    }
+
+    const candidateIndex = interview.assignedCandidates.findIndex(
+      (c) => c.email.toLowerCase() === candidateEmail.toLowerCase()
+    );
+
+    if (candidateIndex === -1) {
+      throw new Error("Candidate request not found");
+    }
+
+    if (interview.assignedCandidates[candidateIndex].status !== "Requested") {
+      throw new Error("Candidate is not in a requested state");
+    }
+
+    if (action === "approve") {
+      interview.assignedCandidates[candidateIndex].status = "Pending";
+    } else if (action === "reject") {
+      interview.assignedCandidates[candidateIndex].status = "Rejected";
+    } else {
+      throw new Error("Invalid action");
+    }
+
+    await interview.save();
+    return interview;
   }
 
   async startInterview(interviewId, candidateEmail) {

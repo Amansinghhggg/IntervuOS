@@ -873,14 +873,16 @@ const EditInterviewPage = () => {
                           >
                             {cand.status}
                           </span>
-                          <button
-                            type="button"
-                            onClick={() => removeExistingCandidate(cand.email)}
-                            className="hover:text-rose-400 transition-colors ml-1 p-0.5"
-                            title="Remove candidate"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
+                          {cand.status !== "Completed" && cand.status !== "In Progress" && (
+                            <button
+                              type="button"
+                              onClick={() => removeExistingCandidate(cand.email)}
+                              className="hover:text-rose-400 transition-colors ml-1 p-0.5"
+                              title="Remove candidate"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>

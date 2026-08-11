@@ -25,6 +25,10 @@ const candidateSchema = new mongoose.Schema({
     ref: "InterviewResult",
     default: null,
   },
+  reEnrollCount: {
+    type: Number,
+    default: 0,
+  },
 }, { _id: false });
 
 const interviewSchema = new mongoose.Schema(

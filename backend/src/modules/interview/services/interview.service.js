@@ -104,8 +104,16 @@ class InterviewService {
     // Remove candidate if provided
     if (validatedData.removeCandidateEmail) {
       const emailToRemove = validatedData.removeCandidateEmail.toLowerCase();
+      const targetCandidate = interview.assignedCandidates.find(
+        (c) => c.email && c.email.toLowerCase() === emailToRemove
+      );
+
+      if (targetCandidate && (targetCandidate.status === "Completed" || targetCandidate.status === "In Progress")) {
+        throw new Error("Candidates who have completed or attempted the interview cannot be removed. They can only be re-enrolled.");
+      }
+
       interview.assignedCandidates = interview.assignedCandidates.filter(
-        (c) => c.email !== emailToRemove
+        (c) => c.email.toLowerCase() !== emailToRemove
       );
       delete validatedData.removeCandidateEmail;
     }

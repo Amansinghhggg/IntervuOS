@@ -77,7 +77,7 @@ const InterviewDetailsPage = () => {
         setInterview(data.interview);
       }
     } catch (error) {
-      toast.error("Failed to remove candidate");
+      toast.error(error.response?.data?.message || "Failed to remove candidate");
     }
   };
 
@@ -463,9 +463,11 @@ const InterviewDetailsPage = () => {
                                     View Result
                                   </button>
                                 )}
-                                <button onClick={() => removeCandidate(candidate.email)} className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-transparent hover:bg-[var(--color-error)]/10 text-[var(--color-on-surface-variant)] hover:text-[var(--color-error)] transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
+                                {candidate.status !== "Completed" && candidate.status !== "In Progress" && (
+                                  <button onClick={() => removeCandidate(candidate.email)} className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-transparent hover:bg-[var(--color-error)]/10 text-[var(--color-on-surface-variant)] hover:text-[var(--color-error)] transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100" title="Remove Candidate">
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                )}
                               </>
                             )}
                           </td>

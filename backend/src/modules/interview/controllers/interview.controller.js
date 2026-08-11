@@ -640,7 +640,14 @@ const performCandidateReEnrollment = async (interview, targetCandidateId, target
   }
 
   if (candidateIndex !== -1) {
-    candidateEmail = interview.assignedCandidates[candidateIndex].email.toLowerCase().trim();
+    const targetCandidateObj = interview.assignedCandidates[candidateIndex];
+    if (targetCandidateObj.reEnrollCount && targetCandidateObj.reEnrollCount >= 1) {
+      const err = new Error("Candidate has already been re-enrolled once for this campaign. Maximum re-enrollment limit reached.");
+      err.statusCode = 400;
+      throw err;
+    }
+
+    candidateEmail = targetCandidateObj.email.toLowerCase().trim();
     if (!candidateUser && candidateEmail) {
       candidateUser = await User.findOne({ email: candidateEmail }).catch(() => null);
       if (candidateUser) {
@@ -690,6 +697,7 @@ const performCandidateReEnrollment = async (interview, targetCandidateId, target
     interview.assignedCandidates[candidateIndex].joinedAt = null;
     interview.assignedCandidates[candidateIndex].submittedAt = null;
     interview.assignedCandidates[candidateIndex].resultId = null;
+    interview.assignedCandidates[candidateIndex].reEnrollCount = (interview.assignedCandidates[candidateIndex].reEnrollCount || 0) + 1;
     interview.markModified("assignedCandidates");
     await interview.save();
   }
@@ -718,6 +726,9 @@ const reEnrollCandidate = async (req, res, next) => {
       message: "Candidate has been successfully re-enrolled.",
     });
   } catch (error) {
+    if (error.statusCode === 400 || error.message?.includes("re-enrolled")) {
+      return res.status(400).json({ success: false, message: error.message });
+    }
     next(error);
   }
 };
@@ -765,36 +776,9 @@ const reEnrollByResultId = async (req, res, next) => {
       if (candidateUser) {
         candidateEmail = candidateUser.email.toLowerCase().trim();
       }
-
-      // Delete Cloudinary recording if it exists
-      if (session.recording && session.recording.publicId) {
-        try {
-          await CloudinaryService.deleteRecording(session.recording.publicId);
-        } catch (err) {
-          console.error("Cloudinary delete error:", err);
-        }
-      }
-
-      // Delete the session
-      await InterviewSession.deleteOne({ _id: session._id });
     }
 
-    // Delete any remaining sessions for this interview & candidate
-    if (candidateUserId) {
-      await InterviewSession.deleteMany({ interviewId, candidateId: candidateUserId }).catch(() => null);
-    } else {
-      await InterviewSession.deleteMany({ interviewId }).catch(() => null);
-    }
-
-    // Delete any result document if one exists
-    if (isValidObjectId(resultId)) {
-      await InterviewResult.deleteMany({ _id: resultId }).catch(() => null);
-    }
-    if (candidateUserId) {
-      await InterviewResult.deleteMany({ interviewId, candidateId: candidateUserId }).catch(() => null);
-    }
-
-    // 3. Find and update the candidate in assignedCandidates using candidate email
+    // 3. Find candidate index and check reEnrollCount BEFORE deleting sessions/results
     let candidateIndex = -1;
     if (candidateEmail) {
       candidateIndex = interview.assignedCandidates.findIndex(
@@ -802,16 +786,47 @@ const reEnrollByResultId = async (req, res, next) => {
       );
     }
 
-    // If candidate email matching failed, try matching candidate with status "Completed" or "In Progress"
     if (candidateIndex === -1) {
       candidateIndex = interview.assignedCandidates.findIndex(
         (c) => c.status === "Completed" || c.status === "In Progress"
       );
     }
 
-    // Fallback: If single candidate in campaign
     if (candidateIndex === -1 && interview.assignedCandidates.length === 1) {
       candidateIndex = 0;
+    }
+
+    if (candidateIndex !== -1) {
+      const targetCand = interview.assignedCandidates[candidateIndex];
+      if (targetCand.reEnrollCount && targetCand.reEnrollCount >= 1) {
+        return res.status(400).json({
+          success: false,
+          message: "Candidate has already been re-enrolled once for this campaign. Maximum re-enrollment limit reached."
+        });
+      }
+    }
+
+    // 4. Delete recordings & sessions
+    if (session) {
+      if (session.recording && session.recording.publicId) {
+        try {
+          await CloudinaryService.deleteRecording(session.recording.publicId);
+        } catch (err) {
+          console.error("Cloudinary delete error:", err);
+        }
+      }
+      await InterviewSession.deleteOne({ _id: session._id });
+    }
+
+    if (candidateUserId) {
+      await InterviewSession.deleteMany({ interviewId, candidateId: candidateUserId }).catch(() => null);
+      await InterviewResult.deleteMany({ interviewId, candidateId: candidateUserId }).catch(() => null);
+    } else {
+      await InterviewSession.deleteMany({ interviewId }).catch(() => null);
+    }
+
+    if (isValidObjectId(resultId)) {
+      await InterviewResult.deleteMany({ _id: resultId }).catch(() => null);
     }
 
     if (candidateIndex !== -1) {
@@ -819,6 +834,7 @@ const reEnrollByResultId = async (req, res, next) => {
       interview.assignedCandidates[candidateIndex].joinedAt = null;
       interview.assignedCandidates[candidateIndex].submittedAt = null;
       interview.assignedCandidates[candidateIndex].resultId = null;
+      interview.assignedCandidates[candidateIndex].reEnrollCount = (interview.assignedCandidates[candidateIndex].reEnrollCount || 0) + 1;
       interview.markModified("assignedCandidates");
       await interview.save();
     }

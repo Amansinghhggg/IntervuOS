@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -23,8 +23,14 @@ const loginSchema = z.object({
 const LoginPage = () => {
   const { login, googleLogin } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const getRedirectRoute = (role) => {
+    if (location.state?.from) return location.state.from;
+    return role === "employer" ? "/employer/dashboard" : "/candidate/mock-interview";
+  };
 
   const handleGoogleSuccess = async (credentialResponse) => {
     if (!credentialResponse.credential) return;
@@ -32,11 +38,7 @@ const LoginPage = () => {
     try {
       const data = await googleLogin(credentialResponse.credential);
       toast.success(`Welcome back, ${data.user.name}!`);
-      if (data.user.role === "employer") {
-        navigate("/employer/dashboard");
-      } else {
-        navigate("/candidate/mock-interview");
-      }
+      navigate(getRedirectRoute(data.user.role), { replace: true });
     } catch (error) {
       toast.error(error.response?.data?.message || "Google login failed.");
     } finally {
@@ -57,11 +59,7 @@ const LoginPage = () => {
     try {
       const data = await login(formData.email, formData.password);
       toast.success(`Welcome back, ${data.user.name}!`);
-      if (data.user.role === "employer") {
-        navigate("/employer/dashboard");
-      } else {
-        navigate("/candidate/mock-interview");
-      }
+      navigate(getRedirectRoute(data.user.role), { replace: true });
     } catch (error) {
       toast.error(
         error.response?.data?.message || "Login failed. Please try again."
@@ -232,6 +230,7 @@ const LoginPage = () => {
               Don't have an account yet?{" "}
               <Link
                 to="/signup"
+                state={{ from: location.state?.from }}
                 className="text-[var(--color-primary-md3)] hover:text-white transition-colors ml-1"
               >
                 Create an account

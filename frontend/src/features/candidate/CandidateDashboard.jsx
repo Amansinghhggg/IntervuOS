@@ -1,88 +1,128 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
 import { toast } from "react-hot-toast";
 import {
-  FileText,
-  Clock,
-  Building2,
-  ArrowRight,
   Briefcase,
-  CheckCircle2,
+  Building2,
+  Clock,
+  ArrowRight,
+  PlayCircle,
   AlertCircle,
+  Hourglass,
+  XCircle,
+  Search,
+  Key,
+  ShieldCheck,
+  ChevronRight,
   Sparkles,
-  Award,
   Layers,
-  UserCheck,
-  Coins,
-  XCircle
+  FileText
 } from "lucide-react";
-import { motion } from "framer-motion";
-import { PageHeader } from "../../ui/primitives/PageHeader";
-import { SectionHeader } from "../../ui/primitives/SectionHeader";
-import { MetricCard } from "../../ui/primitives/MetricCard";
-import { GlassCard } from "../../ui/primitives/GlassCard";
-import { StatusBadge } from "../../ui/primitives/StatusBadge";
-import { EmptyState } from "../../ui/primitives/EmptyState";
-import { LoadingState } from "../../ui/primitives/StateViews";
 
-const CandidateDashboard = () => {
+export default function CandidateDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+
   const [interviews, setInterviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL"); // ALL | READY | IN_PROGRESS | REQUESTED
 
-  const fetchInterviews = async () => {
+  const fetchAssignedInterviews = async () => {
+    setLoading(true);
     try {
       const { data } = await api.get("/interviews/candidate/assigned");
-      if (data.success) {
+      if (data.success && Array.isArray(data.interviews)) {
         setInterviews(data.interviews);
 
-        const inProgress = data.interviews.filter(interview => {
-          return interview.candidateStatus?.toLowerCase() === "in progress" || interview.candidateStatus?.toLowerCase() === "in-progress";
+        // Auto-redirect if an active session is in progress
+        const inProgress = data.interviews.filter((interview) => {
+          const status = interview.candidateStatus?.toLowerCase();
+          return (status === "in progress" || status === "in-progress") && interview.status !== "completed";
         });
 
         if (inProgress.length > 0) {
-          navigate(`/candidate/interviews/${inProgress[0]._id}/live`);
+          // Optional toast to notify candidate
+          // toast("You have an active interview session in progress", { icon: "⏳" });
         }
+      } else {
+        setInterviews([]);
       }
     } catch (error) {
       toast.error("Failed to load assigned interviews");
+      setInterviews([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchInterviews();
+    fetchAssignedInterviews();
   }, []);
 
-  const assignedInterviews = interviews.filter(interview => {
-    return (interview.candidateStatus === "Pending" || interview.candidateStatus === "Requested") && interview.status !== "completed";
-  });
+  // Filter ONLY active assigned, in-progress, requested, and declined items (NO completed / closed history here)
+  const activeInterviews = useMemo(() => {
+    return interviews.filter((interview) => {
+      const cStatus = interview.candidateStatus?.toLowerCase();
+      // Exclude completed or expired interviews (those belong in Past Interviews page)
+      if (cStatus === "completed" || (interview.status === "completed" && cStatus !== "completed")) {
+        return false;
+      }
+      return true;
+    });
+  }, [interviews]);
 
-  const inProgressInterviews = interviews.filter(interview => {
-    const status = interview.candidateStatus?.toLowerCase();
-    return (status === "in progress" || status === "in-progress") && interview.status !== "completed";
-  });
+  // Specific Categorization
+  const inProgressList = useMemo(() => {
+    return activeInterviews.filter((i) => {
+      const s = i.candidateStatus?.toLowerCase();
+      return (s === "in progress" || s === "in-progress") && i.status !== "completed";
+    });
+  }, [activeInterviews]);
 
-  const completedInterviews = interviews.filter(interview => {
-    const status = interview.candidateStatus?.toLowerCase();
-    return status === "completed";
-  });
+  const readyToStartList = useMemo(() => {
+    return activeInterviews.filter((i) => {
+      return i.candidateStatus === "Pending" && i.status !== "completed";
+    });
+  }, [activeInterviews]);
 
-  const missedInterviews = interviews.filter(interview => {
-    const status = interview.candidateStatus?.toLowerCase();
-    return interview.status === "completed" && status !== "completed";
-  });
+  const requestedList = useMemo(() => {
+    return activeInterviews.filter((i) => {
+      return i.candidateStatus === "Requested" && i.status !== "completed";
+    });
+  }, [activeInterviews]);
 
-  const rejectedInterviews = interviews.filter(interview => {
-    return interview.candidateStatus === "Rejected";
-  });
+  const declinedList = useMemo(() => {
+    return activeInterviews.filter((i) => {
+      return i.candidateStatus === "Rejected";
+    });
+  }, [activeInterviews]);
+
+  // Search and Tab Filtering
+  const filteredList = useMemo(() => {
+    return activeInterviews.filter((item) => {
+      const matchesSearch =
+        (item.title && item.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (item.jobRole && item.jobRole.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (item.employer?.name && item.employer.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+      if (!matchesSearch) return false;
+
+      const s = item.candidateStatus?.toLowerCase();
+      if (statusFilter === "ALL") return item.candidateStatus !== "Rejected";
+      if (statusFilter === "READY") return item.candidateStatus === "Pending";
+      if (statusFilter === "IN_PROGRESS") return s === "in progress" || s === "in-progress";
+      if (statusFilter === "REQUESTED") return item.candidateStatus === "Requested";
+      if (statusFilter === "DECLINED") return item.candidateStatus === "Rejected";
+      return true;
+    });
+  }, [activeInterviews, searchQuery, statusFilter]);
 
   const handleStartInterview = (interviewId) => {
-    if (inProgressInterviews.length > 0) {
+    if (inProgressList.length > 0 && inProgressList[0]._id !== interviewId) {
       toast.error("You must complete your in-progress interview before starting a new one.");
       return;
     }
@@ -90,362 +130,289 @@ const CandidateDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-transparent w-full font-['Inter'] pb-16 text-[var(--color-on-surface,#dae2fd)]">
-      <div className="w-full max-w-[1440px] mx-auto p-4 md:p-8 space-y-8">
+    <div className="w-full min-h-screen bg-[var(--background)] font-['Inter'] pb-20 text-[var(--text-primary)]">
+      <div className="w-full px-4 sm:px-6 md:px-8 xl:px-10 py-6 sm:py-8 space-y-6">
 
-        {/* Page Header */}
-        <PageHeader
-          badgeIcon={UserCheck}
-          badgeText="Candidate Workspace"
-          title="Assigned Interviews"
-          description={`Welcome back, ${user?.name || 'Candidate'}. Review your assigned interview campaigns and employer invitations.`}
-        />
+        {/* Top Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[var(--border)]">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] text-[11px] font-medium">
+                <Briefcase className="w-3 h-3" /> Candidate Workspace
+              </span>
+              <span className="text-xs text-[var(--text-muted)]">•</span>
+              <span className="text-xs text-[var(--text-secondary)] font-normal">Active Invitations & Assignments</span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-medium tracking-tight text-[var(--text-primary)]">
+              Assigned Interviews
+            </h1>
+          </div>
 
-        {/* Metric Cards Overview */}
-        {!loading && (
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6"
-          >
-            <MetricCard
-              icon={FileText}
-              label="Assigned Campaigns"
-              value={assignedInterviews.length}
-              subtext="Awaiting Start"
-              glowColor="primary"
-            />
-            <MetricCard
-              icon={AlertCircle}
-              label="In Progress"
-              value={inProgressInterviews.length}
-              subtext="Active Sessions"
-              glowColor="warning"
-            />
-            <MetricCard
-              icon={CheckCircle2}
-              label="Completed"
-              value={completedInterviews.length}
-              subtext="Evaluated"
-              glowColor="success"
-            />
-            <MetricCard
-              icon={Clock}
-              label="Missed"
-              value={missedInterviews.length}
-              subtext="Closed"
-              glowColor="secondary"
-            />
-          </motion.div>
-        )}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate("/candidate/join")}
+              className="px-4 py-2 bg-[var(--card)] hover:bg-[var(--surface-hover,#1E1E2A)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-medium rounded-xl inline-flex items-center gap-1.5 transition-colors duration-150"
+            >
+              <Key className="w-3.5 h-3.5" />
+              <span>Join with Access Key</span>
+            </button>
 
-        {loading ? (
-          <LoadingState message="Loading assigned campaigns..." />
-        ) : (
-          <div className="space-y-10">
+            <button
+              onClick={() => navigate("/candidate/mock-interview")}
+              className="px-4 py-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white font-medium text-xs rounded-xl inline-flex items-center gap-1.5 transition-colors duration-150 shadow-sm shrink-0"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Practice AI Mock</span>
+            </button>
+          </div>
+        </div>
 
-            {/* In-Progress Interviews */}
-            {inProgressInterviews.length > 0 && (
-              <motion.section initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}>
-                <SectionHeader
-                  icon={AlertCircle}
-                  title="Action Required"
-                  subtitle="You have an active interview session in progress."
-                />
+        {/* Summary Metric Strip */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-[var(--card)] border border-[var(--border)] p-4 sm:p-5 rounded-2xl space-y-1">
+            <div className="text-xs text-[var(--text-secondary)] flex items-center justify-between">
+              <span>Ready to Start</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            </div>
+            <div className="text-2xl font-medium text-[var(--text-primary)]">{readyToStartList.length}</div>
+            <p className="text-[11px] text-[var(--text-muted)]">Awaiting your participation</p>
+          </div>
 
-                <div className="grid grid-cols-1 gap-6">
-                  {inProgressInterviews.map((interview) => (
-                    <GlassCard key={interview._id} padding="p-6 md:p-8" className="border-amber-500/40">
-                      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <StatusBadge status="In Progress" />
-                          </div>
-                          <h3 className="text-2xl font-black text-[var(--color-on-surface,#dae2fd)] mb-2 uppercase">{interview.title}</h3>
-                          <div className="flex flex-wrap items-center gap-4 text-xs font-bold tracking-wider text-[var(--color-on-surface-variant)] uppercase mb-2">
-                            <span className="flex items-center gap-1.5">
-                              <Briefcase className="w-4 h-4 text-[var(--color-primary-md3)]" />
-                              {interview.jobRole}
-                            </span>
-                            {interview.employer && (
-                              <span className="flex items-center gap-1.5">
-                                <Building2 className="w-4 h-4 text-[var(--color-secondary)]" />
-                                {interview.employer.name}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => navigate(`/candidate/interviews/${interview._id}/live`)}
-                          className="px-6 py-3.5 bg-amber-500 hover:bg-amber-400 text-black rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-amber-500/25 flex items-center whitespace-nowrap w-full md:w-auto justify-center"
-                        >
-                          Resume Interview <ArrowRight className="w-4 h-4 ml-2" />
-                        </button>
-                      </div>
-                    </GlassCard>
-                  ))}
-                </div>
-              </motion.section>
-            )}
+          <div className="bg-[var(--card)] border border-[var(--border)] p-4 sm:p-5 rounded-2xl space-y-1">
+            <div className="text-xs text-[var(--text-secondary)] flex items-center justify-between">
+              <span>In Progress</span>
+              <span className="w-2 h-2 rounded-full bg-amber-400" />
+            </div>
+            <div className="text-2xl font-medium text-amber-400">{inProgressList.length}</div>
+            <p className="text-[11px] text-[var(--text-muted)]">Active session ongoing</p>
+          </div>
 
-            {/* Rejected Join Requests */}
-            {rejectedInterviews.length > 0 && (
-              <motion.section initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
-                <GlassCard padding="p-0" className="border-rose-500/30">
-                  <div className="p-6 border-b border-[var(--color-outline-variant)]/30 bg-rose-500/5">
-                    <SectionHeader
-                      icon={XCircle}
-                      title="Rejected Join Requests"
-                      subtitle="Campaign join requests that were not approved by the employer."
-                      className="mb-0"
-                    />
-                  </div>
+          <div className="bg-[var(--card)] border border-[var(--border)] p-4 sm:p-5 rounded-2xl space-y-1">
+            <div className="text-xs text-[var(--text-secondary)] flex items-center justify-between">
+              <span>Awaiting Approval</span>
+              <span className="w-2 h-2 rounded-full bg-[var(--primary)]" />
+            </div>
+            <div className="text-2xl font-medium text-[var(--color-text-accent,#C4B5FD)]">{requestedList.length}</div>
+            <p className="text-[11px] text-[var(--text-muted)]">Pending employer review</p>
+          </div>
+        </div>
 
-                  <div className="overflow-x-auto w-full">
-                    <table className="w-full text-left border-collapse min-w-[600px]">
-                      <thead>
-                        <tr className="border-b border-[var(--color-outline-variant)]/30 bg-[var(--color-surface-container-highest)]/10">
-                          <th className="py-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-on-surface-variant)]">Organization</th>
-                          <th className="py-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-on-surface-variant)]">Role</th>
-                          <th className="py-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-on-surface-variant)]">Status & Note</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {rejectedInterviews.map((interview) => (
-                          <tr key={interview._id} className="border-b border-[var(--color-outline-variant)]/20 hover:bg-[var(--color-surface-container-highest)]/10 transition-colors">
-                            <td className="py-4 px-6">
-                              <div className="font-bold text-sm text-[var(--color-on-surface)] mb-0.5">{interview.title}</div>
-                              {interview.employer && (
-                                <div className="text-[10px] font-black tracking-widest text-[var(--color-on-surface-variant)] uppercase">Shared By: {interview.employer.name}</div>
-                              )}
-                            </td>
-                            <td className="py-4 px-6">
-                              <span className="flex items-center gap-2 text-xs text-[var(--color-on-surface-variant)] font-semibold">
-                                <Briefcase className="w-3.5 h-3.5 text-[var(--color-primary-md3)]" />
-                                {interview.jobRole}
-                              </span>
-                            </td>
-                            <td className="py-4 px-6">
-                              <div className="flex flex-col gap-1">
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest bg-rose-500/10 text-rose-400 border border-rose-500/20 w-fit">
-                                  Request Declined
-                                </span>
-                                <p className="text-[11px] text-[var(--color-on-surface-variant)] font-medium">
-                                  Your request to join this campaign was declined by the employer. Please contact the employer to request re-enrollment or access.
-                                </p>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </GlassCard>
-              </motion.section>
-            )}
+        {/* Critical In-Progress Alert Banner */}
+        {inProgressList.length > 0 && (
+          <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+                <AlertCircle className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-[var(--text-primary)]">
+                  Action Required: Active Session In Progress
+                </h3>
+                <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+                  You have an open interview session for <strong className="text-[var(--text-primary)]">{inProgressList[0].title}</strong>. Please resume and complete it.
+                </p>
+              </div>
+            </div>
 
-            {/* Assigned Interviews */}
-            <motion.section initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-              <GlassCard padding="p-0">
-                <div className="p-6 border-b border-[var(--color-outline-variant)]/30 bg-[var(--color-surface-container-highest)]/20">
-                  <SectionHeader
-                    icon={FileText}
-                    title="Assigned Campaigns"
-                    subtitle="Campaign invitations awaiting your participation."
-                    className="mb-0"
-                  />
-                </div>
-
-                {assignedInterviews.length === 0 ? (
-                  <EmptyState
-                    icon={FileText}
-                    title="No Assigned Interviews"
-                    description="You are all caught up! Wait for your employer to assign new campaigns."
-                  />
-                ) : (
-                  <div className="overflow-x-auto w-full">
-                    <table className="w-full text-left border-collapse min-w-[600px]">
-                      <thead>
-                        <tr className="border-b border-[var(--color-outline-variant)]/30 bg-[var(--color-surface-container-highest)]/10">
-                          <th className="py-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-on-surface-variant)]">Organization</th>
-                          <th className="py-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-on-surface-variant)]">Role</th>
-                          <th className="py-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-on-surface-variant)]">Experience</th>
-                          <th className="py-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-on-surface-variant)]">Duration</th>
-                          <th className="py-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-on-surface-variant)] text-right">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {assignedInterviews.map((interview) => (
-                          <tr key={interview._id} className="border-b border-[var(--color-outline-variant)]/20 hover:bg-[var(--color-surface-container-highest)]/10 transition-colors group">
-                            <td className="py-4 px-6">
-                              <div className="font-bold text-sm text-[var(--color-on-surface)] mb-0.5">{interview.title}</div>
-                              {interview.employer && (
-                                <div className="text-[10px] font-black tracking-widest text-[var(--color-on-surface-variant)] uppercase">Shared By: {interview.employer.name}</div>
-                              )}
-                            </td>
-                            <td className="py-4 px-6">
-                              <span className="flex items-center gap-2 text-xs text-[var(--color-on-surface-variant)] font-semibold">
-                                <Briefcase className="w-3.5 h-3.5 text-[var(--color-primary-md3)]" />
-                                {interview.jobRole}
-                              </span>
-                            </td>
-                            <td className="py-4 px-6">
-                              <StatusBadge status="pending" customLabel={interview.experienceLevel} size="sm" />
-                            </td>
-                            <td className="py-4 px-6">
-                              <span className="flex items-center gap-2 text-xs text-[var(--color-on-surface-variant)] font-semibold">
-                                <Clock className="w-3.5 h-3.5 text-[var(--color-secondary)]" />
-                                {interview.duration} mins
-                              </span>
-                            </td>
-                            <td className="py-4 px-6 text-right">
-                              {interview.candidateStatus === "Requested" ? (
-                                <button
-                                  disabled
-                                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all bg-[var(--color-surface-variant)] text-[var(--color-on-surface-variant)] opacity-70 cursor-not-allowed border border-[var(--color-outline-variant)]/30"
-                                >
-                                  Awaiting Approval
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={() => handleStartInterview(interview._id)}
-                                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-                                    inProgressInterviews.length > 0
-                                      ? 'bg-[var(--color-surface-variant)] text-[var(--color-on-surface-variant)] opacity-50 cursor-not-allowed'
-                                      : 'bg-[var(--color-primary-md3)] text-white hover:bg-[var(--color-primary-md3)]/90 shadow-md shadow-[var(--color-primary-md3)]/20'
-                                  }`}
-                                >
-                                  Start Interview
-                                  <ArrowRight className="w-3.5 h-3.5" />
-                                </button>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </GlassCard>
-            </motion.section>
-
-            {/* Completed Interviews */}
-            <motion.section initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-              <GlassCard padding="p-0">
-                <div className="p-6 border-b border-[var(--color-outline-variant)]/30 bg-[var(--color-surface-container-highest)]/20">
-                  <SectionHeader
-                    icon={CheckCircle2}
-                    title="Completed Campaigns"
-                    subtitle="Your past campaign submissions."
-                    className="mb-0"
-                  />
-                </div>
-
-                {completedInterviews.length === 0 ? (
-                  <EmptyState
-                    icon={CheckCircle2}
-                    title="No Completed Interviews"
-                    description="Finished campaign evaluations will appear here."
-                  />
-                ) : (
-                  <div className="overflow-x-auto w-full">
-                    <table className="w-full text-left border-collapse min-w-[600px]">
-                      <thead>
-                        <tr className="border-b border-[var(--color-outline-variant)]/30 bg-[var(--color-surface-container-highest)]/10">
-                          <th className="py-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-on-surface-variant)]">Organization</th>
-                          <th className="py-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-on-surface-variant)]">Role</th>
-                          <th className="py-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-on-surface-variant)]">Status</th>
-                          <th className="py-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-on-surface-variant)] text-right">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {completedInterviews.map((interview) => (
-                          <tr key={interview._id} className="border-b border-[var(--color-outline-variant)]/20 hover:bg-[var(--color-surface-container-highest)]/10 transition-colors">
-                            <td className="py-4 px-6">
-                              <div className="font-bold text-sm text-[var(--color-on-surface)] mb-0.5">{interview.title}</div>
-                              {interview.employer && (
-                                <div className="text-[10px] font-black tracking-widest text-[var(--color-on-surface-variant)] uppercase">{interview.employer.name}</div>
-                              )}
-                            </td>
-                            <td className="py-4 px-6">
-                              <span className="flex items-center gap-2 text-xs text-[var(--color-on-surface-variant)] font-semibold">
-                                <Briefcase className="w-3.5 h-3.5" />
-                                {interview.jobRole}
-                              </span>
-                            </td>
-                            <td className="py-4 px-6">
-                              <StatusBadge status="Completed" size="sm" />
-                            </td>
-                            <td className="py-4 px-6 text-right">
-                              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-black uppercase tracking-widest bg-[var(--color-surface-variant)] text-[var(--color-on-surface-variant)]">
-                                Submitted
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </GlassCard>
-            </motion.section>
-
-            {/* Missed Interviews */}
-            {missedInterviews.length > 0 && (
-              <motion.section initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
-                <GlassCard padding="p-0">
-                  <div className="p-6 border-b border-[var(--color-outline-variant)]/30 bg-[var(--color-surface-container-highest)]/20">
-                    <SectionHeader
-                      icon={Clock}
-                      title="Closed Campaigns"
-                      subtitle="Campaigns closed before submission."
-                      className="mb-0"
-                    />
-                  </div>
-
-                  <div className="overflow-x-auto w-full">
-                    <table className="w-full text-left border-collapse min-w-[600px]">
-                      <thead>
-                        <tr className="border-b border-[var(--color-outline-variant)]/30 bg-[var(--color-surface-container-highest)]/10">
-                          <th className="py-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-on-surface-variant)]">Organization</th>
-                          <th className="py-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-on-surface-variant)]">Role</th>
-                          <th className="py-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-on-surface-variant)] text-right">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {missedInterviews.map((interview) => (
-                          <tr key={interview._id} className="border-b border-[var(--color-outline-variant)]/20 hover:bg-[var(--color-surface-container-highest)]/10 transition-colors">
-                            <td className="py-4 px-6">
-                              <div className="font-bold text-sm text-[var(--color-on-surface)] mb-0.5">{interview.title}</div>
-                              {interview.employer && (
-                                <div className="text-[10px] font-black tracking-widest text-[var(--color-on-surface-variant)] uppercase">{interview.employer.name}</div>
-                              )}
-                            </td>
-                            <td className="py-4 px-6">
-                              <span className="flex items-center gap-2 text-xs text-[var(--color-on-surface-variant)] font-semibold">
-                                <Briefcase className="w-3.5 h-3.5" />
-                                {interview.jobRole}
-                              </span>
-                            </td>
-                            <td className="py-4 px-6 text-right">
-                              <StatusBadge status="failed" customLabel="Closed" size="sm" />
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </GlassCard>
-              </motion.section>
-            )}
-
+            <button
+              onClick={() => navigate(`/candidate/interviews/${inProgressList[0]._id}/live`)}
+              className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black font-medium text-xs rounded-xl flex items-center gap-1.5 transition-colors duration-150 shrink-0 shadow-sm"
+            >
+              <span>Resume Live Session</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
         )}
+
+        {/* Declined Requests Notice (Quiet Collapsible Accordion / Alert) */}
+        {declinedList.length > 0 && (
+          <div className="p-4 rounded-2xl bg-[var(--card)] border border-rose-500/20 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-medium text-rose-400">
+                <XCircle className="w-4 h-4" />
+                <span>Declined Join Requests ({declinedList.length})</span>
+              </div>
+              <span className="text-[11px] text-[var(--text-muted)]">Employer declined access</span>
+            </div>
+            <div className="divide-y divide-[var(--border)]">
+              {declinedList.map((dec) => (
+                <div key={dec._id} className="py-2 flex justify-between items-center text-xs">
+                  <div>
+                    <span className="font-medium text-[var(--text-primary)]">{dec.title}</span>
+                    <span className="text-[11px] text-[var(--text-secondary)] ml-2">• {dec.employer?.name || "Employer"}</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded text-[10px] bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                    Declined
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Search & Filter Controls */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
+          {/* Search Input */}
+          <div className="relative flex-1 max-w-md">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+            <input
+              type="text"
+              placeholder="Search by campaign title, role, or company..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-[var(--card)] border border-[var(--border)] pl-9 pr-4 py-2 rounded-xl text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--color-border-active,#6338F6)] transition-colors duration-150"
+            />
+          </div>
+
+          {/* Filter Pills */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+            {[
+              { key: "ALL", label: `All Active (${activeInterviews.filter(i => i.candidateStatus !== "Rejected").length})` },
+              { key: "READY", label: `Ready to Start (${readyToStartList.length})` },
+              { key: "IN_PROGRESS", label: `In Progress (${inProgressList.length})` },
+              { key: "REQUESTED", label: `Awaiting (${requestedList.length})` }
+            ].map((f) => (
+              <button
+                key={f.key}
+                onClick={() => setStatusFilter(f.key)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors duration-150 border whitespace-nowrap ${
+                  statusFilter === f.key
+                    ? "bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-[var(--color-border-active,#6338F6)]"
+                    : "bg-[var(--card)] text-[var(--text-secondary)] border-[var(--border)] hover:text-[var(--text-primary)]"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Assigned Interviews List */}
+        <div className="space-y-3">
+          {loading ? (
+            <div className="bg-[var(--card)] border border-[var(--border)] p-12 rounded-2xl text-center text-xs text-[var(--text-secondary)]">
+              Loading assigned interviews...
+            </div>
+          ) : filteredList.length === 0 ? (
+            <div className="bg-[var(--card)] border border-[var(--border)] p-12 rounded-2xl text-center space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-[var(--primary-tint,rgba(99,56,246,0.15))] flex items-center justify-center text-[var(--primary)] mx-auto">
+                <Briefcase className="w-5 h-5" />
+              </div>
+              <h3 className="text-base font-medium text-[var(--text-primary)]">No assigned interviews</h3>
+              <p className="text-xs text-[var(--text-secondary)] max-w-sm mx-auto">
+                {searchQuery || statusFilter !== "ALL"
+                  ? "No assigned interviews match your current search filters."
+                  : "You're all caught up! When an employer assigns a campaign or accepts your access key, it will appear here."}
+              </p>
+              <div className="flex items-center justify-center gap-3 pt-2">
+                <button
+                  onClick={() => navigate("/candidate/join")}
+                  className="px-4 py-2 bg-[var(--card)] hover:bg-[var(--surface-hover,#1E1E2A)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-medium rounded-xl transition-colors duration-150"
+                >
+                  Join Campaign
+                </button>
+                <button
+                  onClick={() => navigate("/candidate/mock-interview")}
+                  className="px-4 py-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white font-medium text-xs rounded-xl transition-colors duration-150"
+                >
+                  Launch AI Mock
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3">
+              {filteredList.map((interview) => {
+                const isRequested = interview.candidateStatus === "Requested";
+                const isInProgress =
+                  interview.candidateStatus?.toLowerCase() === "in progress" ||
+                  interview.candidateStatus?.toLowerCase() === "in-progress";
+
+                return (
+                  <div
+                    key={interview._id}
+                    className="bg-[var(--card)] border border-[var(--border)] hover:border-[var(--color-border-active,#6338F6)]/60 transition-colors duration-150 rounded-2xl p-5"
+                  >
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                      
+                      {/* Left Details */}
+                      <div className="space-y-1.5 flex-1">
+                        <div className="flex items-center gap-2">
+                          {isRequested ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--primary)]/30">
+                              Awaiting Approval
+                            </span>
+                          ) : isInProgress ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                              In Progress
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                              Ready to Start
+                            </span>
+                          )}
+
+                          {interview.employer?.name && (
+                            <span className="text-xs text-[var(--text-secondary)] flex items-center gap-1 font-normal">
+                              <Building2 className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                              {interview.employer.name}
+                            </span>
+                          )}
+                        </div>
+
+                        <h3 className="text-base font-medium text-[var(--text-primary)]">
+                          {interview.title}
+                        </h3>
+
+                        <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--text-secondary)]">
+                          <span className="flex items-center gap-1">
+                            <Briefcase className="w-3.5 h-3.5 text-[var(--primary)]" />
+                            {interview.jobRole}
+                          </span>
+                          <span>•</span>
+                          <span>{interview.experienceLevel || "All Levels"}</span>
+                          <span>•</span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5 text-amber-400" />
+                            {interview.duration || 15} Mins
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Right Action CTA Button */}
+                      <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-[var(--border)]">
+                        {isRequested ? (
+                          <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] px-3 py-2 rounded-xl bg-[var(--background)] border border-[var(--border)]">
+                            <Hourglass className="w-3.5 h-3.5 text-[var(--color-text-accent,#C4B5FD)] animate-pulse" />
+                            <span>Employer Review Pending</span>
+                          </div>
+                        ) : isInProgress ? (
+                          <button
+                            onClick={() => navigate(`/candidate/interviews/${interview._id}/live`)}
+                            className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-medium text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors duration-150 shadow-sm w-full sm:w-auto"
+                          >
+                            <span>Resume Live Session</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleStartInterview(interview._id)}
+                            className="px-4 py-2.5 bg-[var(--primary)] hover:bg-[var(--primary-hover)] active:scale-[0.99] text-white font-medium text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all duration-150 shadow-sm w-full sm:w-auto"
+                          >
+                            <PlayCircle className="w-3.5 h-3.5" />
+                            <span>Start Interview</span>
+                          </button>
+                        )}
+                      </div>
+
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
       </div>
     </div>
   );
-};
-
-export default CandidateDashboard;
+}

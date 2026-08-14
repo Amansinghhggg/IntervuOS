@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Sparkles, LayoutDashboard, Key, Crown, HelpCircle, LogOut, User, Menu, X } from 'lucide-react';
+import { Sparkles, LayoutDashboard, Key, Crown, HelpCircle, LogOut, User, Menu, X, FileText } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
 
@@ -26,6 +26,7 @@ export default function CandidateLayout() {
 
     const navItems = [
         { label: "AI Mock Interview", icon: Sparkles, path: "/candidate/mock-interview" },
+        { label: "Past Interviews", icon: FileText, path: "/candidate/mock-reports" },
         { label: "Assigned Interviews", icon: LayoutDashboard, path: "/candidate/dashboard" },
         { label: "Join Campaign", icon: Key, path: "/candidate/join" },
         { label: "Subscriptions", icon: Crown, path: "/candidate/subscriptions" },
@@ -66,8 +67,8 @@ export default function CandidateLayout() {
                                     setMobileMenuOpen(false);
                                 }}
                                 className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${location.pathname === item.path
-                                        ? 'bg-[var(--primary)] text-white shadow-md shadow-[var(--primary)]/30'
-                                        : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)]'
+                                    ? 'bg-[var(--primary)] text-white shadow-md shadow-[var(--primary)]/30'
+                                    : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)]'
                                     }`}
                             >
                                 <item.icon className="w-4 h-4" />
@@ -83,8 +84,8 @@ export default function CandidateLayout() {
                                 setMobileMenuOpen(false);
                             }}
                             className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${location.pathname === '/candidate/profile'
-                                    ? 'bg-[var(--primary)] text-white'
-                                    : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)]'
+                                ? 'bg-[var(--primary)] text-white'
+                                : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)]'
                                 }`}
                         >
                             <User className="w-4 h-4" />
@@ -96,8 +97,8 @@ export default function CandidateLayout() {
                                 setMobileMenuOpen(false);
                             }}
                             className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${location.pathname === '/candidate/help'
-                                    ? 'bg-[var(--primary)] text-white'
-                                    : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)]'
+                                ? 'bg-[var(--primary)] text-white'
+                                : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)]'
                                 }`}
                         >
                             <HelpCircle className="w-4 h-4" />
@@ -132,8 +133,8 @@ export default function CandidateLayout() {
                             key={item.path}
                             onClick={() => handleNavItemClick(item.path)}
                             className={`w-full flex items-center gap-4 px-3 py-3 text-sm font-bold rounded-xl transition-all ${location.pathname === item.path
-                                    ? 'bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--primary)] border border-[var(--primary)]/30 shadow-[0_0_15px_rgba(91,58,242,0.15)]'
-                                    : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)]'
+                                ? 'bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--primary)] border border-[var(--primary)]/30 shadow-[0_0_15px_rgba(91,58,242,0.15)]'
+                                : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)]'
                                 }`}
                         >
                             <item.icon className="w-6 h-6 shrink-0" />
@@ -146,8 +147,8 @@ export default function CandidateLayout() {
                     <button
                         onClick={() => navigate('/candidate/profile')}
                         className={`w-full flex items-center gap-4 px-3 py-3 text-sm font-bold rounded-xl transition-all ${location.pathname === '/candidate/profile'
-                                ? 'bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--primary)] border border-[var(--primary)]/30 shadow-[0_0_15px_rgba(91,58,242,0.15)]'
-                                : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)]'
+                            ? 'bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--primary)] border border-[var(--primary)]/30 shadow-[0_0_15px_rgba(91,58,242,0.15)]'
+                            : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)]'
                             }`}
                     >
                         {user?.profilePicture ? (
@@ -162,8 +163,8 @@ export default function CandidateLayout() {
                     <button
                         onClick={() => navigate('/candidate/help')}
                         className={`w-full flex items-center gap-4 px-3 py-3 text-sm font-bold rounded-xl transition-all ${location.pathname === '/candidate/help'
-                                ? 'bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--primary)] border border-[var(--primary)]/30 shadow-[0_0_15px_rgba(91,58,242,0.15)]'
-                                : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)]'
+                            ? 'bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--primary)] border border-[var(--primary)]/30 shadow-[0_0_15px_rgba(91,58,242,0.15)]'
+                            : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)]'
                             }`}
                     >
                         <HelpCircle className="w-6 h-6 shrink-0" />

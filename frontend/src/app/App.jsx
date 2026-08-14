@@ -24,6 +24,7 @@ import MockInterviewPage from "../features/candidate/MockInterviewPage";
 import MockPreInterviewPage from "../features/candidate/MockPreInterviewPage";
 import CandidateSubscriptionsPage from "../features/candidate/CandidateSubscriptionsPage";
 import CandidateHelpSupportPage from "../features/candidate/CandidateHelpSupportPage";
+import MockReportsPage from "../features/candidate/MockReportsPage";
 import AdminLayout from "../features/admin/AdminLayout";
 import AdminDashboardPage from "../features/admin/AdminDashboardPage";
 import { Loader2 } from "lucide-react";
@@ -108,6 +109,7 @@ function App() {
         <Route element={<ProtectedRoute role="candidate"><CandidateLayout /></ProtectedRoute>}>
           <Route path="/candidate" element={<Navigate to="/candidate/mock-interview" replace />} />
           <Route path="/candidate/mock-interview" element={<MockInterviewPage />} />
+          <Route path="/candidate/mock-reports" element={<MockReportsPage />} />
           <Route path="/candidate/dashboard" element={<CandidateDashboard />} />
           <Route path="/candidate/join" element={<JoinInterviewPage />} />
           <Route path="/candidate/mock-interview/:id/prepare" element={<MockPreInterviewPage />} />

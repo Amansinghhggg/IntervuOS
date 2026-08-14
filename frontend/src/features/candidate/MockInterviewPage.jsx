@@ -238,79 +238,76 @@ export default function MockInterviewPage() {
 
         {/* Top Header Section */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col md:flex-row md:items-end justify-between gap-6"
         >
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--color-primary-md3)]/10 border border-[var(--color-primary-md3)]/30 text-[var(--color-primary-md3)] text-xs font-black uppercase tracking-widest mb-3">
-              <Bot className="w-4 h-4" /> AI Practice Studio
+            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-md bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] text-xs font-medium mb-2.5">
+              <Bot className="w-3.5 h-3.5" /> AI Practice Studio
             </div>
-            <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight text-[var(--color-on-surface)]">
+            <h1 className="text-2xl md:text-3xl font-medium tracking-tight text-[var(--text-primary)]">
               Mock Interview Studio
             </h1>
-            <p className="text-sm text-[var(--color-on-surface-variant)] mt-1 font-medium">
+            <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-1 font-normal">
               Train with adaptive AI questions, test your role readiness, and view detailed evaluation reports.
             </p>
           </div>
 
           {/* Tab Switcher Buttons */}
-          <div className="flex items-center bg-[var(--color-surface-container-low)] p-1.5 rounded-2xl border border-[var(--color-surface-variant)] shadow-lg shrink-0">
+          <div className="flex items-center bg-[var(--card)] p-1 rounded-xl border border-[var(--border)]/70 shrink-0">
             <button
               onClick={() => setActiveTab("create")}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${activeTab === "create"
-                ? "bg-[var(--color-primary-md3)] text-white shadow-lg shadow-[var(--color-primary-md3)]/30"
-                : "text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)]"
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-all duration-150 ${activeTab === "create"
+                ? "bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] font-medium"
+                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                 }`}
             >
-              <Sparkles className="w-4 h-4" /> Create Mock
+              <Sparkles className="w-3.5 h-3.5" /> Create Mock
             </button>
             <button
               onClick={() => setActiveTab("history")}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${activeTab === "history"
-                ? "bg-[var(--color-primary-md3)] text-white shadow-lg shadow-[var(--color-primary-md3)]/30"
-                : "text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)]"
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-all duration-150 ${activeTab === "history"
+                ? "bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] font-medium"
+                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                 }`}
             >
-              <History className="w-4 h-4" /> Past Mocks
+              <History className="w-3.5 h-3.5" /> Past Mocks
             </button>
           </div>
         </motion.div>
 
         {/* AI Interview Wallet Credit Banner & Information */}
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="p-5 md:p-6 rounded-3xl border border-indigo-500/30 bg-gradient-to-r from-indigo-950/50 via-purple-950/40 to-slate-950/50 shadow-xl relative overflow-hidden"
+          className="p-5 rounded-2xl border border-[var(--border)]/70 border-l-2 border-l-[var(--color-border-active,#6338F6)] bg-[var(--card)] relative overflow-hidden"
         >
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0 shadow-lg shadow-indigo-500/10">
-                <Coins className="w-6 h-6" />
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-[var(--primary-tint,rgba(99,56,246,0.15))] flex items-center justify-center text-[var(--color-text-accent,#C4B5FD)] shrink-0">
+                <Coins className="w-5 h-5" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs uppercase font-extrabold text-indigo-400 tracking-wider">AI Interview Wallet</span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase">
+                  <span className="text-xs font-semibold text-[var(--color-text-accent,#C4B5FD)]">AI Interview Wallet</span>
+                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400">
                     Active Balance
                   </span>
                 </div>
-                <h4 className="text-xl font-black text-[var(--color-on-surface,#dae2fd)] flex items-baseline gap-2 mt-0.5">
+                <h4 className="text-lg font-medium tracking-tight text-[var(--text-primary)] flex items-baseline gap-2 mt-0.5">
                   <span>{user?.credits?.availableMinutes ?? user?.credits?.availableCredits ?? 15}</span>
-                  <span className="text-xs font-semibold text-indigo-300">Available Credits</span>
+                  <span className="text-xs font-normal text-[var(--text-secondary)]">Available Credits</span>
                 </h4>
-                <p className="text-xs text-slate-300 mt-1">
-                  Each AI Mock Interview session uses credits for voice stream synthesis, STAR method evaluation & PDF report export.
-                </p>
               </div>
             </div>
 
             <button
               onClick={() => navigate('/candidate/subscriptions')}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-indigo-500/20 flex items-center gap-2 shrink-0"
+              className="px-4 py-2 rounded-xl bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)]/60 hover:bg-[var(--primary-tint)]/80 text-xs font-medium transition-all duration-150 flex items-center gap-2 shrink-0"
             >
-              <Sparkles className="w-4 h-4" />
-              <span>Top-up Credits & Subscriptions</span>
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Top-up Credits</span>
             </button>
           </div>
         </motion.div>
@@ -318,30 +315,25 @@ export default function MockInterviewPage() {
         {/* Tab 1: Create Mock Interview */}
         {activeTab === "create" && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="grid grid-cols-1 lg:grid-cols-12 gap-8"
+            className="grid grid-cols-1 lg:grid-cols-12 gap-6"
           >
             {/* Left Column: Interactive Form */}
             <div className="lg:col-span-8 space-y-6">
 
               {/* Card 1: Target Role */}
-              <div className="bg-[var(--color-surface-container-low)] border border-[var(--color-surface-variant)] p-6 md:p-8 rounded-3xl shadow-2xl relative overflow-hidden group">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-xl bg-[var(--color-primary-md3)]/20 border border-[var(--color-primary-md3)]/30 flex items-center justify-center text-[var(--color-primary-md3)]">
-                    <Briefcase className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-black uppercase tracking-tight text-[var(--color-on-surface)]">
-                      Target Role
-                    </h3>
-                    <p className="text-xs text-[var(--color-on-surface-variant)] font-semibold">
-                      Select a role or specify a custom position you are interviewing for.
-                    </p>
-                  </div>
+              <div className="bg-[var(--card)] border border-[var(--border)]/70 p-6 rounded-2xl">
+                <div className="mb-5">
+                  <h3 className="text-base font-medium text-[var(--text-primary)]">
+                    Target Role
+                  </h3>
+                  <p className="text-xs text-[var(--text-secondary)] mt-0.5 font-normal">
+                    Select a role or specify a custom position you are interviewing for.
+                  </p>
                 </div>
 
-                <div className="flex flex-wrap gap-2.5 mb-6">
+                <div className="flex flex-wrap gap-2 mb-4">
                   {PRESET_ROLES.map((role) => (
                     <button
                       key={role}
@@ -349,9 +341,9 @@ export default function MockInterviewPage() {
                         setSelectedRole(role);
                         if (role !== "Custom Role") setCustomRole("");
                       }}
-                      className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${selectedRole === role
-                        ? "bg-[var(--color-primary-md3)] text-white border-[var(--color-primary-md3)] shadow-md shadow-[var(--color-primary-md3)]/20 scale-[1.02]"
-                        : "bg-[var(--color-surface-container-high)]/40 text-[var(--color-on-surface-variant)] border-[var(--color-outline-variant)]/40 hover:border-[var(--color-primary-md3)]/40"
+                      className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all duration-150 border ${selectedRole === role
+                        ? "bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-[var(--primary)]/40"
+                        : "bg-[var(--background)] text-[var(--text-secondary)] border-[var(--border)]/60 hover:border-[var(--color-border-active,#6338F6)]/60 hover:text-[var(--text-primary)]"
                         }`}
                     >
                       {role}
@@ -359,9 +351,9 @@ export default function MockInterviewPage() {
                   ))}
                   <button
                     onClick={() => setSelectedRole("Custom Role")}
-                    className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${selectedRole === "Custom Role"
-                      ? "bg-[var(--color-primary-md3)] text-white border-[var(--color-primary-md3)] shadow-md shadow-[var(--color-primary-md3)]/20"
-                      : "bg-[var(--color-surface-container-high)]/40 text-[var(--color-on-surface-variant)] border-[var(--color-outline-variant)]/40 hover:border-[var(--color-primary-md3)]/40"
+                    className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all duration-150 border ${selectedRole === "Custom Role"
+                      ? "bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-[var(--primary)]/40"
+                      : "bg-[var(--background)] text-[var(--text-secondary)] border-[var(--border)]/60 hover:border-[var(--color-border-active,#6338F6)]/60 hover:text-[var(--text-primary)]"
                       }`}
                   >
                     + Custom Role
@@ -375,38 +367,33 @@ export default function MockInterviewPage() {
                       placeholder="e.g. AI Engineer, Mobile Lead, Solutions Architect..."
                       value={customRole}
                       onChange={(e) => setCustomRole(e.target.value)}
-                      className="w-full bg-[var(--color-surface-container-lowest)] border border-[var(--color-primary-md3)]/50 px-4 py-3 rounded-xl text-sm font-semibold focus:outline-none text-[var(--color-on-surface)]"
+                      className="w-full bg-[var(--background)] border border-[var(--border)]/70 px-3.5 py-2.5 rounded-xl text-xs font-medium focus:outline-none focus:border-[var(--color-border-active,#6338F6)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
                     />
                   </motion.div>
                 )}
               </div>
 
               {/* Card 2: Key Skills & Topics */}
-              <div className="bg-[var(--color-surface-container-low)] border border-[var(--color-surface-variant)] p-6 md:p-8 rounded-3xl shadow-2xl relative">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-xl bg-[var(--color-secondary)]/20 border border-[var(--color-secondary)]/30 flex items-center justify-center text-[var(--color-secondary)]">
-                    <Layers className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-black uppercase tracking-tight text-[var(--color-on-surface)]">
-                      Key Topics & Tech Stack
-                    </h3>
-                    <p className="text-xs text-[var(--color-on-surface-variant)] font-semibold">
-                      Choose the tech stack topics the AI interviewer will evaluate you on.
-                    </p>
-                  </div>
+              <div className="bg-[var(--card)] border border-[var(--border)]/70 p-6 rounded-2xl">
+                <div className="mb-5">
+                  <h3 className="text-base font-medium text-[var(--text-primary)]">
+                    Key Topics & Tech Stack
+                  </h3>
+                  <p className="text-xs text-[var(--text-secondary)] mt-0.5 font-normal">
+                    Choose the tech stack topics the AI interviewer will evaluate you on.
+                  </p>
                 </div>
 
-                <div className="flex flex-wrap gap-2 mb-6">
+                <div className="flex flex-wrap gap-2 mb-5">
                   {PRESET_TOPICS.map((topic) => {
                     const isSelected = selectedTopics.includes(topic);
                     return (
                       <button
                         key={topic}
                         onClick={() => toggleTopic(topic)}
-                        className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 ${isSelected
-                          ? "bg-[var(--color-secondary)]/20 text-[var(--color-secondary)] border-[var(--color-secondary)]/40 shadow-sm"
-                          : "bg-[var(--color-surface-container-high)]/30 text-[var(--color-on-surface-variant)] border-[var(--color-outline-variant)]/30 hover:bg-[var(--color-surface-container-high)]/60"
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 border flex items-center gap-1.5 ${isSelected
+                          ? "bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-[var(--primary)]/40"
+                          : "bg-[var(--background)] text-[var(--text-secondary)] border-[var(--border)]/60 hover:border-[var(--color-border-active,#6338F6)]/60 hover:text-[var(--text-primary)]"
                           }`}
                       >
                         {isSelected ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
@@ -417,17 +404,17 @@ export default function MockInterviewPage() {
                 </div>
 
                 {/* Custom Topic Tag Creator */}
-                <form onSubmit={handleAddCustomTopic} className="flex gap-3">
+                <form onSubmit={handleAddCustomTopic} className="flex gap-2.5">
                   <input
                     type="text"
                     placeholder="Add custom topic (e.g. GraphQL, AWS Lambda)..."
                     value={customTopicInput}
                     onChange={(e) => setCustomTopicInput(e.target.value)}
-                    className="flex-1 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)]/40 px-4 py-2.5 rounded-xl text-xs font-semibold focus:outline-none focus:border-[var(--color-secondary)] text-[var(--color-on-surface)]"
+                    className="flex-1 bg-[var(--background)] border border-[var(--border)]/70 px-3.5 py-2 rounded-xl text-xs font-medium focus:outline-none focus:border-[var(--color-border-active,#6338F6)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
                   />
                   <button
                     type="submit"
-                    className="px-4 py-2.5 bg-[var(--color-surface-container-high)] hover:bg-[var(--color-surface-container-highest)] border border-[var(--color-outline-variant)]/50 rounded-xl text-xs font-bold uppercase tracking-wider text-[var(--color-on-surface)] transition-all"
+                    className="px-3.5 py-2 bg-[var(--background)] hover:bg-[var(--color-surface-hover,#1E1E2A)] border border-[var(--border)]/70 rounded-xl text-xs font-medium text-[var(--text-primary)] transition-all duration-150"
                   >
                     Add
                   </button>
@@ -438,18 +425,18 @@ export default function MockInterviewPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                 {/* Experience Level */}
-                <div className="bg-[var(--color-surface-container-low)] border border-[var(--color-surface-variant)] p-6 rounded-3xl shadow-xl space-y-4">
-                  <div className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-[var(--color-on-surface)]">
-                    <Brain className="w-4 h-4 text-[var(--color-tertiary)]" /> Experience Level
+                <div className="bg-[var(--card)] border border-[var(--border)]/70 p-6 rounded-2xl space-y-4">
+                  <div className="flex items-center gap-2 text-sm font-medium text-[var(--text-primary)]">
+                    <Brain className="w-4 h-4 text-emerald-400" /> Experience Level
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     {["Fresher", "1-2 Years", "3-5 Years", "5+ Years"].map((lvl) => (
                       <button
                         key={lvl}
                         onClick={() => setExperienceLevel(lvl)}
-                        className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all border ${experienceLevel === lvl
-                          ? "bg-[var(--color-tertiary)]/20 text-[var(--color-tertiary)] border-[var(--color-tertiary)]/40 shadow-sm"
-                          : "bg-[var(--color-surface-container-lowest)] text-[var(--color-on-surface-variant)] border-[var(--color-outline-variant)]/30 hover:border-[var(--color-tertiary)]/30"
+                        className={`py-2 px-3 rounded-xl text-xs font-medium transition-all duration-150 border ${experienceLevel === lvl
+                          ? "bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-[var(--primary)]/40"
+                          : "bg-[var(--background)] text-[var(--text-secondary)] border-[var(--border)]/60 hover:border-[var(--color-border-active,#6338F6)]/60"
                           }`}
                       >
                         {lvl}
@@ -459,9 +446,9 @@ export default function MockInterviewPage() {
                 </div>
 
                 {/* Duration */}
-                <div className="bg-[var(--color-surface-container-low)] border border-[var(--color-surface-variant)] p-6 rounded-3xl shadow-xl space-y-4">
-                  <div className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-[var(--color-on-surface)]">
-                    <Clock className="w-4 h-4 text-[var(--color-warning)]" /> Interview Duration (5 - 30 Mins)
+                <div className="bg-[var(--card)] border border-[var(--border)]/70 p-6 rounded-2xl space-y-4">
+                  <div className="flex items-center gap-2 text-sm font-medium text-[var(--text-primary)]">
+                    <Clock className="w-4 h-4 text-amber-400" /> Interview Duration
                   </div>
                   <div className="grid grid-cols-4 gap-2">
                     {[
@@ -474,9 +461,9 @@ export default function MockInterviewPage() {
                         onClick={() => {
                           setDuration(d.mins);
                         }}
-                        className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all border ${duration === d.mins
-                          ? "bg-[var(--color-warning)]/20 text-[var(--color-warning)] border-[var(--color-warning)]/40 shadow-sm"
-                          : "bg-[var(--color-surface-container-lowest)] text-[var(--color-on-surface-variant)] border-[var(--color-outline-variant)]/30 hover:border-[var(--color-warning)]/30"
+                        className={`py-2 px-2 rounded-xl text-xs font-medium transition-all duration-150 border ${duration === d.mins
+                          ? "bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-[var(--primary)]/40"
+                          : "bg-[var(--background)] text-[var(--text-secondary)] border-[var(--border)]/60 hover:border-[var(--color-border-active,#6338F6)]/60"
                           }`}
                       >
                         {d.label}
@@ -486,9 +473,9 @@ export default function MockInterviewPage() {
                       onClick={() => {
                         if (duration === 5 || duration === 15 || duration === 30) setDuration(10);
                       }}
-                      className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all border ${duration !== 5 && duration !== 15 && duration !== 30
-                        ? "bg-[var(--color-warning)]/20 text-[var(--color-warning)] border-[var(--color-warning)]/40 shadow-sm"
-                        : "bg-[var(--color-surface-container-lowest)] text-[var(--color-on-surface-variant)] border-[var(--color-outline-variant)]/30 hover:border-[var(--color-warning)]/30"
+                      className={`py-2 px-2 rounded-xl text-xs font-medium transition-all duration-150 border ${duration !== 5 && duration !== 15 && duration !== 30
+                        ? "bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-[var(--primary)]/40"
+                        : "bg-[var(--background)] text-[var(--text-secondary)] border-[var(--border)]/60 hover:border-[var(--color-border-active,#6338F6)]/60"
                         }`}
                     >
                       Custom
@@ -505,9 +492,9 @@ export default function MockInterviewPage() {
                           value={duration}
                           onChange={(e) => setDuration(Number(e.target.value))}
                           placeholder="Enter minutes (5-30)..."
-                          className="w-full bg-[var(--color-surface-container-lowest)] border border-[var(--color-warning)]/50 px-4 py-2.5 rounded-xl text-xs font-bold text-[var(--color-on-surface)] focus:outline-none"
+                          className="w-full bg-[var(--background)] border border-[var(--border)]/70 px-3.5 py-2 rounded-xl text-xs font-medium text-[var(--text-primary)] focus:outline-none focus:border-[var(--color-border-active,#6338F6)]"
                         />
-                        <span className="text-xs font-bold text-[var(--color-on-surface-variant)] shrink-0">Minutes (5-30)</span>
+                        <span className="text-xs font-normal text-[var(--text-secondary)] shrink-0">Minutes (5-30)</span>
                       </div>
                     </motion.div>
                   )}
@@ -515,16 +502,16 @@ export default function MockInterviewPage() {
               </div>
 
               {/* Card 4: Custom Instructions */}
-              <div className="bg-[var(--color-surface-container-low)] border border-[var(--color-surface-variant)] p-6 rounded-3xl shadow-xl space-y-3">
-                <label className="text-xs font-black uppercase tracking-widest text-[var(--color-on-surface)] flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-[var(--color-primary-md3)]" /> Specific Focus / Custom Instructions (Optional)
+              <div className="bg-[var(--card)] border border-[var(--border)]/70 p-6 rounded-2xl space-y-3">
+                <label className="text-xs font-medium text-[var(--text-primary)] flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-[var(--primary)]" /> Focus / Instructions (Optional)
                 </label>
                 <textarea
                   rows={3}
-                  placeholder="e.g., Focus heavily on system architecture tradeoffs, React rendering bottlenecks, and scenario-based coding design patterns..."
+                  placeholder="e.g., Focus heavily on system architecture tradeoffs, React rendering bottlenecks..."
                   value={instructions}
                   onChange={(e) => setInstructions(e.target.value)}
-                  className="w-full bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)]/40 p-4 rounded-xl text-xs font-medium focus:outline-none focus:border-[var(--color-primary-md3)] text-[var(--color-on-surface)] resize-none"
+                  className="w-full bg-[var(--background)] border border-[var(--border)]/70 p-3.5 rounded-xl text-xs font-normal focus:outline-none focus:border-[var(--color-border-active,#6338F6)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] resize-none"
                 />
               </div>
 
@@ -532,64 +519,62 @@ export default function MockInterviewPage() {
 
             {/* Right Column: Summary Card & Launch Action */}
             <div className="lg:col-span-4 space-y-6">
-              <div className="bg-gradient-to-b from-[var(--color-surface-container-low)] to-[var(--color-surface-container-lowest)] border border-[var(--color-primary-md3)]/40 p-6 md:p-8 rounded-3xl shadow-2xl sticky top-8 space-y-6 overflow-hidden">
-                <div className="absolute top-0 right-0 w-40 h-40 bg-[var(--color-primary-md3)]/10 rounded-full blur-3xl pointer-events-none" />
-
-                <div className="relative z-10 space-y-4">
-                  <h3 className="text-lg font-black uppercase tracking-tight text-[var(--color-on-surface)] flex items-center gap-2">
-                    <Zap className="w-5 h-5 text-[var(--color-primary-md3)]" /> Interview Summary
+              <div className="bg-[var(--card)] border border-[var(--border)]/70 p-6 rounded-2xl sticky top-8 space-y-5">
+                <div className="space-y-4">
+                  <h3 className="text-base font-medium text-[var(--text-primary)] flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-[var(--primary)]" /> Interview Summary
                   </h3>
 
-                  <div className="space-y-3 pt-2 text-xs border-t border-[var(--color-outline-variant)]/30">
-                    <div className="flex justify-between py-1 border-b border-[var(--color-outline-variant)]/20">
-                      <span className="text-[var(--color-on-surface-variant)] font-semibold">Target Role:</span>
-                      <span className="font-bold text-[var(--color-on-surface)]">
+                  <div className="space-y-2.5 pt-2 text-xs border-t border-[var(--border)]/50">
+                    <div className="flex justify-between py-1">
+                      <span className="text-[var(--text-secondary)] font-normal">Target Role:</span>
+                      <span className="font-medium text-[var(--text-primary)]">
                         {selectedRole === "Custom Role" ? customRole || "Custom Position" : selectedRole}
                       </span>
                     </div>
 
-                    <div className="flex justify-between py-1 border-b border-[var(--color-outline-variant)]/20">
-                      <span className="text-[var(--color-on-surface-variant)] font-semibold">Experience Level:</span>
-                      <span className="font-bold text-[var(--color-tertiary)]">{experienceLevel}</span>
+                    <div className="flex justify-between py-1">
+                      <span className="text-[var(--text-secondary)] font-normal">Experience:</span>
+                      <span className="font-medium text-emerald-400">{experienceLevel}</span>
                     </div>
 
-                    <div className="flex justify-between py-1 border-b border-[var(--color-outline-variant)]/20">
-                      <span className="text-[var(--color-on-surface-variant)] font-semibold">Duration:</span>
-                      <span className="font-bold text-[var(--color-warning)]">{duration} Minutes</span>
+                    <div className="flex justify-between py-1">
+                      <span className="text-[var(--text-secondary)] font-normal">Duration:</span>
+                      <span className="font-medium text-amber-400">{duration} Mins</span>
                     </div>
 
                     <div className="py-1">
-                      <span className="text-[var(--color-on-surface-variant)] font-semibold block mb-2">Selected Topics:</span>
+                      <span className="text-[var(--text-secondary)] font-normal block mb-1.5">Topics:</span>
                       <div className="flex flex-wrap gap-1.5">
                         {selectedTopics.length > 0 ? (
                           selectedTopics.map((t) => (
-                            <span key={t} className="px-2 py-1 rounded-lg bg-[var(--color-surface-container-high)] text-[10px] font-bold text-[var(--color-secondary)]">
+                            <span key={t} className="px-2 py-0.5 rounded-md bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[10px] font-medium text-[var(--color-text-accent,#C4B5FD)]">
                               {t}
                             </span>
                           ))
                         ) : (
-                          <span className="text-[10px] text-[var(--color-on-surface-variant)] italic">General Technical Evaluation</span>
+                          <span className="text-[10px] text-[var(--text-secondary)] italic">General Evaluation</span>
                         )}
                       </div>
                     </div>
                   </div>
 
-                  <div className="pt-4 border-t border-[var(--color-outline-variant)]/30 space-y-3">
+                  <div className="pt-3 border-t border-[var(--border)]/50 space-y-2">
                     <button
                       onClick={handleCreateMockInterview}
                       disabled={isLaunching}
-                      className="w-full py-4 bg-[var(--color-primary-md3)] hover:brightness-110 active:scale-95 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-[var(--color-primary-md3)]/30 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                      className="w-full py-3 bg-[var(--primary)] hover:bg-[var(--primary-hover)] active:scale-[0.98] text-white font-medium text-xs rounded-xl shadow-xs flex items-center justify-center gap-2 transition-all duration-150 disabled:opacity-50"
                     >
                       {isLaunching ? (
                         <>Setting Up AI Interview...</>
                       ) : (
                         <>
-                          <PlayCircle className="w-5 h-5" /> Launch Mock Interview
+                          <PlayCircle className="w-4 h-4" /> Launch Mock Interview
                         </>
                       )}
                     </button>
-                    <p className="text-[10px] text-center text-[var(--color-on-surface-variant)] font-medium">
-                      Simulates a live voice/audio AI evaluation session.
+                    <p className="text-[10px] text-center text-[var(--text-muted)] font-normal">
+                      Simulates a live voice AI evaluation.
                     </p>
                   </div>
                 </div>

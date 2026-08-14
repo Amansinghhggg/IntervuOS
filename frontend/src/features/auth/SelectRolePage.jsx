@@ -52,7 +52,7 @@ const SelectRolePage = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden bg-[#0A0A0A] font-['Inter'] p-4 md:p-8 text-[var(--color-on-surface,#dae2fd)]">
+    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden bg-[var(--background)] font-['Inter'] p-4 md:p-8 text-[var(--text-primary)]">
       {/* Background radial effects */}
       <div
         className="absolute inset-0 z-0 opacity-20 pointer-events-none"
@@ -61,22 +61,22 @@ const SelectRolePage = () => {
           backgroundSize: "32px 32px",
         }}
       />
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[var(--color-primary-md3)] rounded-full blur-[160px] opacity-20 pointer-events-none" />
-      <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-[var(--color-primary-md3)] rounded-full blur-[140px] opacity-15 pointer-events-none" />
+      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[var(--primary)] rounded-full blur-[160px] opacity-20 pointer-events-none" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-[var(--primary)] rounded-full blur-[140px] opacity-15 pointer-events-none" />
 
       <div className="w-full max-w-[1000px] z-10 space-y-10">
         {/* Brand Header */}
         <div className="text-center space-y-4">
-          <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-[var(--color-primary-md3)]/10 border border-[var(--color-primary-md3)]/30 text-[var(--color-primary-md3)] text-xs font-black uppercase tracking-widest shadow-lg">
+          <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-[var(--primary-tint,rgba(99,56,246,0.15))] border border-[var(--primary)]/30 text-[var(--color-text-accent,#C4B5FD)] text-xs font-black uppercase tracking-widest shadow-lg">
             <BrainCircuit className="w-4 h-4" />
             IntervuOS Account Setup
           </div>
 
-          <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight">
+          <h1 className="text-3xl md:text-5xl font-black text-[var(--text-primary)] tracking-tight">
             Select Your Account Role
           </h1>
-          <p className="text-sm md:text-base text-[var(--color-on-surface-variant)] max-w-xl mx-auto font-medium">
-            Welcome, <span className="text-white font-bold">{user.name || user.email}</span>! Please select how you intend to use IntervuOS to continue.
+          <p className="text-sm md:text-base text-[var(--text-secondary)] max-w-xl mx-auto font-medium">
+            Welcome, <span className="text-[var(--text-primary)] font-bold">{user.name || user.email}</span>! Please select how you intend to use IntervuOS to continue.
           </p>
         </div>
 
@@ -85,19 +85,19 @@ const SelectRolePage = () => {
           {/* Card 1: Employer */}
           <motion.div
             whileHover={{ y: -4 }}
-            className="bg-[var(--color-surface-container-low)]/80 backdrop-blur-xl border border-[var(--color-outline-variant)]/30 hover:border-[var(--color-primary-md3)]/60 rounded-3xl p-8 flex flex-col justify-between relative overflow-hidden group shadow-2xl transition-all"
+            className="bg-[var(--card)] backdrop-blur-xl border border-[var(--border)] hover:border-[var(--color-border-active,#6338F6)] rounded-3xl p-8 flex flex-col justify-between relative overflow-hidden group shadow-2xl transition-all"
           >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-primary-md3)]/10 rounded-full blur-[40px] group-hover:bg-[var(--color-primary-md3)]/20 transition-all pointer-events-none" />
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--primary)]/10 rounded-full blur-[40px] group-hover:bg-[var(--primary)]/20 transition-all pointer-events-none" />
 
             <div className="space-y-6 relative z-10">
-              <div className="w-14 h-14 rounded-2xl bg-[var(--color-primary-md3)]/15 border border-[var(--color-primary-md3)]/30 text-[var(--color-primary-md3)] flex items-center justify-center shadow-lg">
+              <div className="w-14 h-14 rounded-2xl bg-[var(--primary)]/15 border border-[var(--primary)]/30 text-[var(--primary)] flex items-center justify-center shadow-lg">
                 <Building2 className="w-8 h-8" />
               </div>
 
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-2xl font-black text-white tracking-tight">Employer</h3>
-                  <span className="px-2.5 py-0.5 rounded-full bg-[var(--color-primary-md3)]/20 text-[var(--color-primary-md3)] text-[10px] font-black uppercase tracking-widest border border-[var(--color-primary-md3)]/30">
+                  <h3 className="text-2xl font-black text-[var(--text-primary)] tracking-tight">Employer</h3>
+                  <span className="px-2.5 py-0.5 rounded-full bg-[var(--primary)]/20 text-[var(--color-text-accent,#C4B5FD)] text-[10px] font-black uppercase tracking-widest border border-[var(--primary)]/30">
                     Recruiter
                   </span>
                 </div>

@@ -22,12 +22,12 @@ export const GlassCard = ({
   return (
     <Component
       {...motionProps}
-      className={`bg-[var(--color-surface-container-low)] border border-[var(--color-surface-variant)] ${padding} rounded-3xl shadow-xl relative overflow-hidden transition-all ${
-        onClick ? "cursor-pointer" : ""
+      className={`bg-[var(--card)] border border-[var(--border)]/80 text-[var(--text-primary)] ${padding} rounded-2xl shadow-sm relative overflow-hidden transition-all duration-150 ${
+        onClick ? "cursor-pointer hover:border-[var(--color-border-active,#6338F6)]" : ""
       } ${className}`}
     >
       {glowEffect && (
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--color-primary-md3)]/5 rounded-full blur-[60px] pointer-events-none" />
+        <div className="absolute top-0 right-0 w-48 h-48 bg-[var(--primary)]/5 rounded-full blur-[40px] pointer-events-none" />
       )}
       <div className="relative z-10">{children}</div>
     </Component>

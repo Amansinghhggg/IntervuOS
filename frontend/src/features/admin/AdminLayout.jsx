@@ -37,26 +37,26 @@ export default function AdminLayout() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0d14] text-slate-100 font-['Inter'] flex flex-col md:flex-row selection:bg-purple-500/30">
+    <div className="min-h-screen bg-[var(--background)] text-[var(--text-primary)] font-['Inter'] flex flex-col md:flex-row">
       
       {/* Mobile Header Bar */}
-      <header className="md:hidden sticky top-0 z-50 flex items-center justify-between px-4 py-3 bg-[#0f1422]/90 backdrop-blur-xl border-b border-purple-500/10">
+      <header className="md:hidden sticky top-0 z-50 flex items-center justify-between px-4 py-3 bg-[var(--card)]/90 backdrop-blur-xl border-b border-[var(--border)]">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white font-black text-xs shadow-lg shadow-purple-500/20">
+          <div className="w-9 h-9 rounded-xl bg-[var(--primary)] flex items-center justify-center text-white font-black text-xs shadow-lg shadow-[var(--primary)]/30">
             AD
           </div>
           <div>
             <h1 className="text-xs font-black tracking-tight text-white uppercase flex items-center gap-1.5">
-              IntervuOS <Sparkles className="w-3 h-3 text-purple-400" />
+              IntervuOS <Sparkles className="w-3 h-3 text-[var(--color-text-accent)]" />
             </h1>
-            <p className="text-[9px] text-purple-400 uppercase tracking-widest font-bold">
+            <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-widest font-bold">
               Single Admin Portal
             </p>
           </div>
         </div>
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-2 rounded-xl bg-purple-500/10 text-purple-300 hover:text-white transition-colors border border-purple-500/20"
+          className="p-2 rounded-xl bg-[var(--background-secondary)] text-[var(--text-primary)] hover:border-[var(--border-active,#6338F6)] transition-colors border border-[var(--border)]"
           aria-label="Toggle navigation menu"
         >
           {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -67,22 +67,22 @@ export default function AdminLayout() {
       {mobileMenuOpen && (
         <div className="md:hidden fixed inset-x-0 top-[57px] bottom-0 z-40 bg-black/80 backdrop-blur-md flex flex-col justify-between p-4 overflow-y-auto max-h-[calc(100vh-57px)] animate-in fade-in duration-200">
           <div className="space-y-4">
-            <div className="p-4 rounded-2xl bg-purple-950/40 border border-purple-500/20 flex items-center justify-between">
+            <div className="p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)] flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-purple-600/30 border border-purple-500/30 text-purple-200 flex items-center justify-center font-bold text-sm">
+                <div className="w-10 h-10 rounded-xl bg-[var(--primary)]/20 border border-[var(--primary)]/30 text-[var(--color-text-accent)] flex items-center justify-center font-bold text-sm">
                   {user?.name ? user.name.substring(0, 1) : "A"}
                 </div>
                 <div>
                   <p className="text-sm font-bold text-white">{user?.name || "Admin"}</p>
-                  <p className="text-xs text-purple-300/70">{user?.email}</p>
+                  <p className="text-xs text-[var(--text-secondary)]">{user?.email}</p>
                 </div>
               </div>
-              <span className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded-full">
+              <span className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider bg-[var(--primary)]/20 text-[var(--color-text-accent)] border border-[var(--primary)]/30 rounded-full">
                 ROOT ADMIN
               </span>
             </div>
 
-            <nav className="space-y-2 bg-[#0f1422] border border-purple-500/10 p-3 rounded-2xl">
+            <nav className="space-y-2 bg-[var(--card)] border border-[var(--border)] p-3 rounded-2xl">
               {navItems.map((item) => (
                 <button
                   key={item.path}
@@ -92,8 +92,8 @@ export default function AdminLayout() {
                   }}
                   className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold uppercase tracking-wider rounded-xl transition-all ${
                     location.pathname === item.path
-                      ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-500/20"
-                      : "text-slate-400 hover:bg-purple-500/10 hover:text-white"
+                      ? "bg-[var(--primary)] text-white shadow-md shadow-[var(--primary)]/30"
+                      : "text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-white"
                   }`}
                 >
                   <item.icon className="w-4 h-4" />
@@ -114,16 +114,16 @@ export default function AdminLayout() {
       )}
 
       {/* Desktop Expandable Sidebar */}
-      <aside className="hidden md:flex group w-20 hover:w-72 border-r border-purple-500/10 bg-[#0f1422] flex-col fixed bottom-0 top-0 left-0 z-40 transition-all duration-300 overflow-hidden shadow-2xl">
+      <aside className="hidden md:flex group w-20 hover:w-72 border-r border-[var(--border)] bg-[var(--card)] flex-col fixed bottom-0 top-0 left-0 z-40 transition-all duration-300 overflow-hidden shadow-2xl">
         <div className="flex items-center gap-3 p-5 mb-2 min-w-[288px]">
-          <div className="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white font-black shadow-lg shadow-purple-500/30">
+          <div className="w-10 h-10 shrink-0 rounded-xl bg-[var(--primary)] flex items-center justify-center text-white font-black shadow-lg shadow-[var(--primary)]/30">
             AD
           </div>
           <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
             <h1 className="text-sm font-black tracking-tight text-white flex items-center gap-1.5">
-              IntervuOS <Sparkles className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
+              IntervuOS <Sparkles className="w-3.5 h-3.5 text-[var(--color-text-accent)] animate-pulse" />
             </h1>
-            <p className="text-[10px] text-purple-400 uppercase tracking-widest font-bold">
+            <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-widest font-bold">
               Root Control Center
             </p>
           </div>
@@ -137,11 +137,11 @@ export default function AdminLayout() {
               onClick={() => navigate(item.path)}
               className={`w-full flex items-center gap-4 px-3.5 py-3 text-sm font-bold rounded-xl transition-all ${
                 location.pathname === item.path
-                  ? "bg-purple-600/15 text-purple-300 border border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.15)]"
-                  : "text-slate-400 hover:bg-purple-500/10 hover:text-purple-300"
+                  ? "bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--primary)] border border-[var(--primary)]/30 shadow-[0_0_20px_rgba(91,58,242,0.15)]"
+                  : "text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)]"
               }`}
             >
-              <item.icon className="w-5 h-5 shrink-0 text-purple-400" />
+              <item.icon className="w-5 h-5 shrink-0 text-[var(--primary)]" />
               <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
                 {item.label}
               </span>
@@ -150,23 +150,23 @@ export default function AdminLayout() {
         </nav>
 
         {/* Admin User Footer Card */}
-        <div className="p-3 border-t border-purple-500/10 space-y-2 min-w-[288px]">
-          <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-purple-950/20 border border-purple-500/10">
+        <div className="p-3 border-t border-[var(--border)] space-y-2 min-w-[288px]">
+          <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-[var(--background-secondary)] border border-[var(--border)]">
             {user?.profilePicture ? (
               <img
                 src={user.profilePicture}
                 alt="Admin Profile"
                 referrerPolicy="no-referrer"
-                className="w-8 h-8 rounded-full object-cover shrink-0 border border-purple-500/30"
+                className="w-8 h-8 rounded-full object-cover shrink-0 border border-[var(--border)]"
               />
             ) : (
-              <div className="w-8 h-8 shrink-0 rounded-full bg-purple-600/20 text-purple-300 flex items-center justify-center text-xs font-black uppercase border border-purple-500/30">
+              <div className="w-8 h-8 shrink-0 rounded-full bg-[var(--primary)]/20 text-[var(--primary)] flex items-center justify-center text-xs font-black uppercase border border-[var(--primary)]/30">
                 {user?.name ? user.name.substring(0, 1) : "A"}
               </div>
             )}
             <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 min-w-0">
               <p className="text-xs font-bold text-white truncate">{user?.name || "Admin Owner"}</p>
-              <p className="text-[10px] text-purple-300/70 truncate">{user?.email}</p>
+              <p className="text-[10px] text-[var(--text-secondary)] truncate">{user?.email}</p>
             </div>
           </div>
 

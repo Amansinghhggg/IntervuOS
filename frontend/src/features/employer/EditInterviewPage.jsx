@@ -44,6 +44,7 @@ import { PageHeader } from "../../ui/primitives/PageHeader";
 import { SectionHeader } from "../../ui/primitives/SectionHeader";
 import { GlassCard } from "../../ui/primitives/GlassCard";
 import { Chip } from "../../ui/primitives/Chip";
+import { CandidateInviteForm } from "../../ui/primitives/CandidateInviteForm";
 
 const PRESET_ROLES = [
   "Full Stack Engineer",
@@ -103,10 +104,6 @@ const EditInterviewPage = () => {
   // Existing & New Candidate state
   const [existingCandidates, setExistingCandidates] = useState([]);
   const [newCandidateEmails, setNewCandidateEmails] = useState([]);
-  const [candidateMode, setCandidateMode] = useState("single"); // 'single' | 'bulk' | 'csv'
-  const [singleEmailInput, setSingleEmailInput] = useState("");
-  const [bulkEmailInput, setBulkEmailInput] = useState("");
-  const [csvFileName, setCsvFileName] = useState("");
 
   // Question Mode & Custom Questions State
   const [questionMode, setQuestionMode] = useState("AI_GENERATED");
@@ -289,91 +286,8 @@ const EditInterviewPage = () => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
-  const addSingleCandidate = () => {
-    const trimmed = singleEmailInput.trim().toLowerCase();
-    if (!trimmed) return;
-    if (!isValidEmail(trimmed)) {
-      return toast.error("Please enter a valid candidate email address.");
-    }
-    const alreadyAssigned = existingCandidates.some(
-      (c) => c.email.toLowerCase() === trimmed
-    );
-    if (alreadyAssigned || newCandidateEmails.includes(trimmed)) {
-      return toast.error("This candidate email is already assigned or added.");
-    }
-    setNewCandidateEmails([...newCandidateEmails, trimmed]);
-    setSingleEmailInput("");
-  };
-
-  const addBulkCandidates = () => {
-    const matches =
-      bulkEmailInput.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || [];
-    if (matches.length === 0) {
-      return toast.error("No valid email addresses found in the text.");
-    }
-    const existingEmailSet = new Set(
-      existingCandidates.map((c) => c.email.toLowerCase())
-    );
-    const newEmails = [];
-    matches.forEach((m) => {
-      const email = m.toLowerCase();
-      if (
-        !existingEmailSet.has(email) &&
-        !newCandidateEmails.includes(email) &&
-        !newEmails.includes(email)
-      ) {
-        newEmails.push(email);
-      }
-    });
-
-    if (newEmails.length === 0) {
-      return toast.error("All found emails are already assigned or added.");
-    }
-
-    setNewCandidateEmails([...newCandidateEmails, ...newEmails]);
-    setBulkEmailInput("");
-  };
-
-  const handleCsvUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setCsvFileName(file.name);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const content = event.target?.result || "";
-      const matches =
-        content.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || [];
-      if (matches.length === 0) {
-        toast.error("No valid email addresses found in file.");
-        return;
-      }
-      const existingEmailSet = new Set(
-        existingCandidates.map((c) => c.email.toLowerCase())
-      );
-      const newEmails = [];
-      matches.forEach((m) => {
-        const email = m.toLowerCase();
-        if (
-          !existingEmailSet.has(email) &&
-          !newCandidateEmails.includes(email) &&
-          !newEmails.includes(email)
-        ) {
-          newEmails.push(email);
-        }
-      });
-
-      if (newEmails.length === 0) {
-        toast.error(
-          "All emails in the file are already assigned or in your candidate list."
-        );
-        return;
-      }
-
-      setNewCandidateEmails((prev) => [...prev, ...newEmails]);
-    };
-    reader.readAsText(file);
-    e.target.value = "";
+  const removeNewCandidate = (emailToRemove) => {
+    setNewCandidateEmails(newCandidateEmails.filter((e) => e !== emailToRemove));
   };
 
   const removeExistingCandidate = async (emailToRemove) => {
@@ -392,13 +306,8 @@ const EditInterviewPage = () => {
     }
   };
 
-  const removeNewCandidate = (emailToRemove) => {
-    setNewCandidateEmails(newCandidateEmails.filter((e) => e !== emailToRemove));
-  };
-
   const clearNewCandidates = () => {
     setNewCandidateEmails([]);
-    setCsvFileName("");
   };
 
   const onSubmit = async (formData) => {
@@ -1018,131 +927,17 @@ const EditInterviewPage = () => {
 
               {/* Add New Candidates Box */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                {/* Left: New Candidate Input Methods */}
+                {/* Left: Shared Candidate Invite Form */}
                 <div className="lg:col-span-6 space-y-4">
-                  <span className="text-xs font-medium text-[var(--color-text-primary)] block">
-                    Invite new candidates
-                  </span>
-
-                  <div className="flex flex-wrap gap-2 p-1.5 rounded-xl bg-[var(--color-canvas)] border border-[var(--color-border)]">
-                    <button
-                      type="button"
-                      onClick={() => setCandidateMode("single")}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium tracking-tight transition-all ${
-                        candidateMode === "single"
-                          ? "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)]"
-                          : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
-                      }`}
-                    >
-                      <User className="w-3.5 h-3.5" /> Single candidate
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setCandidateMode("bulk")}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium tracking-tight transition-all ${
-                        candidateMode === "bulk"
-                          ? "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)]"
-                          : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
-                      }`}
-                    >
-                      <ListFilter className="w-3.5 h-3.5" /> Bulk paste
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setCandidateMode("csv")}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium tracking-tight transition-all ${
-                        candidateMode === "csv"
-                          ? "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)]"
-                          : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
-                      }`}
-                    >
-                      <FileSpreadsheet className="w-3.5 h-3.5" /> CSV upload
-                    </button>
-                  </div>
-
-                  {/* Single Email */}
-                  {candidateMode === "single" && (
-                    <div className="space-y-3 p-5 rounded-2xl bg-[var(--color-canvas)] border border-[var(--color-border)]">
-                      <label className="text-xs font-medium text-[var(--color-text-secondary)] block">
-                        Enter candidate email
-                      </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="email"
-                          value={singleEmailInput}
-                          onChange={(e) => setSingleEmailInput(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              addSingleCandidate();
-                            }
-                          }}
-                          placeholder="candidate@company.com"
-                          className={inputClasses}
-                        />
-                        <button
-                          type="button"
-                          onClick={addSingleCandidate}
-                          className="px-5 py-2.5 bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)] rounded-xl text-xs font-medium tracking-tight transition-all flex items-center shrink-0"
-                        >
-                          <Plus className="w-3.5 h-3.5 mr-1" /> Add
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Bulk Text */}
-                  {candidateMode === "bulk" && (
-                    <div className="space-y-3 p-5 rounded-2xl bg-[var(--color-canvas)] border border-[var(--color-border)]">
-                      <label className="text-xs font-medium text-[var(--color-text-secondary)] block">
-                        Paste multiple email addresses
-                      </label>
-                      <textarea
-                        value={bulkEmailInput}
-                        onChange={(e) => setBulkEmailInput(e.target.value)}
-                        rows={4}
-                        placeholder="Paste candidate emails separated by commas, spaces, or newlines (e.g. john@acme.com, sarah@acme.com)..."
-                        className={`${inputClasses} resize-none`}
-                      />
-                      <div className="flex justify-end">
-                        <button
-                          type="button"
-                          onClick={addBulkCandidates}
-                          className="px-5 py-2.5 bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)] rounded-xl text-xs font-medium tracking-tight transition-all flex items-center"
-                        >
-                          <Plus className="w-3.5 h-3.5 mr-1" /> Parse & add emails
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* CSV Upload */}
-                  {candidateMode === "csv" && (
-                    <div className="p-8 border-2 border-dashed border-[var(--color-border)] rounded-2xl bg-[var(--color-canvas)] text-center space-y-3 relative hover:border-[var(--color-border-active,#6338F6)]/50 transition-colors">
-                      <input
-                        type="file"
-                        accept=".csv, .txt"
-                        onChange={handleCsvUpload}
-                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                      />
-                      <div className="w-11 h-11 rounded-full bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] flex items-center justify-center mx-auto border border-[var(--color-border-active,#6338F6)]/30">
-                        <Upload className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-[var(--color-text-primary)]">
-                          Drop CSV or TXT file here or click to browse
-                        </h4>
-                        <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                          Supports spreadsheet exports containing email columns.
-                        </p>
-                      </div>
-                      {csvFileName && (
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-success)]/10 border border-[var(--color-success)]/30 text-[var(--color-success)] text-xs font-medium">
-                          <FileSpreadsheet className="w-3.5 h-3.5" /> Uploaded: {csvFileName}
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  <CandidateInviteForm
+                    onAddCandidates={(newEmails) => {
+                      setNewCandidateEmails((prev) => [...prev, ...newEmails]);
+                    }}
+                    existingEmails={[
+                      ...existingCandidates.map((c) => c.email),
+                      ...newCandidateEmails,
+                    ]}
+                  />
                 </div>
 
                 {/* Right: Newly Added Candidates List */}

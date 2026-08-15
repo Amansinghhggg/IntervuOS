@@ -27,19 +27,19 @@ export const StatusBadge = ({
       s === "in-progress" ||
       s === "in progress" ||
       s === "hire" ||
-      s === "active"
+      s === "active" ||
+      s === "requested"
     ) {
       return {
-        label: customLabel || (s === "active" ? "Active" : "In progress"),
+        label:
+          customLabel ||
+          (s === "active"
+            ? "Active"
+            : s === "requested"
+            ? "Requested"
+            : "In progress"),
         styles:
           "bg-[var(--color-info-tint,rgba(59,130,246,0.15))] text-[var(--color-info,#3B82F6)] border-[var(--color-info,#3B82F6)]/30",
-      };
-    }
-    if (s === "pending" || s === "waiting" || s === "borderline") {
-      return {
-        label: customLabel || "Pending",
-        styles:
-          "bg-[var(--color-warning)]/10 text-[var(--color-warning)] border-[var(--color-warning)]/30",
       };
     }
     if (
@@ -48,12 +48,26 @@ export const StatusBadge = ({
       s === "no_hire" ||
       s === "no hire" ||
       s === "missed" ||
+      s === "rejected" ||
       s === "inactive"
     ) {
       return {
-        label: customLabel || (s === "inactive" ? "Inactive" : "Failed"),
+        label:
+          customLabel ||
+          (s === "inactive"
+            ? "Inactive"
+            : s === "rejected"
+            ? "Rejected"
+            : "Failed"),
         styles:
           "bg-[var(--color-danger)]/10 text-[var(--color-danger)] border-[var(--color-danger)]/30",
+      };
+    }
+    if (s === "pending" || s === "waiting" || s === "borderline") {
+      return {
+        label: customLabel || "Pending",
+        styles:
+          "bg-[var(--color-surface)] text-[var(--color-text-secondary)] border-[var(--color-border)]",
       };
     }
     return {

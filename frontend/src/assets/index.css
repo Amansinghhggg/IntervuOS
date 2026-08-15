@@ -228,7 +228,21 @@ body {
   background: var(--text-secondary);
 }
 
-/* Accessibility */
+/* Accessibility & Visible Focus */
+:focus-visible {
+  outline: 2px solid var(--color-border-active, #6338F6) !important;
+  outline-offset: 2px !important;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--color-border-active, #6338F6) !important;
+  outline-offset: 2px !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,

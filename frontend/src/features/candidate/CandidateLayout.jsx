@@ -1,14 +1,65 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Sparkles, LayoutDashboard, Key, Crown, HelpCircle, LogOut, User, Menu, X, FileText } from 'lucide-react';
+import {
+    Sparkles,
+    LayoutDashboard,
+    Key,
+    Crown,
+    HelpCircle,
+    LogOut,
+    User,
+    Menu,
+    X,
+    FileText,
+    PanelLeftClose,
+    PanelLeftOpen
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
+
+const SIDEBAR_STORAGE_KEY = 'intervuos_candidate_sidebar_collapsed';
 
 export default function CandidateLayout() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+    // Collapsible Sidebar State (Remembers user preference, defaults to expanded on >= 1280px, collapsed on < 1280px)
+    const [isCollapsed, setIsCollapsed] = useState(() => {
+        const saved = localStorage.getItem(SIDEBAR_STORAGE_KEY);
+        if (saved !== null) {
+            return saved === 'true';
+        }
+        return typeof window !== 'undefined' ? window.innerWidth < 1280 : false;
+    });
+
+    const [hasManualPreference, setHasManualPreference] = useState(() => {
+        return localStorage.getItem(SIDEBAR_STORAGE_KEY) !== null;
+    });
+
+    // Auto-collapse on resize under ~1280px if no manual toggle preference exists
+    useEffect(() => {
+        if (hasManualPreference) return;
+        const handleResize = () => {
+            if (window.innerWidth < 1280) {
+                setIsCollapsed(true);
+            } else {
+                setIsCollapsed(false);
+            }
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [hasManualPreference]);
+
+    const toggleSidebar = () => {
+        setIsCollapsed((prev) => {
+            const next = !prev;
+            localStorage.setItem(SIDEBAR_STORAGE_KEY, String(next));
+            setHasManualPreference(true);
+            return next;
+        });
+    };
 
     const handleLogout = async () => {
         try {
@@ -58,37 +109,42 @@ export default function CandidateLayout() {
             {/* Mobile Dropdown Navigation Drawer */}
             {mobileMenuOpen && (
                 <div className="md:hidden fixed inset-x-0 top-[57px] bottom-0 z-40 bg-black/70 backdrop-blur-sm flex flex-col justify-between p-4 overflow-y-auto max-h-[calc(100vh-57px)] animate-in fade-in duration-200">
-                    <nav className="space-y-2 bg-[var(--card)] border border-[var(--border)] p-4 rounded-3xl shadow-2xl">
-                        {navItems.map((item) => (
-                            <button
-                                key={item.path}
-                                onClick={() => {
-                                    handleNavItemClick(item.path);
-                                    setMobileMenuOpen(false);
-                                }}
-                                className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${location.pathname === item.path
-                                    ? 'bg-[var(--primary)] text-white shadow-md shadow-[var(--primary)]/30'
-                                    : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)]'
+                    <nav className="space-y-1.5 bg-[var(--card)] border border-[var(--border)] p-3 rounded-2xl shadow-xl">
+                        {navItems.map((item) => {
+                            const isActive = location.pathname === item.path;
+                            return (
+                                <button
+                                    key={item.path}
+                                    onClick={() => {
+                                        handleNavItemClick(item.path);
+                                        setMobileMenuOpen(false);
+                                    }}
+                                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-medium rounded-xl transition-all border-l-[3px] ${
+                                        isActive
+                                            ? 'bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-l-[var(--color-primary,#5B3AF2)] border-t-transparent border-b-transparent border-r-transparent'
+                                            : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)] border-l-transparent'
                                     }`}
-                            >
-                                <item.icon className="w-4 h-4" />
-                                <span>{item.label}</span>
-                            </button>
-                        ))}
+                                >
+                                    <item.icon className="w-4 h-4 shrink-0" />
+                                    <span>{item.label}</span>
+                                </button>
+                            );
+                        })}
                     </nav>
 
-                    <div className="bg-[var(--card)] border border-[var(--border)] p-4 rounded-3xl shadow-2xl space-y-2">
+                    <div className="bg-[var(--card)] border border-[var(--border)] p-3 rounded-2xl shadow-xl space-y-1.5 mt-3">
                         <button
                             onClick={() => {
                                 navigate('/candidate/profile');
                                 setMobileMenuOpen(false);
                             }}
-                            className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${location.pathname === '/candidate/profile'
-                                ? 'bg-[var(--primary)] text-white'
-                                : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)]'
-                                }`}
+                            className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-medium rounded-xl transition-all border-l-[3px] ${
+                                location.pathname === '/candidate/profile'
+                                    ? 'bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-l-[var(--color-primary,#5B3AF2)] border-t-transparent border-b-transparent border-r-transparent'
+                                    : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)] border-l-transparent'
+                            }`}
                         >
-                            <User className="w-4 h-4" />
+                            <User className="w-4 h-4 shrink-0" />
                             <span>Profile</span>
                         </button>
                         <button
@@ -96,91 +152,156 @@ export default function CandidateLayout() {
                                 navigate('/candidate/help');
                                 setMobileMenuOpen(false);
                             }}
-                            className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${location.pathname === '/candidate/help'
-                                ? 'bg-[var(--primary)] text-white'
-                                : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)]'
-                                }`}
+                            className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-medium rounded-xl transition-all border-l-[3px] ${
+                                location.pathname === '/candidate/help'
+                                    ? 'bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-l-[var(--color-primary,#5B3AF2)] border-t-transparent border-b-transparent border-r-transparent'
+                                    : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)] border-l-transparent'
+                            }`}
                         >
-                            <HelpCircle className="w-4 h-4" />
+                            <HelpCircle className="w-4 h-4 shrink-0" />
                             <span>Help & Support</span>
                         </button>
                         <button
                             onClick={handleLogout}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-xs font-black uppercase tracking-wider text-rose-400 hover:bg-rose-500/10 rounded-xl transition-all"
+                            className="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-medium text-rose-400 hover:bg-rose-500/10 rounded-xl transition-all border-l-[3px] border-l-transparent"
                         >
-                            <LogOut className="w-4 h-4" />
+                            <LogOut className="w-4 h-4 shrink-0" />
                             <span>Logout</span>
                         </button>
                     </div>
                 </div>
             )}
 
-            {/* Desktop Expandable Sidebar (hidden on < md screens) */}
-            <aside className="hidden md:flex group w-20 hover:w-72 border-r border-[var(--border)] bg-[var(--card)] flex-col fixed bottom-0 top-0 left-0 z-40 transition-all duration-300 overflow-hidden shadow-2xl">
-                <div className="flex items-center gap-3 p-6 mb-4 min-w-[288px]">
-                    <div className="w-10 h-10 shrink-0 rounded-xl bg-[var(--primary)] flex items-center justify-center text-white font-bold shadow-lg shadow-[var(--primary)]/30">
-                        IO
+            {/* Desktop Collapsible Sidebar (hidden on < md screens) */}
+            <aside
+                className={`hidden md:flex flex-col fixed bottom-0 top-0 left-0 z-40 bg-[var(--card)] border-r border-[var(--border)] shadow-[1px_0_3px_0_rgba(0,0,0,0.15)] transition-all duration-300 ease-in-out ${
+                    isCollapsed ? 'w-20' : 'w-64'
+                }`}
+            >
+                {/* Header with Logo and Collapse Toggle */}
+                <div className={`flex items-center ${isCollapsed ? 'justify-center px-2' : 'justify-between px-4'} py-5 border-b border-[var(--border)]/60 min-h-[69px]`}>
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-9 h-9 shrink-0 rounded-xl bg-[var(--primary)] flex items-center justify-center text-white font-bold text-xs shadow-sm">
+                            IO
+                        </div>
+                        {!isCollapsed && (
+                            <div className="min-w-0 truncate">
+                                <h1 className="text-sm font-medium tracking-tight text-[var(--text-primary)] truncate">IntervuOS</h1>
+                                <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-medium truncate">Candidate Suite</p>
+                            </div>
+                        )}
                     </div>
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-                        <h1 className="text-sm font-black tracking-tight text-[var(--text-primary)]">IntervuOS</h1>
-                        <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-widest font-bold">Candidate Suite</p>
-                    </div>
+
+                    {!isCollapsed && (
+                        <button
+                            onClick={toggleSidebar}
+                            className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover,#1E1E2A)] transition-colors shrink-0"
+                            title="Collapse sidebar"
+                            aria-label="Collapse sidebar"
+                        >
+                            <PanelLeftClose className="w-4 h-4" />
+                        </button>
+                    )}
                 </div>
 
-                <nav className="flex-1 space-y-2 px-4 min-w-[288px]">
-                    {navItems.map((item) => (
+                {/* Collapsed Expand Quick Action Bar */}
+                {isCollapsed && (
+                    <div className="px-2 pt-3 flex justify-center">
                         <button
-                            key={item.path}
-                            onClick={() => handleNavItemClick(item.path)}
-                            className={`w-full flex items-center gap-4 px-3 py-3 text-sm font-bold rounded-xl transition-all ${location.pathname === item.path
-                                ? 'bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--primary)] border border-[var(--primary)]/30 shadow-[0_0_15px_rgba(91,58,242,0.15)]'
-                                : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)]'
-                                }`}
+                            onClick={toggleSidebar}
+                            className="p-2 rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover,#1E1E2A)] transition-colors border border-[var(--border)]/50"
+                            title="Expand sidebar"
+                            aria-label="Expand sidebar"
                         >
-                            <item.icon className="w-6 h-6 shrink-0" />
-                            <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">{item.label}</span>
+                            <PanelLeftOpen className="w-4 h-4" />
                         </button>
-                    ))}
+                    </div>
+                )}
+
+                {/* Nav Items */}
+                <nav className="flex-1 space-y-1.5 px-3 py-4 overflow-y-auto">
+                    {navItems.map((item) => {
+                        const isActive = location.pathname === item.path;
+                        return (
+                            <button
+                                key={item.path}
+                                onClick={() => handleNavItemClick(item.path)}
+                                title={isCollapsed ? item.label : undefined}
+                                className={`w-full flex items-center ${
+                                    isCollapsed ? 'justify-center px-0' : 'px-3 gap-3'
+                                } py-2.5 text-xs font-medium rounded-xl transition-all border-l-[3px] ${
+                                    isActive
+                                        ? 'bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-l-[var(--color-primary,#5B3AF2)] border-t-transparent border-b-transparent border-r-transparent'
+                                        : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)] border-l-transparent'
+                                }`}
+                            >
+                                <item.icon className="w-4 h-4 shrink-0" />
+                                {!isCollapsed && <span className="truncate">{item.label}</span>}
+                            </button>
+                        );
+                    })}
                 </nav>
 
-                <div className="p-4 border-t border-[var(--border)] space-y-2 min-w-[288px]">
+                {/* Footer Section */}
+                <div className="p-3 border-t border-[var(--border)]/60 space-y-1.5">
                     <button
                         onClick={() => navigate('/candidate/profile')}
-                        className={`w-full flex items-center gap-4 px-3 py-3 text-sm font-bold rounded-xl transition-all ${location.pathname === '/candidate/profile'
-                            ? 'bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--primary)] border border-[var(--primary)]/30 shadow-[0_0_15px_rgba(91,58,242,0.15)]'
-                            : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)]'
-                            }`}
+                        title={isCollapsed ? 'Profile' : undefined}
+                        className={`w-full flex items-center ${
+                            isCollapsed ? 'justify-center px-0' : 'px-3 gap-3'
+                        } py-2 text-xs font-medium rounded-xl transition-all border-l-[3px] ${
+                            location.pathname === '/candidate/profile'
+                                ? 'bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-l-[var(--color-primary,#5B3AF2)] border-t-transparent border-b-transparent border-r-transparent'
+                                : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)] border-l-transparent'
+                        }`}
                     >
                         {user?.profilePicture ? (
-                            <img src={user.profilePicture} alt="Profile" referrerPolicy="no-referrer" className="w-6 h-6 rounded-full object-cover shrink-0" />
+                            <img src={user.profilePicture} alt="Profile" referrerPolicy="no-referrer" className="w-5 h-5 rounded-full object-cover shrink-0" />
                         ) : (
-                            <div className="w-6 h-6 shrink-0 rounded-full bg-[var(--primary)]/20 text-[var(--primary)] flex items-center justify-center text-[10px] font-black uppercase border border-[var(--primary)]/30">
+                            <div className="w-5 h-5 shrink-0 rounded-full bg-[var(--primary)]/20 text-[var(--color-text-accent,#C4B5FD)] flex items-center justify-center text-[10px] font-bold uppercase border border-[var(--primary)]/30">
                                 {user?.name ? user.name.substring(0, 1) : "U"}
                             </div>
                         )}
-                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Profile</span>
+                        {!isCollapsed && <span className="truncate">{user?.name || "Profile"}</span>}
                     </button>
+
                     <button
                         onClick={() => navigate('/candidate/help')}
-                        className={`w-full flex items-center gap-4 px-3 py-3 text-sm font-bold rounded-xl transition-all ${location.pathname === '/candidate/help'
-                            ? 'bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--primary)] border border-[var(--primary)]/30 shadow-[0_0_15px_rgba(91,58,242,0.15)]'
-                            : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)]'
-                            }`}
+                        title={isCollapsed ? 'Help & Support' : undefined}
+                        className={`w-full flex items-center ${
+                            isCollapsed ? 'justify-center px-0' : 'px-3 gap-3'
+                        } py-2 text-xs font-medium rounded-xl transition-all border-l-[3px] ${
+                            location.pathname === '/candidate/help'
+                                ? 'bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-l-[var(--color-primary,#5B3AF2)] border-t-transparent border-b-transparent border-r-transparent'
+                                : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)] border-l-transparent'
+                        }`}
                     >
-                        <HelpCircle className="w-6 h-6 shrink-0" />
-                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Help & Support</span>
+                        <HelpCircle className="w-4 h-4 shrink-0" />
+                        {!isCollapsed && <span className="truncate">Help & Support</span>}
                     </button>
-                    <button onClick={handleLogout} className="w-full flex items-center gap-4 px-3 py-3 text-sm font-bold text-red-400 hover:bg-red-500/10 rounded-xl transition-all">
-                        <LogOut className="w-6 h-6 shrink-0" />
-                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">Logout</span>
+
+                    <button
+                        onClick={handleLogout}
+                        title={isCollapsed ? 'Logout' : undefined}
+                        className={`w-full flex items-center ${
+                            isCollapsed ? 'justify-center px-0' : 'px-3 gap-3'
+                        } py-2 text-xs font-medium text-rose-400 hover:bg-rose-500/10 rounded-xl transition-all border-l-[3px] border-l-transparent`}
+                    >
+                        <LogOut className="w-4 h-4 shrink-0" />
+                        {!isCollapsed && <span className="truncate">Logout</span>}
                     </button>
                 </div>
             </aside>
 
-            {/* Main Content Area */}
-            <main className="flex-1 md:ml-20 transition-all duration-300 w-full overflow-x-hidden">
+            {/* Main Content Area: margin-left strictly matches the sidebar width */}
+            <main
+                className={`flex-1 ${
+                    isCollapsed ? 'md:ml-20' : 'md:ml-64'
+                } transition-all duration-300 ease-in-out w-full min-w-0 overflow-x-clip`}
+            >
                 <Outlet />
             </main>
         </div>
     );
 }
+

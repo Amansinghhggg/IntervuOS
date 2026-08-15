@@ -590,22 +590,38 @@ export default function MockReportsPage() {
                   Loading evaluation reports...
                 </div>
               ) : filteredMockEvaluations.length === 0 ? (
-                <div className="bg-[var(--card)] border border-[var(--border)] p-12 rounded-2xl text-center space-y-3">
-                  <div className="w-10 h-10 rounded-xl bg-[var(--primary-tint,rgba(99,56,246,0.15))] flex items-center justify-center text-[var(--primary)] mx-auto">
-                    <FileText className="w-5 h-5" />
+                <div className="bg-[var(--card)] border border-[var(--border)] p-10 sm:p-14 rounded-3xl text-center space-y-4">
+                  <div className="w-12 h-12 rounded-2xl bg-[var(--primary-tint,rgba(99,56,246,0.15))] border border-[var(--color-border-active,#6338F6)]/30 flex items-center justify-center text-[var(--color-text-accent,#C4B5FD)] mx-auto">
+                    <FileText className="w-6 h-6" />
                   </div>
-                  <h3 className="text-base font-medium text-[var(--text-primary)]">No reports found</h3>
-                  <p className="text-xs text-[var(--text-secondary)] max-w-sm mx-auto font-normal">
-                    {mockSearchQuery || mockSelectedFilter !== "ALL"
-                      ? "Try clearing your search filters to see all evaluation reports."
-                      : "Practice with adaptive AI questions to generate your first technical evaluation report."}
-                  </p>
-                  {!evaluations.length && (
+                  <div className="space-y-1">
+                    <h3 className="text-base sm:text-lg font-medium text-[var(--text-primary)]">
+                      {evaluations.length === 0 ? "No Mock Interview Reports Yet" : "No Matching Reports"}
+                    </h3>
+                    <p className="text-xs text-[var(--text-secondary)] max-w-md mx-auto font-normal leading-relaxed">
+                      {evaluations.length === 0
+                        ? "Take your first AI mock interview to generate in-depth STAR feedback, competency radar scores, transcript analysis, and downloadable PDF performance reports."
+                        : "Try adjusting your search keywords or filter dropdowns to view your past reports."}
+                    </p>
+                  </div>
+                  {evaluations.length === 0 ? (
+                    <div className="pt-2">
+                      <button
+                        onClick={() => navigate("/candidate/mock-interview")}
+                        className="px-5 py-2.5 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white font-medium text-xs rounded-xl inline-flex items-center gap-2 transition-colors duration-150 shadow-sm focus-visible:ring-2 focus-visible:ring-[var(--color-border-active,#6338F6)] focus-visible:outline-none"
+                      >
+                        <PlayCircle className="w-4 h-4" /> Start First Mock Interview
+                      </button>
+                    </div>
+                  ) : (
                     <button
-                      onClick={() => navigate("/candidate/mock-interview")}
-                      className="px-4 py-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white font-medium text-xs rounded-xl inline-flex items-center gap-1.5 transition-colors duration-150"
+                      onClick={() => {
+                        setMockSearchQuery("");
+                        setMockSelectedFilter("ALL");
+                      }}
+                      className="px-4 py-2 border border-[var(--border)] hover:bg-[var(--surface-hover,#1E1E2A)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] font-medium text-xs rounded-xl inline-flex items-center gap-1.5 transition-colors duration-150"
                     >
-                      <PlayCircle className="w-3.5 h-3.5" /> Start Practice
+                      Clear Search Filters
                     </button>
                   )}
                 </div>

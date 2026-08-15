@@ -29,6 +29,7 @@ const MockPreInterviewPage = () => {
   const [interview, setInterview] = useState(null);
   const [loadingInterview, setLoadingInterview] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const [checks, setChecks] = useState({
     camera: { status: "pending" },
@@ -236,19 +237,16 @@ const MockPreInterviewPage = () => {
 
             {/* System Checks */}
             <div className="mb-4">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-6 h-6 rounded-lg bg-[var(--color-warning)]/10 flex items-center justify-center border border-[var(--color-warning)]/20">
-                  <AlertTriangle className="w-3 h-3 text-[var(--color-warning)]" />
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-6 h-6 rounded-lg bg-[var(--primary)]/10 flex items-center justify-center border border-[var(--primary)]/20">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[var(--color-text-accent)]" />
                 </div>
-                <h2 className="text-sm font-black text-[var(--color-on-surface)] uppercase tracking-wider">
-                  System Checks
+                <h2 className="text-sm font-medium text-[var(--color-on-surface)]">
+                  Hardware & Network Verification
                 </h2>
               </div>
-              <p className="text-[var(--color-on-surface-variant)] text-[10px] font-semibold mb-3 leading-relaxed">
-                We need camera and microphone access. We do not record video or audio — these are used for the live interview experience only.
-              </p>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2 mb-4">
                 {[
                   { key: "camera", icon: Camera, label: "Camera", successText: "Verified" },
                   { key: "mic", icon: Mic, label: "Microphone", successText: "Verified" },
@@ -269,19 +267,59 @@ const MockPreInterviewPage = () => {
                       <div className="w-6 h-6 rounded-lg bg-[var(--color-surface-variant)] flex items-center justify-center">
                         <Icon className="w-3 h-3 text-[var(--color-on-surface-variant)]" />
                       </div>
-                      <span className="text-[var(--color-on-surface)] text-[10px] font-bold uppercase tracking-wider">{label}</span>
+                      <span className="text-[var(--color-on-surface)] text-[10px] font-medium">{label}</span>
                     </div>
                     {getStatusIcon(checks[key].status)}
                   </div>
                 ))}
               </div>
+
+              {/* Requirement 1: Pre-Launch Privacy & Transparency Disclosure Panel */}
+              <div className="p-4 rounded-2xl bg-[var(--background)] border border-[var(--border)] space-y-3 mb-4 text-left">
+                <div className="flex items-center gap-2 text-xs font-medium text-[var(--text-primary)]">
+                  <ShieldCheck className="w-4 h-4 text-[var(--color-text-accent)]" />
+                  <span>Session Privacy & Recording Transparency</span>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] text-[var(--text-secondary)]">
+                  <div className="p-2.5 rounded-xl bg-[var(--card)] border border-[var(--border)]">
+                    <p className="font-medium text-[var(--text-primary)] mb-0.5">Recorded</p>
+                    <p className="leading-tight">Microphone audio for real-time STAR evaluation.</p>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-[var(--card)] border border-[var(--border)]">
+                    <p className="font-medium text-[var(--text-primary)] mb-0.5">Retention</p>
+                    <p className="leading-tight">30-day encrypted storage in your private account.</p>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-[var(--card)] border border-[var(--border)]">
+                    <p className="font-medium text-[var(--text-primary)] mb-0.5">Human Review</p>
+                    <p className="leading-tight">100% Private AI. No recruiter sees practice runs.</p>
+                  </div>
+                </div>
+
+                <label className="flex items-start gap-2.5 pt-1 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={agreedToTerms}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 rounded border-[var(--border)] bg-[var(--card)] text-[var(--primary)] focus:ring-[var(--color-border-active)] cursor-pointer"
+                  />
+                  <span className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
+                    I acknowledge audio capture for AI evaluation, 30-day retention, and confirm device setup.
+                  </span>
+                </label>
+              </div>
             </div>
 
             {/* Error message */}
             {!allChecksPassed && Object.values(checks).some(c => c.status === "error") && (
-              <div className="mb-4 p-3 bg-[var(--color-error)]/10 border border-[var(--color-error)]/20 rounded-lg text-[var(--color-error)] flex items-start gap-2">
-                <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-                <p className="font-bold text-[10px] tracking-wide">Some checks failed. Please grant permissions and retry.</p>
+              <div className="mb-4 p-3.5 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-300 flex items-start gap-2.5 text-left text-xs">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5 text-rose-400" />
+                <div>
+                  <p className="font-medium text-rose-300">Device verification failed</p>
+                  <p className="text-[11px] text-rose-300/80 mt-0.5">
+                    Please allow camera/microphone access in your browser address bar and click Retry. No session has been started or penalized.
+                  </p>
+                </div>
               </div>
             )}
 
@@ -289,18 +327,18 @@ const MockPreInterviewPage = () => {
             {!allChecksPassed ? (
               <button
                 onClick={performChecks}
-                className="w-full py-3 bg-[var(--color-surface-variant)] hover:bg-[var(--color-surface-variant)]/80 text-[var(--color-on-surface)] border border-[var(--color-outline-variant)]/30 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                className="w-full py-3 bg-[var(--color-surface-variant)] hover:bg-[var(--color-surface-variant)]/80 text-[var(--color-on-surface)] border border-[var(--color-outline-variant)]/30 rounded-xl text-xs font-medium transition-all focus-visible:ring-2 focus-visible:ring-[var(--color-border-active)] focus-visible:outline-none"
               >
-                Retry Checks
+                Retry Device Checks
               </button>
             ) : (
               <button
                 onClick={handleStartInterview}
-                disabled={loading}
-                className="w-full py-3.5 bg-[var(--color-primary-md3)] text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[var(--color-primary-md3)]/90 transition-all shadow-lg shadow-[var(--color-primary-md3)]/30 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed group"
+                disabled={loading || !agreedToTerms}
+                className="w-full py-3.5 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white rounded-xl text-xs font-medium transition-all shadow-sm flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed group focus-visible:ring-2 focus-visible:ring-[var(--color-border-active)] focus-visible:outline-none"
               >
-                {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-2" /> : <Play className="w-3.5 h-3.5 mr-2 fill-current group-hover:scale-110 transition-transform" />}
-                {loading ? "STARTING..." : "PROCEED TO MOCK INTERVIEW"}
+                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Play className="w-4 h-4 mr-2 fill-current group-hover:scale-110 transition-transform" />}
+                {loading ? "Initializing..." : "Begin Mock Interview Session"}
               </button>
             )}
           </div>

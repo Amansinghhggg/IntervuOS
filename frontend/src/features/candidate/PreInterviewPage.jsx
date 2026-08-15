@@ -248,44 +248,69 @@ const PreInterviewPage = () => {
               </div>
             </div>
 
+            {/* Requirement 1: Pre-Launch Disclosure Panel for Employer Campaign */}
+            <div className="p-4 rounded-2xl bg-[var(--background,#0B0B0E)] border border-[var(--border,#232330)] space-y-3 mb-6 text-left">
+              <div className="flex items-center gap-2 text-xs font-medium text-[var(--text-primary)]">
+                <CheckCircle2 className="w-4 h-4 text-[var(--color-text-accent,#C4B5FD)]" />
+                <span>Candidate Assessment Disclosure & Recording Terms</span>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] text-[var(--text-secondary)]">
+                <div className="p-2.5 rounded-xl bg-[var(--card)] border border-[var(--border)]">
+                  <p className="font-medium text-[var(--text-primary)] mb-0.5">Capture</p>
+                  <p className="leading-tight">Audio & video response recording for structured interview scoring.</p>
+                </div>
+                <div className="p-2.5 rounded-xl bg-[var(--card)] border border-[var(--border)]">
+                  <p className="font-medium text-[var(--text-primary)] mb-0.5">Retention</p>
+                  <p className="leading-tight">Encrypted evaluation records retained for the duration of this hiring cycle.</p>
+                </div>
+                <div className="p-2.5 rounded-xl bg-[var(--card)] border border-[var(--border)]">
+                  <p className="font-medium text-[var(--text-primary)] mb-0.5">Hiring Review</p>
+                  <p className="leading-tight">Evaluated by IntervuOS AI and reviewed exclusively by the company hiring team.</p>
+                </div>
+              </div>
+            </div>
+
             {!allChecksPassed && (
-              <div className="mb-4 p-3.5 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 flex items-start gap-2.5">
-                <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                <p className="font-bold text-xs tracking-wide">Hardware verification incomplete. Grant required device permissions and click retry.</p>
+              <div className="mb-4 p-3.5 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-300 flex items-start gap-2.5 text-left text-xs">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5 text-rose-400" />
+                <div>
+                  <p className="font-medium text-rose-300">Device verification incomplete</p>
+                  <p className="text-[11px] text-rose-300/80 mt-0.5">
+                    Please allow camera and microphone access in your browser to proceed. Your evaluation has not begun and you have not been penalized.
+                  </p>
+                </div>
               </div>
             )}
 
             {!allChecksPassed ? (
               <button
                 onClick={performChecks}
-                className="w-full py-3.5 bg-[var(--color-surface-variant)] hover:bg-[var(--color-surface-variant)]/80 text-[var(--color-on-surface)] border border-[var(--color-outline-variant)]/30 rounded-xl text-xs font-black uppercase tracking-wider transition-all"
+                className="w-full py-3.5 bg-[var(--color-surface-variant)] hover:bg-[var(--color-surface-variant)]/80 text-[var(--color-on-surface)] border border-[var(--color-outline-variant)]/30 rounded-xl text-xs font-medium transition-all focus-visible:ring-2 focus-visible:ring-[var(--color-border-active)] focus-visible:outline-none"
               >
                 Retry Hardware Checks
               </button>
             ) : (
               <div className="space-y-4 pt-4 border-t border-[var(--color-outline-variant)]/30">
-                <label className="flex items-center justify-center gap-3 cursor-pointer group p-1">
-                  <div className="relative flex items-center justify-center flex-shrink-0">
-                    <input
-                      type="checkbox"
-                      checked={agreed}
-                      onChange={(e) => setAgreed(e.target.checked)}
-                      className="w-4 h-4 rounded border-2 border-[var(--color-on-surface-variant)] appearance-none checked:bg-[var(--color-primary-md3)] checked:border-[var(--color-primary-md3)] transition-colors cursor-pointer bg-[var(--color-surface-container-low)]"
-                    />
-                    {agreed && <CheckCircle2 className="w-3 h-3 text-white absolute pointer-events-none" />}
-                  </div>
-                  <span className="text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-on-surface)] transition-colors text-xs font-medium tracking-wide">
-                    I confirm camera and microphone functionality for live evaluation.
+                <label className="flex items-start justify-start gap-3 cursor-pointer group p-2 rounded-xl bg-[var(--primary-tint,rgba(99,56,246,0.15))] border border-[var(--color-border-active,#6338F6)]/30 text-left select-none">
+                  <input
+                    type="checkbox"
+                    checked={agreed}
+                    onChange={(e) => setAgreed(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 rounded border-[var(--border)] bg-[var(--card)] text-[var(--primary)] focus:ring-[var(--color-border-active)] cursor-pointer"
+                  />
+                  <span className="text-[var(--text-primary)] text-xs font-normal leading-relaxed">
+                    I acknowledge audio/video recording for candidate evaluation, agree to session terms, and consent to authorized hiring team review.
                   </span>
                 </label>
 
                 <button
                   onClick={handleStartInterview}
                   disabled={!canStart || loading}
-                  className="w-full py-3.5 bg-[var(--color-primary-md3)] text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-[var(--color-primary-md3)]/90 transition-all shadow-lg shadow-[var(--color-primary-md3)]/25 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed group"
+                  className="w-full py-3.5 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white rounded-xl text-xs font-medium transition-all shadow-sm flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed group focus-visible:ring-2 focus-visible:ring-[var(--color-border-active)] focus-visible:outline-none"
                 >
                   {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Play className="w-4 h-4 mr-2 fill-current group-hover:scale-110 transition-transform" />}
-                  {loading ? "STARTING..." : "BEGIN INTERVIEW SESSION"}
+                  {loading ? "Initializing..." : "Begin Candidate Interview Session"}
                 </button>
               </div>
             )}

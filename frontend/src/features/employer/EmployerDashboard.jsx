@@ -170,12 +170,12 @@ const EmployerDashboard = () => {
 
               {interviews.length === 0 ? (
                 <EmptyState
-                  icon={FileText}
-                  title="No Campaigns Created Yet"
-                  description="Create your first AI-driven interview campaign to start evaluating candidates smartly."
+                  icon={Briefcase}
+                  title="No Recruitment Campaigns Created Yet"
+                  description="Launch a structured candidate assessment campaign with customized technical questions, real-time proctoring, and automated STAR candidate scoring."
                   action={
                     <Link to="/employer/create-interview">
-                      <button className="px-6 py-3 bg-[var(--color-primary-md3)] text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-[var(--color-primary-md3)]/90 transition-all shadow-lg shadow-[var(--color-primary-md3)]/30 flex items-center gap-2 mx-auto">
+                      <button className="px-6 py-3 bg-[var(--primary,#5B3AF2)] hover:bg-[var(--primary-hover,#472CD7)] text-white rounded-xl text-xs font-medium transition-all shadow-sm flex items-center gap-2 mx-auto focus-visible:ring-2 focus-visible:ring-[var(--color-border-active)] focus-visible:outline-none">
                         <Plus className="w-4 h-4" /> Create First Campaign
                       </button>
                     </Link>

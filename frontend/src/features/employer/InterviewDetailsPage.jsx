@@ -404,12 +404,26 @@ const InterviewDetailsPage = () => {
             </div>
 
             {interview.assignedCandidates?.length === 0 ? (
-              <div className="text-center py-24 px-4">
-                <div className="w-16 h-16 rounded-2xl bg-[var(--color-surface-variant)] flex items-center justify-center mx-auto mb-6">
-                  <Users className="w-8 h-8 text-[var(--color-on-surface-variant)]" />
+              <div className="text-center py-20 px-6 max-w-lg mx-auto space-y-4">
+                <div className="w-14 h-14 rounded-2xl bg-[var(--primary-tint,rgba(99,56,246,0.15))] border border-[var(--color-border-active,#6338F6)]/30 flex items-center justify-center mx-auto text-[var(--color-text-accent,#C4B5FD)]">
+                  <Users className="w-7 h-7" />
                 </div>
-                <h3 className="text-lg font-black text-[var(--color-on-surface)] uppercase tracking-wider mb-2">No candidates yet</h3>
-                <p className="text-[var(--color-on-surface-variant)] mb-8 max-w-md mx-auto text-sm font-medium">Start by inviting candidates to this interview campaign to see them here.</p>
+                <div className="space-y-1">
+                  <h3 className="text-base sm:text-lg font-medium text-[var(--color-on-surface)]">
+                    No Candidates Invited Yet
+                  </h3>
+                  <p className="text-xs text-[var(--color-on-surface-variant)] font-normal leading-relaxed">
+                    Invite applicants by email, paste multiple emails, or upload a CSV candidate roster. You can also share the direct interview code <code className="px-1.5 py-0.5 rounded bg-[var(--color-surface-container-highest)] text-[var(--color-text-accent)] font-mono text-[11px]">{interview.interviewCode}</code> with candidates.
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <button
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="px-5 py-2.5 bg-[var(--primary,#5B3AF2)] hover:bg-[var(--primary-hover,#472CD7)] text-white text-xs font-medium rounded-xl transition-all shadow-sm inline-flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-[var(--color-border-active)] focus-visible:outline-none"
+                  >
+                    <Plus className="w-4 h-4" /> Invite Candidates Now
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="overflow-x-auto">

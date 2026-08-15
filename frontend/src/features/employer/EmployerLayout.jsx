@@ -17,9 +17,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
-import ForkLogo from '../../ui/shared/ForkLogo';
 
-const SIDEBAR_STORAGE_KEY = 'forktalent_employer_sidebar_collapsed';
+const SIDEBAR_STORAGE_KEY = 'intervuos_employer_sidebar_collapsed';
 
 export default function EmployerLayout() {
     const { user, logout } = useAuth();
@@ -92,11 +91,11 @@ export default function EmployerLayout() {
                 {/* Mobile Header Bar (visible on < md screens) */}
                 <header className="md:hidden sticky top-0 z-50 flex items-center justify-between px-4 py-3 bg-[var(--card)]/90 backdrop-blur-md border-b border-[var(--border)]">
                     <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-[var(--primary)] flex items-center justify-center p-2 shadow-md shadow-[var(--primary)]/30">
-                            <ForkLogo className="w-5 h-5 text-white" />
+                        <div className="w-9 h-9 rounded-xl bg-[var(--primary)] flex items-center justify-center text-white font-bold text-xs shadow-md shadow-[var(--primary)]/30">
+                            IO
                         </div>
                         <div>
-                            <h1 className="text-xs font-black tracking-tight text-[var(--text-primary)] uppercase">ForkTalent</h1>
+                            <h1 className="text-xs font-black tracking-tight text-[var(--text-primary)] uppercase">IntervuOS</h1>
                             <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-widest font-bold">Employer Console</p>
                         </div>
                     </div>
@@ -183,12 +182,12 @@ export default function EmployerLayout() {
                     {/* Header with Logo and Collapse Toggle */}
                     <div className={`flex items-center ${isCollapsed ? 'justify-center px-2' : 'justify-between px-4'} py-5 border-b border-[var(--border)]/60 min-h-[69px]`}>
                         <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-9 h-9 shrink-0 rounded-xl bg-[var(--primary)] flex items-center justify-center p-2 shadow-sm">
-                                <ForkLogo className="w-5 h-5 text-white" />
+                            <div className="w-9 h-9 shrink-0 rounded-xl bg-[var(--primary)] flex items-center justify-center text-white font-bold text-xs shadow-sm">
+                                IO
                             </div>
                             {!isCollapsed && (
                                 <div className="min-w-0 truncate">
-                                    <h1 className="text-sm font-medium tracking-tight text-[var(--text-primary)] truncate">ForkTalent</h1>
+                                    <h1 className="text-sm font-medium tracking-tight text-[var(--text-primary)] truncate">IntervuOS</h1>
                                     <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-medium truncate">Recruitment Suite</p>
                                 </div>
                             )}

@@ -245,7 +245,7 @@ export default function CandidateHelpSupportPage() {
             </div>
           </div>
           <a
-            href={`https://wa.me/${whatsappCleanNumber}?text=Hi%20ForkTalent%20Support,%20I%20am%20a%20candidate%20facing%20an%20issue%20with%20my%20interview.`}
+            href={`https://wa.me/${whatsappCleanNumber}?text=Hi%20IntervuOS%20Support,%20I%20am%20a%20candidate%20facing%20an%20issue%20with%20my%20interview.`}
             target="_blank"
             rel="noopener noreferrer"
             className="px-3.5 py-2 rounded-xl text-xs font-medium text-[var(--color-success)] bg-[var(--color-success)]/10 hover:bg-[var(--color-success)]/20 border border-[var(--color-success)]/30 transition-all flex items-center gap-1.5"
@@ -296,11 +296,10 @@ export default function CandidateHelpSupportPage() {
         <button
           type="button"
           onClick={() => setActiveTab("faq")}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium tracking-tight transition-all ${
-            activeTab === "faq"
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium tracking-tight transition-all ${activeTab === "faq"
               ? "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)]"
               : "text-[var(--color-text-secondary)] border border-transparent hover:border-[var(--color-border)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text-primary)]"
-          }`}
+            }`}
         >
           <BookOpen className="w-4 h-4" />
           <span>Frequently asked questions</span>
@@ -309,11 +308,10 @@ export default function CandidateHelpSupportPage() {
         <button
           type="button"
           onClick={() => setActiveTab("ticket")}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium tracking-tight transition-all ${
-            activeTab === "ticket"
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium tracking-tight transition-all ${activeTab === "ticket"
               ? "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)]"
               : "text-[var(--color-text-secondary)] border border-transparent hover:border-[var(--color-border)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text-primary)]"
-          }`}
+            }`}
         >
           <Send className="w-4 h-4" />
           <span>Submit a support ticket</span>
@@ -322,11 +320,10 @@ export default function CandidateHelpSupportPage() {
         <button
           type="button"
           onClick={() => setActiveTab("history")}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium tracking-tight transition-all ${
-            activeTab === "history"
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium tracking-tight transition-all ${activeTab === "history"
               ? "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)]"
               : "text-[var(--color-text-secondary)] border border-transparent hover:border-[var(--color-border)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text-primary)]"
-          }`}
+            }`}
         >
           <History className="w-4 h-4" />
           <span>My ticket history</span>
@@ -360,11 +357,10 @@ export default function CandidateHelpSupportPage() {
                   key={cat.id}
                   type="button"
                   onClick={() => setActiveCategory(cat.id)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-medium tracking-tight transition-all border ${
-                    activeCategory === cat.id
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-medium tracking-tight transition-all border ${activeCategory === cat.id
                       ? "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-[var(--color-border-active,#6338F6)]"
                       : "bg-[var(--color-surface)] text-[var(--color-text-secondary)] border-[var(--color-border)] hover:border-[var(--color-border-active,#6338F6)]/50 hover:text-[var(--color-text-primary)]"
-                  }`}
+                    }`}
                 >
                   {cat.label}
                 </button>
@@ -412,9 +408,8 @@ export default function CandidateHelpSupportPage() {
                         </span>
                       </div>
                       <ChevronDown
-                        className={`w-4 h-4 text-[var(--color-text-secondary)] shrink-0 transition-transform duration-200 ${
-                          isOpen ? "rotate-180 text-[var(--color-text-accent,#C4B5FD)]" : ""
-                        }`}
+                        className={`w-4 h-4 text-[var(--color-text-secondary)] shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180 text-[var(--color-text-accent,#C4B5FD)]" : ""
+                          }`}
                       />
                     </button>
 

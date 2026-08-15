@@ -131,7 +131,7 @@ export default function CandidateSubscriptionsPage() {
         key: orderData.key,
         amount: orderData.amount,
         currency: orderData.currency || 'INR',
-        name: 'ForkTalent',
+        name: 'IntervuOS',
         description: `${credits} AI Interview Credits (${title || 'Credit Pack'})`,
         order_id: orderData.orderId,
         prefill: {
@@ -296,7 +296,7 @@ export default function CandidateSubscriptionsPage() {
   // FAQs
   const faqs = [
     {
-      question: 'How do Interview Credits work in ForkTalent?',
+      question: 'How do Interview Credits work in IntervuOS?',
       answer: 'Credits correspond to session time: 1 minute of AI mock interview consumes exactly 1 Credit. Real-time speech synthesis, STAR response scoring, and PDF report generation are all included.'
     },
     {
@@ -451,11 +451,10 @@ export default function CandidateSubscriptionsPage() {
               return (
                 <div
                   key={bundle.id}
-                  className={`bg-[var(--card)] rounded-3xl p-6 flex flex-col justify-between space-y-6 transition-all duration-150 relative ${
-                    isRecommended
+                  className={`bg-[var(--card)] rounded-3xl p-6 flex flex-col justify-between space-y-6 transition-all duration-150 relative ${isRecommended
                       ? "border border-[var(--color-border-active,#6338F6)] shadow-md"
                       : "border border-[var(--border)]"
-                  }`}
+                    }`}
                 >
                   {/* Card Header & Badge */}
                   <div className="space-y-3">
@@ -649,11 +648,10 @@ export default function CandidateSubscriptionsPage() {
                 <button
                   key={tab.key}
                   onClick={() => setHistoryFilter(tab.key)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors border whitespace-nowrap focus-visible:ring-2 focus-visible:ring-[var(--color-border-active,#6338F6)] focus-visible:outline-none ${
-                    historyFilter === tab.key
+                  className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors border whitespace-nowrap focus-visible:ring-2 focus-visible:ring-[var(--color-border-active,#6338F6)] focus-visible:outline-none ${historyFilter === tab.key
                       ? "bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-[var(--color-border-active,#6338F6)]"
                       : "bg-[var(--card)] text-[var(--text-secondary)] border-[var(--border)] hover:text-[var(--text-primary)]"
-                  }`}
+                    }`}
                 >
                   {tab.label}
                 </button>
@@ -721,8 +719,8 @@ export default function CandidateSubscriptionsPage() {
                         item.status === 'completed'
                           ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                           : item.status === 'failed'
-                          ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                          : 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+                            ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                            : 'bg-amber-500/10 text-amber-400 border-amber-500/20';
 
                       return (
                         <tr key={item._id} className="hover:bg-[var(--surface-hover,#1E1E2A)] transition-colors">

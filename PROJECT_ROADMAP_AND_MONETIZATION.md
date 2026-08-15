@@ -1,6 +1,6 @@
-# ForkTalent: Detailed Project Roadmap, Architecture & Monetization Guide
+# IntervuOS: Detailed Project Roadmap, Architecture & Monetization Guide
 
-This document outlines the comprehensive roadmap, architectural enhancements, and candidate monetization strategy for the ForkTalent platform.
+This document outlines the comprehensive roadmap, architectural enhancements, and candidate monetization strategy for the IntervuOS platform.
 
 ---
 

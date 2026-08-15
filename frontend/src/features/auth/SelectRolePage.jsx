@@ -12,7 +12,6 @@ import {
   LogOut,
   ShieldCheck
 } from "lucide-react";
-import ForkLogo from "../../ui/shared/ForkLogo";
 import { motion } from "framer-motion";
 
 const SelectRolePage = () => {
@@ -65,15 +64,15 @@ const SelectRolePage = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-between relative bg-[var(--background)] font-['Inter'] p-4 sm:p-6 md:p-10 text-[var(--text-primary)]">
-      
+
       {/* Top Navbar with Logout Action */}
       <div className="w-full max-w-5xl flex items-center justify-between py-2 border-b border-[var(--border)]/60">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-[var(--primary)] text-white flex items-center justify-center p-1.5 shadow-sm">
-            <ForkLogo className="w-5 h-5 text-white" />
+          <div className="w-8 h-8 rounded-lg bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--primary)] flex items-center justify-center font-bold text-sm">
+            IV
           </div>
           <span className="font-medium text-sm tracking-tight text-[var(--text-primary)]">
-            ForkTalent
+            IntervuOS
           </span>
         </div>
 
@@ -93,7 +92,7 @@ const SelectRolePage = () => {
 
       {/* Main Role Selection Content */}
       <div className="w-full max-w-4xl py-10 space-y-8 my-auto">
-        
+
         {/* Header */}
         <div className="text-center space-y-2.5 max-w-lg mx-auto">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--primary-tint,rgba(99,56,246,0.15))] border border-[var(--primary)]/30 text-[var(--color-text-accent,#C4B5FD)] text-xs font-medium">
@@ -105,13 +104,13 @@ const SelectRolePage = () => {
             Select your account type
           </h1>
           <p className="text-xs sm:text-sm text-[var(--text-secondary)]">
-            Signed in as <strong className="text-[var(--text-primary)] font-medium">{user.email || user.name}</strong>. Choose how you intend to use ForkTalent.
+            Signed in as <strong className="text-[var(--text-primary)] font-medium">{user.email || user.name}</strong>. Choose how you intend to use IntervuOS.
           </p>
         </div>
 
         {/* Role Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
-          
+
           {/* Card 1: Employer */}
           <div className="bg-[var(--card)] border border-[var(--border)] hover:border-[var(--color-border-active,#6338F6)] transition-all duration-150 rounded-2xl p-6 sm:p-7 flex flex-col justify-between space-y-6">
             <div className="space-y-4">
@@ -240,7 +239,7 @@ const SelectRolePage = () => {
 
       {/* Footer */}
       <div className="w-full max-w-5xl text-center py-2 text-[11px] text-[var(--text-muted)]">
-        ForkTalent AI Interviewing Platform
+        IntervuOS AI Interviewing Platform
       </div>
 
     </div>

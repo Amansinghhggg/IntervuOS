@@ -322,24 +322,24 @@ export default function AdminDashboardPage() {
   // Chart data prepped from stats
   const userDistributionData = stats
     ? [
-        { name: "Candidates", value: stats.users.candidates, color: COLORS.indigo },
-        { name: "Employers", value: stats.users.employers, color: COLORS.purple },
-        { name: "Admins", value: stats.users.admins, color: COLORS.cyan },
-      ]
+      { name: "Candidates", value: stats.users.candidates, color: COLORS.indigo },
+      { name: "Employers", value: stats.users.employers, color: COLORS.purple },
+      { name: "Admins", value: stats.users.admins, color: COLORS.cyan },
+    ]
     : [];
 
   const recommendationChartData = stats
     ? Object.keys(stats.interviews.recommendations).map((key) => ({
-        name: key.replace("_", " "),
-        count: stats.interviews.recommendations[key],
-      }))
+      name: key.replace("_", " "),
+      count: stats.interviews.recommendations[key],
+    }))
     : [];
 
   const complaintCategoryChartData = stats
     ? Object.keys(stats.complaints.categories).map((cat) => ({
-        name: cat.toUpperCase(),
-        value: stats.complaints.categories[cat],
-      }))
+      name: cat.toUpperCase(),
+      value: stats.complaints.categories[cat],
+    }))
     : [];
 
   return (
@@ -347,14 +347,14 @@ export default function AdminDashboardPage() {
       {/* Header Banner */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-purple-900/40 via-indigo-900/30 to-[#0f1422] border border-purple-500/20 p-6 md:p-8 backdrop-blur-xl shadow-2xl">
         <div className="absolute top-0 right-0 transform translate-x-12 -translate-y-12 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
-        
+
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-bold uppercase tracking-wider mb-3">
               <Sparkles className="w-3.5 h-3.5" /> Root System Dashboard
             </div>
             <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight">
-              ForkTalent Admin Console
+              IntervuOS Admin Console
             </h1>
             <p className="text-sm text-slate-400 mt-1 max-w-xl">
               Monitor platform growth, verify employers, inspect AI mock interviews, and resolve user support complaints in real time.
@@ -393,11 +393,10 @@ export default function AdminDashboardPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-all whitespace-nowrap ${
-                  isActive
+                className={`flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-all whitespace-nowrap ${isActive
                     ? "bg-purple-600 text-white shadow-lg shadow-purple-600/30"
                     : "bg-purple-950/20 text-slate-400 hover:text-white hover:bg-purple-950/40 border border-purple-500/10"
-                }`}
+                  }`}
               >
                 <Icon className="w-4 h-4 text-purple-300" />
                 <span>{tab.label}</span>
@@ -437,7 +436,7 @@ export default function AdminDashboardPage() {
               </div>
               <h3 className="text-2xl font-black text-white">{stats?.users?.employers || 0}</h3>
               <p className="text-xs text-slate-400 flex items-center gap-1.5">
-                <span className="text-emerald-400 font-bold">{stats?.users?.verifiedEmployers || 0} Verified</span> • 
+                <span className="text-emerald-400 font-bold">{stats?.users?.verifiedEmployers || 0} Verified</span> •
                 <span className="text-amber-400 font-bold">{stats?.users?.unverifiedEmployers || 0} Pending</span>
               </p>
             </div>
@@ -460,7 +459,7 @@ export default function AdminDashboardPage() {
               </div>
               <h3 className="text-2xl font-black text-white">{stats?.complaints?.total || 0}</h3>
               <p className="text-xs text-slate-400 flex items-center gap-1.5">
-                <span className="text-rose-400 font-bold">{stats?.complaints?.pending || 0} Pending</span> • 
+                <span className="text-rose-400 font-bold">{stats?.complaints?.pending || 0} Pending</span> •
                 <span className="text-emerald-400 font-bold">{stats?.complaints?.resolved || 0} Resolved</span>
               </p>
             </div>
@@ -617,11 +616,10 @@ export default function AdminDashboardPage() {
                 <button
                   key={status}
                   onClick={() => setEmployerFilter(status)}
-                  className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${
-                    employerFilter === status
+                  className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${employerFilter === status
                       ? "bg-purple-600 text-white"
                       : "bg-purple-950/20 text-slate-400 hover:text-white border border-purple-500/10"
-                  }`}
+                    }`}
                 >
                   {status}
                 </button>
@@ -682,11 +680,10 @@ export default function AdminDashboardPage() {
                         <td className="p-4 text-right">
                           <button
                             onClick={() => handleToggleVerification(emp._id, emp.isVerified)}
-                            className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${
-                              emp.isVerified
+                            className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${emp.isVerified
                                 ? "bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30"
                                 : "bg-emerald-600 text-white hover:bg-emerald-500 shadow-md shadow-emerald-600/20"
-                            }`}
+                              }`}
                           >
                             {emp.isVerified ? "Revoke Verification" : "Approve & Verify"}
                           </button>
@@ -723,11 +720,10 @@ export default function AdminDashboardPage() {
                 <button
                   key={st}
                   onClick={() => setCampaignStatusFilter(st)}
-                  className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${
-                    campaignStatusFilter === st
+                  className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${campaignStatusFilter === st
                       ? "bg-purple-600 text-white"
                       : "bg-purple-950/20 text-slate-400 hover:text-white border border-purple-500/10"
-                  }`}
+                    }`}
                 >
                   {st}
                 </button>
@@ -754,23 +750,21 @@ export default function AdminDashboardPage() {
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => handleUpdateCampaignControls(camp._id, { isVerified: !camp.isVerified })}
-                          className={`px-2 py-0.5 text-[9px] font-black uppercase rounded-full border transition-all flex items-center gap-1 ${
-                            camp.isVerified
+                          className={`px-2 py-0.5 text-[9px] font-black uppercase rounded-full border transition-all flex items-center gap-1 ${camp.isVerified
                               ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30 hover:bg-rose-500/20 hover:text-rose-300"
                               : "bg-amber-500/20 text-amber-300 border-amber-500/30 hover:bg-emerald-500/20 hover:text-emerald-300"
-                          }`}
+                            }`}
                           title={camp.isVerified ? "Verified — Click to revoke candidate access" : "Unverified — Click to verify & make visible to candidates"}
                         >
                           {camp.isVerified ? <ShieldCheck className="w-3 h-3" /> : <ShieldAlert className="w-3 h-3" />}
                           {camp.isVerified ? "Verified" : "Unverified"}
                         </button>
-                        <span className={`px-2 py-0.5 text-[9px] font-black uppercase rounded-full border ${
-                          camp.status === "active"
+                        <span className={`px-2 py-0.5 text-[9px] font-black uppercase rounded-full border ${camp.status === "active"
                             ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
                             : camp.status === "completed"
-                            ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/30"
-                            : "bg-slate-500/20 text-slate-400 border-slate-500/30"
-                        }`}>
+                              ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/30"
+                              : "bg-slate-500/20 text-slate-400 border-slate-500/30"
+                          }`}>
                           {camp.status}
                         </span>
                       </div>
@@ -834,7 +828,7 @@ export default function AdminDashboardPage() {
                     <h4 className="font-bold text-purple-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
                       <ShieldCheck className="w-4 h-4 text-purple-400" /> Admin Campaign Controls
                     </h4>
-                    
+
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div>
                         <p className="text-xs font-bold text-white">Verification Status</p>
@@ -846,11 +840,10 @@ export default function AdminDashboardPage() {
                       </div>
                       <button
                         onClick={() => handleUpdateCampaignControls(selectedCampaign._id, { isVerified: !selectedCampaign.isVerified })}
-                        className={`px-3 py-1.5 text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 ${
-                          selectedCampaign.isVerified
+                        className={`px-3 py-1.5 text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 ${selectedCampaign.isVerified
                             ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-rose-500/20 hover:text-rose-300"
                             : "bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-emerald-500/20 hover:text-emerald-300"
-                        }`}
+                          }`}
                       >
                         {selectedCampaign.isVerified ? <ShieldCheck className="w-4 h-4" /> : <ShieldAlert className="w-4 h-4" />}
                         {selectedCampaign.isVerified ? "Verified (Click to Unverify)" : "Unverified (Click to Verify)"}
@@ -915,9 +908,8 @@ export default function AdminDashboardPage() {
                         {selectedCampaign.assignedCandidates.map((c, idx) => (
                           <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-purple-950/20 border border-purple-500/10 text-xs">
                             <span className="font-bold text-white">{c.email}</span>
-                            <span className={`px-2 py-0.5 text-[9px] font-black uppercase rounded ${
-                              c.status === "Completed" ? "bg-emerald-500/20 text-emerald-300" : c.status === "In Progress" ? "bg-amber-500/20 text-amber-300" : "bg-slate-500/20 text-slate-400"
-                            }`}>
+                            <span className={`px-2 py-0.5 text-[9px] font-black uppercase rounded ${c.status === "Completed" ? "bg-emerald-500/20 text-emerald-300" : c.status === "In Progress" ? "bg-amber-500/20 text-amber-300" : "bg-slate-500/20 text-slate-400"
+                              }`}>
                               {c.status}
                             </span>
                           </div>
@@ -954,11 +946,10 @@ export default function AdminDashboardPage() {
                 <button
                   key={rec}
                   onClick={() => setMockRecommendationFilter(rec)}
-                  className={`px-2.5 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all whitespace-nowrap ${
-                    mockRecommendationFilter === rec
+                  className={`px-2.5 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all whitespace-nowrap ${mockRecommendationFilter === rec
                       ? "bg-purple-600 text-white"
                       : "bg-purple-950/20 text-slate-400 hover:text-white border border-purple-500/10"
-                  }`}
+                    }`}
                 >
                   {rec.replace("_", " ")}
                 </button>
@@ -982,13 +973,12 @@ export default function AdminDashboardPage() {
                       <span className="text-[10px] font-black uppercase tracking-wider text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2.5 py-0.5 rounded-full">
                         {attempt.interviewSnapshot?.jobRole || "Mock Candidate"}
                       </span>
-                      <span className={`px-2.5 py-0.5 text-[9px] font-black uppercase rounded-full border ${
-                        attempt.recommendation === "STRONG_HIRE" || attempt.recommendation === "HIRE"
+                      <span className={`px-2.5 py-0.5 text-[9px] font-black uppercase rounded-full border ${attempt.recommendation === "STRONG_HIRE" || attempt.recommendation === "HIRE"
                           ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
                           : attempt.recommendation === "BORDERLINE"
-                          ? "bg-amber-500/20 text-amber-300 border-amber-500/30"
-                          : "bg-rose-500/20 text-rose-300 border-rose-500/30"
-                      }`}>
+                            ? "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                            : "bg-rose-500/20 text-rose-300 border-rose-500/30"
+                        }`}>
                         {attempt.recommendation?.replace("_", " ") || "N/A"}
                       </span>
                     </div>
@@ -1091,11 +1081,10 @@ export default function AdminDashboardPage() {
                 <button
                   key={st}
                   onClick={() => setComplaintStatusFilter(st)}
-                  className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${
-                    complaintStatusFilter === st
+                  className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${complaintStatusFilter === st
                       ? "bg-purple-600 text-white"
                       : "bg-purple-950/20 text-slate-400 hover:text-white border border-purple-500/10"
-                  }`}
+                    }`}
                 >
                   {st}
                 </button>
@@ -1123,13 +1112,12 @@ export default function AdminDashboardPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span className={`px-2.5 py-0.5 text-[9px] font-black uppercase rounded-full ${
-                        c.status === "PENDING"
+                      <span className={`px-2.5 py-0.5 text-[9px] font-black uppercase rounded-full ${c.status === "PENDING"
                           ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
                           : c.status === "IN_PROGRESS"
-                          ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                          : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                      }`}>
+                            ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                            : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                        }`}>
                         {c.status}
                       </span>
                     </div>
@@ -1178,41 +1166,37 @@ export default function AdminDashboardPage() {
                       <span className="text-[10px] uppercase font-bold text-slate-500 mr-1">Status:</span>
                       <button
                         onClick={() => handleUpdateComplaintStatus(c._id, "PENDING")}
-                        className={`px-2.5 py-1 text-[9px] font-bold uppercase rounded-lg transition-all ${
-                          c.status === "PENDING"
+                        className={`px-2.5 py-1 text-[9px] font-bold uppercase rounded-lg transition-all ${c.status === "PENDING"
                             ? "bg-rose-500 text-white shadow-sm"
                             : "bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 border border-rose-500/20"
-                        }`}
+                          }`}
                       >
                         Pending
                       </button>
                       <button
                         onClick={() => handleUpdateComplaintStatus(c._id, "IN_PROGRESS")}
-                        className={`px-2.5 py-1 text-[9px] font-bold uppercase rounded-lg transition-all ${
-                          c.status === "IN_PROGRESS"
+                        className={`px-2.5 py-1 text-[9px] font-bold uppercase rounded-lg transition-all ${c.status === "IN_PROGRESS"
                             ? "bg-amber-500 text-white shadow-sm"
                             : "bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/20"
-                        }`}
+                          }`}
                       >
                         In Progress
                       </button>
                       <button
                         onClick={() => handleUpdateComplaintStatus(c._id, "RESOLVED")}
-                        className={`px-2.5 py-1 text-[9px] font-bold uppercase rounded-lg transition-all ${
-                          c.status === "RESOLVED"
+                        className={`px-2.5 py-1 text-[9px] font-bold uppercase rounded-lg transition-all ${c.status === "RESOLVED"
                             ? "bg-emerald-600 text-white shadow-sm"
                             : "bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 border border-emerald-500/20"
-                        }`}
+                          }`}
                       >
                         Resolve
                       </button>
                       <button
                         onClick={() => handleUpdateComplaintStatus(c._id, "CLOSED")}
-                        className={`px-2.5 py-1 text-[9px] font-bold uppercase rounded-lg transition-all ${
-                          c.status === "CLOSED"
+                        className={`px-2.5 py-1 text-[9px] font-bold uppercase rounded-lg transition-all ${c.status === "CLOSED"
                             ? "bg-slate-700 text-white shadow-sm"
                             : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white border border-slate-700"
-                        }`}
+                          }`}
                       >
                         Close
                       </button>
@@ -1247,11 +1231,10 @@ export default function AdminDashboardPage() {
                 <button
                   key={r}
                   onClick={() => setUserRoleFilter(r)}
-                  className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${
-                    userRoleFilter === r
+                  className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${userRoleFilter === r
                       ? "bg-purple-600 text-white"
                       : "bg-purple-950/20 text-slate-400 hover:text-white border border-purple-500/10"
-                  }`}
+                    }`}
                 >
                   {r}
                 </button>
@@ -1295,9 +1278,8 @@ export default function AdminDashboardPage() {
                           </div>
                         </td>
                         <td className="p-4">
-                          <span className={`px-2.5 py-0.5 text-[10px] font-black uppercase rounded-full ${
-                            u.role === "admin" ? "bg-purple-500/20 text-purple-300 border border-purple-500/30" : u.role === "employer" ? "bg-indigo-500/20 text-indigo-300" : "bg-emerald-500/20 text-emerald-300"
-                          }`}>
+                          <span className={`px-2.5 py-0.5 text-[10px] font-black uppercase rounded-full ${u.role === "admin" ? "bg-purple-500/20 text-purple-300 border border-purple-500/30" : u.role === "employer" ? "bg-indigo-500/20 text-indigo-300" : "bg-emerald-500/20 text-emerald-300"
+                            }`}>
                             {u.role || "Candidate"}
                           </span>
                         </td>

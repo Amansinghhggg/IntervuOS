@@ -125,7 +125,7 @@ const ConversationController = ({
         if (isInsufficientTranscript(response.transcript)) {
           runtimeDiagnostics("RecoveryStarted", { context: "STT_INSUFFICIENT_TRANSCRIPT", transcript: response.transcript });
           toast("I couldn't clearly understand your answer. Please answer the question again.", { icon: "⚠️" });
-          
+
           // Wait 1.5s to let the user read before restarting listening
           setTimeout(() => {
             setIsTranscribing(false);
@@ -136,14 +136,14 @@ const ConversationController = ({
         // Merge transcript with any existing answer
         const currentAnswer = answers[currentQuestion.id] || '';
         const newText = mergeTranscript(currentAnswer, response.transcript);
-        
+
         handleAnswerChange(currentQuestion.id, newText);
-        
+
         // Notify parent that the answer is completely ready
         if (onAnswerReady) {
           onAnswerReady(newText);
         }
-        
+
         // Clear isTranscribing synchronously since we succeeded
         setIsTranscribing(false);
       } else {
@@ -166,10 +166,10 @@ const ConversationController = ({
   // ─── Render ───────────────────────────────────────
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 h-full w-full bg-slate-950 divide-y lg:divide-y-0 lg:divide-x divide-slate-800/80 overflow-y-auto lg:overflow-hidden">
-      {/* ForkTalent Section */}
+      {/* IntervuOS Section */}
       <section
         className="bg-slate-950 flex flex-col relative overflow-hidden min-h-[440px] lg:min-h-0 lg:h-full"
-        aria-label="ForkTalent AI Section"
+        aria-label="IntervuOS AI Section"
       >
         <InterviewAI
           currentQuestion={currentQuestion}

@@ -86,7 +86,11 @@ export default function EmployerVerificationPage() {
 
             <div className="shrink-0 flex flex-col sm:flex-row md:flex-col items-start md:items-end gap-2.5">
               <a
+<<<<<<< HEAD
                 href={`https://wa.me/${whatsappCleanNumber}?text=Hello%20ForkTalent%20Team,%20I%20want%20to%20set%20up%20a%20custom%20hiring%20drive%20/%20campaign.`}
+=======
+                href={`https://wa.me/${whatsappCleanNumber}?text=Hello%20IntervuOS%20Team,%20I%20want%20to%20set%20up%20a%20custom%20hiring%20drive%20/%20campaign.`}
+>>>>>>> bc83f8f271ed2764f625168b80affb29ea5f449e
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium transition-colors inline-flex items-center gap-2 shadow-sm shrink-0"
@@ -130,7 +134,11 @@ export default function EmployerVerificationPage() {
             </div>
 
             <a
+<<<<<<< HEAD
               href={`https://wa.me/${whatsappCleanNumber}?text=Hello%20ForkTalent%20Team,%20I%20need%20support%20with%20an%20employer%20campaign.`}
+=======
+              href={`https://wa.me/${whatsappCleanNumber}?text=Hello%20IntervuOS%20Team,%20I%20need%20support%20with%20an%20employer%20campaign.`}
+>>>>>>> bc83f8f271ed2764f625168b80affb29ea5f449e
               target="_blank"
               rel="noopener noreferrer"
               className="w-full py-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-medium transition-colors flex items-center justify-center gap-1.5"

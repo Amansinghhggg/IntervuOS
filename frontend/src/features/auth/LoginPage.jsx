@@ -33,7 +33,11 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       const data = await googleLogin(credentialResponse.credential);
+<<<<<<< HEAD
       toast.success(`Welcome to ForkTalent, ${data.user.name || "User"}!`);
+=======
+      toast.success(`Welcome to IntervuOS, ${data.user.name || "User"}!`);
+>>>>>>> bc83f8f271ed2764f625168b80affb29ea5f449e
       navigate(getRedirectRoute(data.user.role), { replace: true });
     } catch (error) {
       toast.error(error.response?.data?.message || "Google authentication failed. Please try again.");
@@ -48,11 +52,19 @@ export default function LoginPage() {
       {/* Top Header */}
       <header className="w-full max-w-6xl mx-auto flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2.5 group">
+<<<<<<< HEAD
           <div className="w-8 h-8 rounded-xl bg-[var(--color-primary)] text-white flex items-center justify-center p-1.5 shadow-xs transition-transform group-hover:scale-105">
             <ForkLogo className="w-5 h-5 text-white" />
           </div>
           <span className="text-base font-medium tracking-tight text-[var(--color-text-primary)]">
             Fork<span className="text-[var(--color-text-accent)]">Talent</span>
+=======
+          <div className="w-8 h-8 rounded-xl bg-[var(--color-primary)] text-white flex items-center justify-center font-bold text-sm shadow-xs">
+            IO
+          </div>
+          <span className="text-base font-medium tracking-tight text-[var(--color-text-primary)]">
+            Intervu<span className="text-[var(--color-text-accent)]">OS</span>
+>>>>>>> bc83f8f271ed2764f625168b80affb29ea5f449e
           </span>
         </Link>
 
@@ -114,7 +126,11 @@ export default function LoginPage() {
                 <Bot className="w-6 h-6" />
               </div>
               <h2 className="text-base sm:text-lg font-medium text-[var(--color-text-primary)] tracking-tight">
+<<<<<<< HEAD
                 Sign in to ForkTalent
+=======
+                Sign in to IntervuOS
+>>>>>>> bc83f8f271ed2764f625168b80affb29ea5f449e
               </h2>
               <p className="text-xs text-[var(--color-text-secondary)] font-normal max-w-xs">
                 Continue instantly with Google to get started in seconds.
@@ -150,7 +166,11 @@ export default function LoginPage() {
                 <span>Fast, secure single sign-on</span>
               </div>
               <p>
+<<<<<<< HEAD
                 By signing in, you agree to ForkTalent's terms of service and privacy policy.
+=======
+                By signing in, you agree to IntervuOS's terms of service and privacy policy.
+>>>>>>> bc83f8f271ed2764f625168b80affb29ea5f449e
               </p>
             </div>
           </div>
@@ -160,7 +180,11 @@ export default function LoginPage() {
 
       {/* Footer */}
       <footer className="w-full max-w-6xl mx-auto text-center text-[11px] text-[var(--color-text-muted)] pt-6">
+<<<<<<< HEAD
         © 2026 ForkTalent. All rights reserved. • Protected with 256-bit SSL encryption.
+=======
+        © 2026 IntervuOS. All rights reserved. • Protected with 256-bit SSL encryption.
+>>>>>>> bc83f8f271ed2764f625168b80affb29ea5f449e
       </footer>
 
     </div>

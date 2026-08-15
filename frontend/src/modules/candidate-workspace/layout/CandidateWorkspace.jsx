@@ -144,7 +144,11 @@ export const CandidateWorkspace = ({ resultData, onReEnroll, onViewResume }) => 
                                     </div>
                                     <div className="px-3 py-1 bg-[var(--color-surface-hover)] rounded-xl flex items-center gap-1.5 border border-[var(--color-border)] text-xs text-[var(--color-text-secondary)]">
                                         <Building2 className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />
+<<<<<<< HEAD
                                         <span>ForkTalent</span>
+=======
+                                        <span>IntervuOS</span>
+>>>>>>> bc83f8f271ed2764f625168b80affb29ea5f449e
                                     </div>
                                     <div className="px-3 py-1 bg-[var(--color-surface-hover)] rounded-xl flex items-center gap-1.5 border border-[var(--color-border)] text-xs text-[var(--color-text-secondary)]">
                                         <Calendar className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />

@@ -42,7 +42,6 @@ export default function MockReportsPage() {
   // Mock Evaluations State
   const [loadingMocks, setLoadingMocks] = useState(true);
   const [evaluations, setEvaluations] = useState([]);
-  const [resumeableMocks, setResumeableMocks] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [selectedEvaluation, setSelectedEvaluation] = useState(null);
 
@@ -81,17 +80,6 @@ export default function MockReportsPage() {
     }
   };
 
-  const fetchResumeableMocks = async () => {
-    try {
-      const data = await mockInterviewService.getResumeableMocks();
-      if (data.success && Array.isArray(data.resumeable)) {
-        setResumeableMocks(data.resumeable);
-      }
-    } catch (err) {
-      console.warn("Could not fetch resumeable mocks:", err.message);
-    }
-  };
-
   const fetchCompanyInterviews = async () => {
     setLoadingCompany(true);
     try {
@@ -116,7 +104,6 @@ export default function MockReportsPage() {
 
   useEffect(() => {
     fetchMockReports();
-    fetchResumeableMocks();
     fetchCompanyInterviews();
   }, []);
 
@@ -332,11 +319,10 @@ export default function MockReportsPage() {
           <div className="flex items-center bg-[var(--card)] p-1 rounded-xl border border-[var(--border)]">
             <button
               onClick={() => setActiveCategory("mock")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-colors duration-150 ${
-                activeCategory === "mock"
-                  ? "bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)]"
-                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-transparent"
-              }`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-colors duration-150 ${activeCategory === "mock"
+                ? "bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)]"
+                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-transparent"
+                }`}
             >
               <Brain className="w-3.5 h-3.5" />
               <span>AI Mock Practice ({evaluations.length})</span>
@@ -344,11 +330,10 @@ export default function MockReportsPage() {
 
             <button
               onClick={() => setActiveCategory("company")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-colors duration-150 ${
-                activeCategory === "company"
-                  ? "bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)]"
-                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-transparent"
-              }`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-colors duration-150 ${activeCategory === "company"
+                ? "bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)]"
+                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-transparent"
+                }`}
             >
               <Building2 className="w-3.5 h-3.5" />
               <span>Company Campaigns ({companyInterviews.length})</span>
@@ -365,7 +350,7 @@ export default function MockReportsPage() {
             {/* Executive Donut / Pie Visual Summary Widget */}
             {evaluatedList.length > 0 && (
               <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-5 sm:p-6 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-                
+
                 {/* 1. Pie / Donut Chart with Centered Metric (Left 5 Cols) */}
                 <div className="md:col-span-5 flex items-center justify-center sm:justify-start gap-4">
                   <div className="relative w-32 h-32 shrink-0">
@@ -421,7 +406,7 @@ export default function MockReportsPage() {
                   <div className="text-[11px] font-medium text-[var(--text-secondary)] mb-1">
                     Outcome Distribution
                   </div>
-                  
+
                   <div className="space-y-1.5 text-xs">
                     <div className="flex items-center justify-between">
                       <span className="flex items-center gap-1.5 text-[var(--text-secondary)]">
@@ -497,54 +482,6 @@ export default function MockReportsPage() {
               </div>
             )}
 
-            {/* Incomplete / Resumeable Sessions (if any exist) */}
-            {resumeableMocks.length > 0 && (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                  <h2 className="text-sm font-medium text-[var(--text-primary)]">
-                    Pending / Incomplete Mocks ({resumeableMocks.length})
-                  </h2>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {resumeableMocks.map((item) => (
-                    <div
-                      key={item.id}
-                      className="bg-[var(--card)] border border-amber-500/30 rounded-2xl p-5 space-y-3"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                            {item.status || "In Progress"}
-                          </span>
-                          <h3 className="text-sm font-medium text-[var(--text-primary)] mt-1.5">
-                            {item.jobRole || item.title}
-                          </h3>
-                        </div>
-                        <span className="text-[11px] text-[var(--text-secondary)]">
-                          {new Date(item.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-3 text-xs text-[var(--text-secondary)]">
-                        <span>{item.experienceLevel}</span>
-                        <span>•</span>
-                        <span>{item.duration} Mins</span>
-                      </div>
-
-                      <button
-                        onClick={() => navigate(`/candidate/mock-interview/${item.id}/prepare`)}
-                        className="w-full py-2 bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] hover:bg-[var(--primary-tint)]/80 border border-[var(--primary)]/30 font-medium text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors duration-150"
-                      >
-                        <PlayCircle className="w-3.5 h-3.5" /> Resume Session
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Filter and Search Bar */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
               {/* Search Box */}
@@ -571,11 +508,10 @@ export default function MockReportsPage() {
                   <button
                     key={f.key}
                     onClick={() => setMockSelectedFilter(f.key)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors duration-150 border whitespace-nowrap ${
-                      mockSelectedFilter === f.key
-                        ? "bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-[var(--color-border-active,#6338F6)]"
-                        : "bg-[var(--card)] text-[var(--text-secondary)] border-[var(--border)] hover:text-[var(--text-primary)]"
-                    }`}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors duration-150 border whitespace-nowrap ${mockSelectedFilter === f.key
+                      ? "bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-[var(--color-border-active,#6338F6)]"
+                      : "bg-[var(--card)] text-[var(--text-secondary)] border-[var(--border)] hover:text-[var(--text-primary)]"
+                      }`}
                   >
                     {f.label}
                   </button>
@@ -733,11 +669,10 @@ export default function MockReportsPage() {
                           <button
                             key={pageNum}
                             onClick={() => setMockCurrentPage(pageNum)}
-                            className={`w-8 h-8 rounded-xl text-xs font-medium border transition-colors ${
-                              mockCurrentPage === pageNum
-                                ? "bg-[var(--primary)] text-white border-[var(--primary)]"
-                                : "bg-[var(--card)] text-[var(--text-secondary)] border-[var(--border)] hover:text-[var(--text-primary)]"
-                            }`}
+                            className={`w-8 h-8 rounded-xl text-xs font-medium border transition-colors ${mockCurrentPage === pageNum
+                              ? "bg-[var(--primary)] text-white border-[var(--primary)]"
+                              : "bg-[var(--card)] text-[var(--text-secondary)] border-[var(--border)] hover:text-[var(--text-primary)]"
+                              }`}
                           >
                             {pageNum}
                           </button>
@@ -810,11 +745,10 @@ export default function MockReportsPage() {
                   <button
                     key={f.key}
                     onClick={() => setCompanySelectedFilter(f.key)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors duration-150 border whitespace-nowrap ${
-                      companySelectedFilter === f.key
-                        ? "bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-[var(--color-border-active,#6338F6)]"
-                        : "bg-[var(--card)] text-[var(--text-secondary)] border-[var(--border)] hover:text-[var(--text-primary)]"
-                    }`}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors duration-150 border whitespace-nowrap ${companySelectedFilter === f.key
+                      ? "bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-[var(--color-border-active,#6338F6)]"
+                      : "bg-[var(--card)] text-[var(--text-secondary)] border-[var(--border)] hover:text-[var(--text-primary)]"
+                      }`}
                   >
                     {f.label}
                   </button>
@@ -934,11 +868,10 @@ export default function MockReportsPage() {
                           <button
                             key={pageNum}
                             onClick={() => setCompanyCurrentPage(pageNum)}
-                            className={`w-8 h-8 rounded-xl text-xs font-medium border transition-colors ${
-                              companyCurrentPage === pageNum
-                                ? "bg-[var(--primary)] text-white border-[var(--primary)]"
-                                : "bg-[var(--card)] text-[var(--text-secondary)] border-[var(--border)] hover:text-[var(--text-primary)]"
-                            }`}
+                            className={`w-8 h-8 rounded-xl text-xs font-medium border transition-colors ${companyCurrentPage === pageNum
+                              ? "bg-[var(--primary)] text-white border-[var(--primary)]"
+                              : "bg-[var(--card)] text-[var(--text-secondary)] border-[var(--border)] hover:text-[var(--text-primary)]"
+                              }`}
                           >
                             {pageNum}
                           </button>

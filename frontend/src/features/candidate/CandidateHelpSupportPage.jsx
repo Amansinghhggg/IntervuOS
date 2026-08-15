@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
 import { toast } from "react-hot-toast";
+import { SUPPORT_CONFIG } from "../../config/constants";
 import {
   HelpCircle,
   Mic,
@@ -189,25 +190,25 @@ export default function CandidateHelpSupportPage() {
     switch (status) {
       case "PENDING":
         return (
-          <span className="px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5">
+          <span className="px-3 py-1 rounded-full bg-[var(--color-warning)]/10 text-[var(--color-warning)] border border-[var(--color-warning)]/30 text-[10px] font-medium uppercase tracking-wider flex items-center gap-1.5">
             <Clock className="w-3 h-3 animate-spin" /> Pending Review
           </span>
         );
       case "IN_PROGRESS":
         return (
-          <span className="px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/30 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5">
+          <span className="px-3 py-1 rounded-full bg-[var(--color-primary)]/10 text-[var(--color-primary)] border border-[var(--color-primary)]/30 text-[10px] font-medium uppercase tracking-wider flex items-center gap-1.5">
             <RefreshCw className="w-3 h-3 animate-spin" /> In Investigation
           </span>
         );
       case "RESOLVED":
         return (
-          <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5">
-            <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Resolved
+          <span className="px-3 py-1 rounded-full bg-[var(--color-success)]/10 text-[var(--color-success)] border border-[var(--color-success)]/30 text-[10px] font-medium uppercase tracking-wider flex items-center gap-1.5">
+            <CheckCircle2 className="w-3 h-3 text-[var(--color-success)]" /> Resolved
           </span>
         );
       case "CLOSED":
         return (
-          <span className="px-3 py-1 rounded-full bg-gray-500/10 text-gray-400 border border-gray-500/30 text-[10px] font-black uppercase tracking-wider">
+          <span className="px-3 py-1 rounded-full bg-[var(--color-text-muted)]/10 text-[var(--color-text-muted)] border border-[var(--color-text-muted)]/30 text-[10px] font-medium uppercase tracking-wider">
             Closed
           </span>
         );
@@ -216,12 +217,12 @@ export default function CandidateHelpSupportPage() {
     }
   };
 
-  const adminEmail = "intervuos@gmail.com";
-  const whatsappNumber = "+91 86550 21064";
-  const whatsappCleanNumber = "8655021064";
+  const adminEmail = SUPPORT_CONFIG.ADMIN_EMAIL;
+  const whatsappNumber = SUPPORT_CONFIG.WHATSAPP_NUMBER;
+  const whatsappCleanNumber = SUPPORT_CONFIG.WHATSAPP_CLEAN_NUMBER;
 
   return (
-    <div className="bg-transparent min-h-screen text-[var(--color-on-surface,#dae2fd)] font-['Inter'] pb-24">
+    <div className="bg-[var(--color-canvas)] min-h-screen text-[var(--color-text-primary)] font-['Inter'] pb-24">
       <div className="max-w-[1300px] mx-auto p-4 md:p-8 space-y-8">
 
         {/* Page Header */}
@@ -233,13 +234,13 @@ export default function CandidateHelpSupportPage() {
         />
 
         {/* Main Tab Switcher */}
-        <div className="flex items-center justify-center border-b border-[var(--color-surface-variant)] pb-4">
-          <div className="flex items-center gap-2 p-1.5 bg-[var(--color-surface-container-low)] border border-[var(--color-surface-variant)] rounded-2xl shadow-lg">
+        <div className="flex items-center justify-center border-b border-[var(--color-border)] pb-4">
+          <div className="flex items-center gap-2 p-1.5 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-lg">
             <button
               onClick={() => setActiveMainTab("support")}
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${activeMainTab === "support"
-                ? "bg-[var(--color-primary-md3)] text-white shadow-md shadow-[var(--color-primary-md3)]/30"
-                : "text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)]"
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium tracking-tight transition-all ${activeMainTab === "support"
+                ? "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)] shadow-sm shadow-[var(--color-primary)]/10"
+                : "text-[var(--color-text-secondary)] border border-transparent hover:border-[var(--color-border)] hover:bg-[var(--color-border)]/50 hover:text-[var(--color-text-primary)]"
                 }`}
             >
               <HelpCircle className="w-4 h-4" />
@@ -248,15 +249,15 @@ export default function CandidateHelpSupportPage() {
 
             <button
               onClick={() => setActiveMainTab("history")}
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${activeMainTab === "history"
-                ? "bg-[var(--color-primary-md3)] text-white shadow-md shadow-[var(--color-primary-md3)]/30"
-                : "text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)]"
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium tracking-tight transition-all ${activeMainTab === "history"
+                ? "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)] shadow-sm shadow-[var(--color-primary)]/10"
+                : "text-[var(--color-text-secondary)] border border-transparent hover:border-[var(--color-border)] hover:bg-[var(--color-border)]/50 hover:text-[var(--color-text-primary)]"
                 }`}
             >
               <History className="w-4 h-4" />
               <span>My Ticket History</span>
               {myTickets.length > 0 && (
-                <span className="ml-1.5 px-2 py-0.5 rounded-full bg-white/20 text-white text-[10px] font-black">
+                <span className="ml-1.5 px-2 py-0.5 rounded-full bg-white/20 text-white text-[10px] font-medium">
                   {myTickets.length}
                 </span>
               )}
@@ -283,25 +284,25 @@ export default function CandidateHelpSupportPage() {
 
                     <div className="space-y-4 mt-6">
                       {/* WhatsApp Desk */}
-                      <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-2">
+                      <div className="p-4 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 flex items-center gap-1.5">
-                            <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
+                          <span className="text-[10px] font-medium tracking-tight text-[var(--color-success)] flex items-center gap-1.5">
+                            <MessageSquare className="w-3.5 h-3.5 text-[var(--color-success)]" />
                             WhatsApp Candidate Hotline
                           </span>
-                          <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[9px] font-bold uppercase tracking-wider">
+                          <span className="px-2 py-0.5 rounded-full bg-[var(--color-success)]/10 text-[var(--color-success)] border border-[var(--color-success)]/30 text-[9px] font-medium uppercase tracking-wider">
                             Live Desk
                           </span>
                         </div>
                         <div className="flex items-center justify-between gap-2 pt-1">
-                          <span className="text-xs font-bold text-[var(--color-on-surface)]">
+                          <span className="text-sm font-medium text-[var(--color-text-primary)]">
                             {whatsappNumber}
                           </span>
                           <a
                             href={`https://wa.me/${whatsappCleanNumber}?text=Hi%20InterviewOS%20Support,%20I%20am%20a%20candidate%20facing%20an%20issue%20with%20my%20interview.`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-md shadow-emerald-500/20 shrink-0"
+                            className="px-3.5 py-1.5 rounded-xl text-[var(--color-success)] border border-[var(--color-success)]/30 hover:bg-[var(--color-success)]/10 text-[10px] font-medium uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0"
                           >
                             <MessageSquare className="w-3 h-3" />
                             Chat
@@ -310,13 +311,13 @@ export default function CandidateHelpSupportPage() {
                       </div>
 
                       {/* Email Support */}
-                      <div className="p-4 rounded-2xl bg-[var(--color-surface-container-highest)]/30 border border-[var(--color-outline-variant)]/30 space-y-2">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] flex items-center gap-1.5">
-                          <Mail className="w-3.5 h-3.5 text-[var(--color-primary-md3)]" />
+                      <div className="p-4 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] space-y-2">
+                        <span className="text-[10px] font-medium tracking-tight text-[var(--color-text-secondary)] flex items-center gap-1.5">
+                          <Mail className="w-3.5 h-3.5 text-[var(--color-primary)]" />
                           Support Email
                         </span>
                         <div className="flex items-center justify-between gap-2 pt-1">
-                          <span className="text-xs font-bold text-[var(--color-on-surface)] select-all truncate">
+                          <span className="text-sm font-medium text-[var(--color-text-primary)] select-all truncate">
                             {adminEmail}
                           </span>
                           <button
@@ -324,7 +325,7 @@ export default function CandidateHelpSupportPage() {
                               navigator.clipboard.writeText(adminEmail);
                               toast.success("Support email copied to clipboard!");
                             }}
-                            className="px-3 py-1.5 rounded-xl bg-[var(--color-primary-md3)]/10 hover:bg-[var(--color-primary-md3)]/20 text-[var(--color-primary-md3)] text-[10px] font-bold uppercase tracking-wider transition-colors border border-[var(--color-primary-md3)]/30"
+                            className="px-3 py-1.5 rounded-xl bg-[var(--color-primary)]/10 hover:bg-[var(--color-primary)]/20 text-[var(--color-primary)] text-[10px] font-medium uppercase tracking-wider transition-colors border border-[var(--color-primary)]/30"
                           >
                             Copy
                           </button>
@@ -333,12 +334,12 @@ export default function CandidateHelpSupportPage() {
                     </div>
                   </div>
 
-                  <div className="mt-8 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium space-y-1">
-                    <span className="font-bold flex items-center gap-1.5">
-                      <AlertTriangle className="w-4 h-4 text-amber-400" />
-                      Live Session Tip
+                  <div className="mt-8 p-4 rounded-2xl bg-[var(--color-warning)]/10 border border-[var(--color-warning)]/30 text-[var(--color-warning)] text-sm font-medium space-y-1">
+                    <span className="font-medium flex items-center gap-1.5 tracking-tight">
+                      <AlertTriangle className="w-4 h-4 text-[var(--color-warning)]" />
+                      Live session tip
                     </span>
-                    <p className="text-[11px] text-amber-200/80 leading-relaxed">
+                    <p className="text-xs text-[var(--color-warning)]/80 leading-relaxed">
                       If your internet drops mid-interview, your session timer pauses automatically. Refreshing your link allows instant session continuation!
                     </p>
                   </div>
@@ -358,29 +359,29 @@ export default function CandidateHelpSupportPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* Name (Read-Only Account Detail) */}
                       <div>
-                        <label className="block text-[11px] font-black uppercase tracking-widest mb-1.5 text-[var(--color-on-surface-variant)] flex items-center gap-1.5">
-                          <Lock className="w-3 h-3 text-emerald-400" /> Account Name
+                        <label className="block text-[11px] font-medium tracking-tight mb-1.5 text-[var(--color-text-secondary)] flex items-center gap-1.5">
+                          <Lock className="w-3 h-3 text-[var(--color-success)]" /> Account Name
                         </label>
                         <input
                           type="text"
                           disabled
                           readOnly
                           value={user?.name || "Account User"}
-                          className="w-full bg-[var(--color-surface-container-highest)]/20 border border-[var(--color-outline-variant)]/20 rounded-xl px-4 py-3 text-xs text-[var(--color-on-surface)] cursor-not-allowed opacity-80 font-medium"
+                          className="w-full bg-[var(--color-surface)]/20 border border-[var(--color-border)]/20 rounded-xl px-4 py-3 text-sm text-[var(--color-text-primary)] cursor-not-allowed opacity-80 font-medium"
                         />
                       </div>
 
                       {/* Email (Read-Only Account Detail) */}
                       <div>
-                        <label className="block text-[11px] font-black uppercase tracking-widest mb-1.5 text-[var(--color-on-surface-variant)] flex items-center gap-1.5">
-                          <Lock className="w-3 h-3 text-emerald-400" /> Account Email
+                        <label className="block text-[11px] font-medium tracking-tight mb-1.5 text-[var(--color-text-secondary)] flex items-center gap-1.5">
+                          <Lock className="w-3 h-3 text-[var(--color-success)]" /> Account Email
                         </label>
                         <input
                           type="email"
                           disabled
                           readOnly
                           value={user?.email || "Account Email"}
-                          className="w-full bg-[var(--color-surface-container-highest)]/20 border border-[var(--color-outline-variant)]/20 rounded-xl px-4 py-3 text-xs text-[var(--color-on-surface)] cursor-not-allowed opacity-80 font-medium"
+                          className="w-full bg-[var(--color-surface)]/20 border border-[var(--color-border)]/20 rounded-xl px-4 py-3 text-sm text-[var(--color-text-primary)] cursor-not-allowed opacity-80 font-medium"
                         />
                       </div>
                     </div>
@@ -388,13 +389,13 @@ export default function CandidateHelpSupportPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* Issue Category */}
                       <div>
-                        <label className="block text-[11px] font-black uppercase tracking-widest mb-2 text-[var(--color-on-surface-variant)]">
+                        <label className="block text-[11px] font-medium tracking-tight mb-2 text-[var(--color-text-secondary)]">
                           Issue Category *
                         </label>
                         <select
                           value={category}
                           onChange={(e) => setCategory(e.target.value)}
-                          className="w-full bg-[var(--color-surface-container-highest)]/30 border border-[var(--color-outline-variant)]/30 rounded-xl px-4 py-3 text-xs text-[var(--color-on-surface)] focus:outline-none focus:border-[var(--color-primary-md3)]"
+                          className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl px-4 py-3 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)] transition-colors"
                         >
                           <option value="audio">🎤 Microphone / Audio Issue</option>
                           <option value="camera">📹 Camera / Proctoring Warning</option>
@@ -406,7 +407,7 @@ export default function CandidateHelpSupportPage() {
 
                       {/* Interview Code (Optional) */}
                       <div>
-                        <label className="block text-[11px] font-black uppercase tracking-widest mb-2 text-[var(--color-on-surface-variant)]">
+                        <label className="block text-[11px] font-medium tracking-tight mb-2 text-[var(--color-text-secondary)]">
                           Interview Code / ID (Optional)
                         </label>
                         <input
@@ -414,14 +415,14 @@ export default function CandidateHelpSupportPage() {
                           value={interviewCode}
                           onChange={(e) => setInterviewCode(e.target.value)}
                           placeholder="e.g. INT-928310"
-                          className="w-full bg-[var(--color-surface-container-highest)]/30 border border-[var(--color-outline-variant)]/30 rounded-xl px-4 py-3 text-xs text-[var(--color-on-surface)] focus:outline-none focus:border-[var(--color-primary-md3)]"
+                          className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl px-4 py-3 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)] transition-colors"
                         />
                       </div>
                     </div>
 
                     {/* Priority */}
                     <div>
-                      <label className="block text-[11px] font-black uppercase tracking-widest mb-2 text-[var(--color-on-surface-variant)]">
+                      <label className="block text-[11px] font-medium tracking-tight mb-2 text-[var(--color-text-secondary)]">
                         Issue Urgency Level
                       </label>
                       <div className="grid grid-cols-3 gap-3">
@@ -434,11 +435,11 @@ export default function CandidateHelpSupportPage() {
                             key={p.id}
                             type="button"
                             onClick={() => setPriority(p.id)}
-                            className={`py-2.5 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border ${priority === p.id
+                            className={`py-2.5 px-3 rounded-xl text-[10px] font-medium uppercase tracking-wider transition-all border ${priority === p.id
                               ? p.id === "urgent"
-                                ? "bg-rose-500 text-white border-rose-500 shadow-md shadow-rose-500/30"
-                                : "bg-[var(--color-primary-md3)] text-white border-[var(--color-primary-md3)] shadow-md shadow-[var(--color-primary-md3)]/30"
-                              : "bg-[var(--color-surface-container-highest)]/30 text-[var(--color-on-surface-variant)] border-[var(--color-outline-variant)]/30 hover:text-[var(--color-on-surface)]"
+                                ? "bg-[var(--color-danger)]/10 text-[var(--color-danger)] border-[var(--color-danger)]/50"
+                                : "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-[var(--color-border-active,#6338F6)]"
+                              : "bg-[var(--color-surface)] text-[var(--color-text-secondary)] border-[var(--color-border)] hover:border-[var(--color-border-active,#6338F6)]/50 hover:text-[var(--color-text-primary)]"
                               }`}
                           >
                             {p.label}
@@ -449,7 +450,7 @@ export default function CandidateHelpSupportPage() {
 
                     {/* Message */}
                     <div>
-                      <label className="block text-[11px] font-black uppercase tracking-widest mb-2 text-[var(--color-on-surface-variant)]">
+                      <label className="block text-[11px] font-medium tracking-tight mb-2 text-[var(--color-text-secondary)]">
                         Describe the issue experienced *
                       </label>
                       <textarea
@@ -458,7 +459,7 @@ export default function CandidateHelpSupportPage() {
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                         placeholder="Please detail your experience (e.g. Mic input stopped working during Question 2)..."
-                        className="w-full bg-[var(--color-surface-container-highest)]/30 border border-[var(--color-outline-variant)]/30 rounded-xl px-4 py-3 text-xs text-[var(--color-on-surface)] focus:outline-none focus:border-[var(--color-primary-md3)] resize-none"
+                        className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl px-4 py-3 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)] transition-colors resize-none"
                       />
                     </div>
 
@@ -466,7 +467,7 @@ export default function CandidateHelpSupportPage() {
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full py-3.5 bg-[var(--color-primary-md3)] hover:bg-[var(--color-primary-md3)]/90 disabled:opacity-50 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-[var(--color-primary-md3)]/30 flex items-center justify-center gap-2"
+                      className="w-full py-3.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover,var(--color-primary))]/90 disabled:opacity-50 text-white text-sm font-medium tracking-tight rounded-xl transition-all shadow-lg shadow-[var(--color-primary)]/30 flex items-center justify-center gap-2"
                     >
                       {isSubmitting ? (
                         <>
@@ -491,13 +492,13 @@ export default function CandidateHelpSupportPage() {
             {/* Search & Topic Filters (BELOW) */}
             <div className="space-y-4">
               <div className="relative max-w-2xl mx-auto">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-on-surface-variant)]" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-secondary)]" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search issues (e.g. microphone, camera black screen, network disconnect)..."
-                  className="w-full bg-[var(--color-surface-container-low)] border border-[var(--color-surface-variant)] rounded-2xl pl-12 pr-4 py-4 text-sm text-[var(--color-on-surface)] placeholder:text-[var(--color-on-surface-variant)]/60 focus:outline-none focus:border-[var(--color-primary-md3)] transition-all shadow-lg"
+                  className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl pl-12 pr-4 py-4 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]/60 focus:outline-none focus:border-[var(--color-primary)] transition-all shadow-lg"
                 />
               </div>
 
@@ -507,9 +508,9 @@ export default function CandidateHelpSupportPage() {
                   <button
                     key={cat.id}
                     onClick={() => setActiveCategory(cat.id)}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border ${activeCategory === cat.id
-                      ? "bg-[var(--color-primary-md3)] text-white border-[var(--color-primary-md3)] shadow-md shadow-[var(--color-primary-md3)]/30"
-                      : "bg-[var(--color-surface-container-low)] text-[var(--color-on-surface-variant)] border-[var(--color-surface-variant)] hover:bg-[var(--color-surface-variant)]/50 hover:text-[var(--color-on-surface)]"
+                    className={`px-4 py-2 rounded-xl text-sm font-medium tracking-tight transition-all border ${activeCategory === cat.id
+                      ? "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-[var(--color-border-active,#6338F6)]"
+                      : "bg-[var(--color-surface)] text-[var(--color-text-secondary)] border-transparent hover:border-[var(--color-border)] hover:bg-[var(--color-border)]/50 hover:text-[var(--color-text-primary)]"
                       }`}
                   >
                     {cat.label}
@@ -528,9 +529,9 @@ export default function CandidateHelpSupportPage() {
 
               {filteredFaqs.length === 0 ? (
                 <GlassCard padding="p-8" className="text-center space-y-3">
-                  <AlertTriangle className="w-10 h-10 text-amber-400 mx-auto opacity-80" />
-                  <h3 className="text-base font-bold text-[var(--color-on-surface)]">No matching guide found</h3>
-                  <p className="text-xs text-[var(--color-on-surface-variant)] max-w-md mx-auto">
+                  <AlertTriangle className="w-10 h-10 text-[var(--color-warning)] mx-auto opacity-80" />
+                  <h3 className="text-base font-bold text-[var(--color-text-primary)]">No matching guide found</h3>
+                  <p className="text-sm text-[var(--color-text-secondary)] max-w-md mx-auto">
                     Try searching with different keywords or submit a ticket above to get direct help from our team.
                   </p>
                 </GlassCard>
@@ -542,22 +543,22 @@ export default function CandidateHelpSupportPage() {
                     return (
                       <div
                         key={faq.id}
-                        className="bg-[var(--color-surface-container-low)] border border-[var(--color-surface-variant)] rounded-2xl overflow-hidden shadow-md transition-all hover:border-[var(--color-primary-md3)]/40"
+                        className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl overflow-hidden shadow-md transition-all hover:border-[var(--color-primary)]/40"
                       >
                         <button
                           onClick={() => setOpenFaqId(isOpen ? null : faq.id)}
-                          className="w-full p-5 flex items-center justify-between gap-4 text-left transition-colors hover:bg-[var(--color-surface-variant)]/20"
+                          className="w-full p-5 flex items-center justify-between gap-4 text-left transition-colors hover:bg-[var(--color-border)]/20"
                         >
                           <div className="flex items-center gap-3.5">
-                            <div className="w-9 h-9 rounded-xl bg-[var(--color-primary-md3)]/10 text-[var(--color-primary-md3)] flex items-center justify-center shrink-0 border border-[var(--color-primary-md3)]/20">
+                            <div className="w-9 h-9 rounded-xl bg-[var(--color-primary)]/10 text-[var(--color-primary)] flex items-center justify-center shrink-0 border border-[var(--color-primary)]/20">
                               <IconComponent className="w-4 h-4" />
                             </div>
-                            <span className="text-sm font-bold text-[var(--color-on-surface)] tracking-tight">
+                            <span className="text-sm font-bold text-[var(--color-text-primary)] tracking-tight">
                               {faq.question}
                             </span>
                           </div>
                           <ChevronDown
-                            className={`w-5 h-5 text-[var(--color-on-surface-variant)] shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180 text-[var(--color-primary-md3)]" : ""
+                            className={`w-5 h-5 text-[var(--color-text-secondary)] shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180 text-[var(--color-primary)]" : ""
                               }`}
                           />
                         </button>
@@ -569,7 +570,7 @@ export default function CandidateHelpSupportPage() {
                               animate={{ height: "auto", opacity: 1 }}
                               exit={{ height: 0, opacity: 0 }}
                               transition={{ duration: 0.25 }}
-                              className="px-5 pb-5 pt-1 text-xs md:text-sm text-[var(--color-on-surface-variant)] leading-relaxed font-medium whitespace-pre-line border-t border-[var(--color-surface-variant)]/40 bg-[var(--color-surface-container-lowest)]/50 pl-16"
+                              className="px-5 pb-5 pt-1 text-sm md:text-sm text-[var(--color-text-secondary)] leading-relaxed font-medium whitespace-pre-line border-t border-[var(--color-border)]/40 bg-[var(--color-surface)]/50 pl-16"
                             >
                               {faq.answer}
                             </motion.div>
@@ -595,18 +596,18 @@ export default function CandidateHelpSupportPage() {
 
             {loadingTickets ? (
               <div className="flex items-center justify-center py-20">
-                <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary-md3)]" />
+                <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
               </div>
             ) : myTickets.length === 0 ? (
               <GlassCard padding="p-12" className="text-center space-y-4">
-                <MessageCircleQuestion className="w-12 h-12 text-[var(--color-on-surface-variant)] mx-auto opacity-50" />
-                <h3 className="text-lg font-bold text-[var(--color-on-surface)]">No Support Tickets Found</h3>
-                <p className="text-xs text-[var(--color-on-surface-variant)] max-w-md mx-auto">
+                <MessageCircleQuestion className="w-12 h-12 text-[var(--color-text-secondary)] mx-auto opacity-50" />
+                <h3 className="text-lg font-bold text-[var(--color-text-primary)]">No Support Tickets Found</h3>
+                <p className="text-sm text-[var(--color-text-secondary)] max-w-md mx-auto">
                   You haven't submitted any complaints or support requests yet.
                 </p>
                 <button
                   onClick={() => setActiveMainTab("support")}
-                  className="px-5 py-2.5 bg-[var(--color-primary-md3)] text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md"
+                  className="px-5 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover,var(--color-primary))]/90 text-white text-sm font-medium tracking-tight rounded-xl transition-all shadow-md shadow-[var(--color-primary)]/30"
                 >
                   Submit a Support Ticket
                 </button>
@@ -616,20 +617,20 @@ export default function CandidateHelpSupportPage() {
                 {myTickets.map((ticket) => (
                   <div
                     key={ticket._id || ticket.ticketId}
-                    className="bg-[var(--color-surface-container-low)] border border-[var(--color-surface-variant)] rounded-3xl p-6 shadow-xl space-y-4 relative overflow-hidden"
+                    className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl p-6 shadow-xl space-y-4 relative overflow-hidden"
                   >
                     {/* Ticket Header Row */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[var(--color-surface-variant)]/50 pb-4">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[var(--color-border)]/50 pb-4">
                       <div className="flex items-center gap-3 flex-wrap">
-                        <span className="px-3 py-1 rounded-xl bg-[var(--color-primary-md3)]/15 border border-[var(--color-primary-md3)]/30 text-[var(--color-primary-md3)] text-xs font-black uppercase tracking-widest font-mono">
+                        <span className="px-3 py-1 rounded-xl bg-[var(--color-primary)]/15 border border-[var(--color-primary)]/30 text-[var(--color-primary)] text-xs font-medium tracking-tight font-mono">
                           {ticket.ticketId}
                         </span>
                         {getStatusBadge(ticket.status)}
-                        <span className="px-2.5 py-0.5 rounded-full bg-[var(--color-surface-variant)] text-[var(--color-on-surface-variant)] text-[10px] font-bold uppercase tracking-wider">
+                        <span className="px-2.5 py-0.5 rounded-full bg-[var(--color-border)]/50 text-[var(--color-text-secondary)] text-[10px] font-medium tracking-tight uppercase">
                           Category: {ticket.category}
                         </span>
                       </div>
-                      <span className="text-[11px] font-medium text-[var(--color-on-surface-variant)] flex items-center gap-1.5">
+                      <span className="text-[11px] font-medium text-[var(--color-text-secondary)] flex items-center gap-1.5">
                         <Clock className="w-3.5 h-3.5" />
                         {new Date(ticket.createdAt).toLocaleDateString(undefined, {
                           year: "numeric",
@@ -643,30 +644,30 @@ export default function CandidateHelpSupportPage() {
 
                     {/* Candidate Message */}
                     <div className="space-y-1.5">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)]">
+                      <span className="text-xs font-medium tracking-tight text-[var(--color-text-secondary)] uppercase">
                         Your Complaint Description:
                       </span>
-                      <p className="text-xs md:text-sm text-[var(--color-on-surface)] leading-relaxed font-medium bg-[var(--color-surface-container-lowest)]/50 p-4 rounded-2xl border border-[var(--color-surface-variant)]/30">
+                      <p className="text-xs md:text-sm text-[var(--color-text-primary)] leading-relaxed font-medium bg-[var(--color-surface)]/50 p-4 rounded-2xl border border-[var(--color-border)]/30">
                         {ticket.message}
                       </p>
                     </div>
 
                     {/* Admin Response Section */}
                     {(ticket.adminNotes || ticket.adminNote) ? (
-                      <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-2">
-                        <div className="flex items-center gap-2 text-emerald-400">
+                      <div className="p-4 rounded-2xl bg-[var(--color-success)]/10 border border-[var(--color-success)]/30 space-y-2">
+                        <div className="flex items-center gap-2 text-[var(--color-success)]">
                           <ShieldCheck className="w-4 h-4" />
-                          <span className="text-xs font-black uppercase tracking-wider">
+                          <span className="text-sm font-medium tracking-tight uppercase">
                             Official Admin Response & Notes
                           </span>
                         </div>
-                        <p className="text-xs md:text-sm text-emerald-200 leading-relaxed font-medium pl-6">
+                        <p className="text-xs md:text-sm text-[var(--color-success)]/80 leading-relaxed font-medium pl-6">
                           {ticket.adminNotes || ticket.adminNote}
                         </p>
                       </div>
                     ) : (
-                      <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[11px] font-medium flex items-center gap-2">
-                        <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <div className="p-3 rounded-xl bg-[var(--color-warning)]/10 border border-[var(--color-warning)]/20 text-[var(--color-warning)] text-xs font-medium flex items-center gap-2">
+                        <Clock className="w-3.5 h-3.5 text-[var(--color-warning)] shrink-0" />
                         <span>Support desk review pending. An administrator response will appear here once updated.</span>
                       </div>
                     )}

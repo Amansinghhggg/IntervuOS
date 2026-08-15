@@ -380,7 +380,13 @@ export default function CandidateDashboard() {
                           </div>
                         ) : isInProgress ? (
                           <button
-                            onClick={() => navigate(`/candidate/interviews/${interview._id}/live`)}
+                            onClick={() => {
+                              const elem = document.documentElement;
+                              if (elem.requestFullscreen && !document.fullscreenElement) {
+                                elem.requestFullscreen().catch(() => {});
+                              }
+                              navigate(`/candidate/interviews/${interview._id}/live`);
+                            }}
                             className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-medium text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors duration-150 shadow-sm w-full sm:w-auto"
                           >
                             <span>Resume Live Session</span>

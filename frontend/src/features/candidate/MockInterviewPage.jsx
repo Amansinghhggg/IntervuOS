@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { toast } from "react-hot-toast";
@@ -16,6 +16,7 @@ import {
   MessageSquare,
   Zap,
   PlayCircle,
+  Play,
   Loader2,
   Coins,
   ShieldCheck,
@@ -24,9 +25,11 @@ import {
   FileText,
   Lock,
   ArrowRight,
-  AlertCircle
+  AlertCircle,
+  RotateCcw,
+  Trash2
 } from "lucide-react";
-import { PreLaunchDisclosureModal } from "../../ui/primitives/PreLaunchDisclosureModal";
+import { PreSessionCheckModal } from "../../ui/shared/PreSessionCheckModal";
 import { InsufficientCreditsModal } from "../../ui/primitives/InsufficientCreditsModal";
 
 // Preset Role Options
@@ -84,6 +87,41 @@ export default function MockInterviewPage() {
   // Insufficient Credits Modal State
   const [showInsufficientCreditsModal, setShowInsufficientCreditsModal] = useState(false);
   const [requiredCreditsNeeded, setRequiredCreditsNeeded] = useState(15);
+
+  // In-Progress / Resumable Mock Sessions State
+  const [resumeableMocks, setResumeableMocks] = useState([]);
+  const [loadingResumeable, setLoadingResumeable] = useState(true);
+
+  const fetchResumeableMocks = async () => {
+    try {
+      const data = await mockInterviewService.getResumeableMocks();
+      if (data.success && Array.isArray(data.resumeable)) {
+        setResumeableMocks(data.resumeable);
+      } else {
+        setResumeableMocks([]);
+      }
+    } catch (err) {
+      console.warn("Could not fetch resumeable mocks:", err.message);
+      setResumeableMocks([]);
+    } finally {
+      setLoadingResumeable(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchResumeableMocks();
+  }, []);
+
+  const handleDeleteResumeableMock = async (id, e) => {
+    e.stopPropagation();
+    try {
+      await mockInterviewService.deleteMockInterview(id);
+      toast.success("Incomplete session removed");
+      setResumeableMocks((prev) => prev.filter((m) => m.id !== id));
+    } catch {
+      toast.error("Failed to remove session");
+    }
+  };
 
   const availableCredits = user?.credits?.availableCredits ?? user?.credits?.availableMinutes ?? 15;
   const isBalanceSufficient = availableCredits >= duration;
@@ -155,8 +193,12 @@ export default function MockInterviewPage() {
       if (data.success && data.interview?._id) {
         if (checkAuth) await checkAuth();
         setShowDisclosureModal(false);
-        toast.success(`Deducted ${duration} Credits! Launching session...`, { id: toastId });
-        navigate(`/candidate/mock-interview/${data.interview._id}/prepare`);
+        const elem = document.documentElement;
+        if (elem.requestFullscreen && !document.fullscreenElement) {
+          elem.requestFullscreen().catch(() => {});
+        }
+        toast.success(`Deducted ${duration} Credits! Starting session...`, { id: toastId });
+        navigate(`/candidate/mock-interview/${data.interview._id}/live`);
       } else {
         toast.error("Failed to create mock interview", { id: toastId });
       }
@@ -219,7 +261,73 @@ export default function MockInterviewPage() {
           </div>
         </div>
 
+        {/* Resumable In-Progress Mock Sessions (Rendered ONLY when active in-progress mocks exist) */}
+        {resumeableMocks.length > 0 && (
+          <div className="bg-[var(--card)] border border-[var(--color-border-active,#6338F6)]/40 rounded-2xl p-5 sm:p-6 space-y-4 shadow-sm relative overflow-hidden">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[var(--border)]">
+              <div className="flex items-center gap-3">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
+                <div>
+                  <h2 className="text-sm sm:text-base font-medium text-[var(--text-primary)] flex items-center gap-2">
+                    <span>Resume In-Progress Practice Session</span>
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] font-normal border border-[var(--color-border-active,#6338F6)]/30">
+                      {resumeableMocks.length} Active
+                    </span>
+                  </h2>
+                  <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+                    You have an incomplete mock interview session. You can continue directly where you left off.
+                  </p>
+                </div>
+              </div>
+            </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {resumeableMocks.map((item) => (
+                <div
+                  key={item.id}
+                  className="p-4 rounded-xl bg-[var(--background)] border border-[var(--border)] space-y-3 flex flex-col justify-between hover:border-[var(--color-border-active,#6338F6)]/50 transition-colors"
+                >
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-medium text-[var(--text-primary)] truncate">
+                        {item.jobRole || item.title || "Practice Session"}
+                      </span>
+                      <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
+                        {item.status || "In Progress"}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-3 text-[11px] text-[var(--text-secondary)]">
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-[var(--text-muted)]" />
+                        {item.duration || 15} Mins
+                      </span>
+                      <span>•</span>
+                      <span className="truncate">{item.experienceLevel || "Mid-Level"}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const elem = document.documentElement;
+                        if (elem.requestFullscreen && !document.fullscreenElement) {
+                          elem.requestFullscreen().catch(() => {});
+                        }
+                        navigate(`/candidate/interviews/${item.id}/live`);
+                      }}
+                      className="flex-1 py-2 px-3 bg-[var(--primary,#5B3AF2)] hover:bg-[var(--primary-hover,#472CD7)] text-white rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 shadow-sm focus-visible:ring-2 focus-visible:ring-[var(--color-border-active,#6338F6)] focus-visible:outline-none"
+                    >
+                      <Play className="w-3 h-3 fill-current" />
+                      <span>Resume Interview</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Studio Creation Console */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -570,16 +678,18 @@ export default function MockInterviewPage() {
 
       </div>
 
-      {/* Requirement 1: Pre-Launch Disclosure & Consent Modal */}
-      <PreLaunchDisclosureModal
+      {/* Consolidated Pre-Session Hardware & Disclosure Modal */}
+      <PreSessionCheckModal
         isOpen={showDisclosureModal}
         onClose={() => setShowDisclosureModal(false)}
         onConfirm={handleConfirmAndCreateInterview}
         isLaunching={isLaunching}
         isMock={true}
         roleTitle={currentRoleName}
+        experienceLevel={experienceLevel}
         duration={duration}
         creditCost={duration}
+        topics={selectedTopics}
       />
 
       {/* Requirement 5: Insufficient Credits Modal Component */}

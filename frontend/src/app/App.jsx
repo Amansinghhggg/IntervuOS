@@ -12,7 +12,6 @@ import CreateInterviewPage from "../features/employer/CreateInterviewPage";
 import EditInterviewPage from "../features/employer/EditInterviewPage";
 import InterviewDetailsPage from "../features/employer/InterviewDetailsPage";
 import InterviewInstructionsPage from "../features/candidate/InterviewInstructionsPage";
-import PreInterviewPage from "../features/candidate/PreInterviewPage";
 import CandidateLayout from "../features/candidate/CandidateLayout";
 import LiveInterviewPage from "../features/interview/LiveInterviewPage";
 import EmployerInterviewResultPage from "../features/employer/EmployerInterviewResultPage";
@@ -20,7 +19,6 @@ import VoiceTestPage from "../features/interview/VoiceTestPage";
 import AvatarTestPage from "../features/interview/AvatarTestPage";
 import ProfilePage from "../features/shared/ProfilePage";
 import MockInterviewPage from "../features/candidate/MockInterviewPage";
-import MockPreInterviewPage from "../features/candidate/MockPreInterviewPage";
 import CandidateSubscriptionsPage from "../features/candidate/CandidateSubscriptionsPage";
 import CandidateHelpSupportPage from "../features/candidate/CandidateHelpSupportPage";
 import MockReportsPage from "../features/candidate/MockReportsPage";
@@ -111,15 +109,29 @@ function App() {
           <Route path="/candidate/mock-reports" element={<MockReportsPage />} />
           <Route path="/candidate/dashboard" element={<CandidateDashboard />} />
           <Route path="/candidate/join" element={<Navigate to="/candidate/dashboard" replace />} />
-          <Route path="/candidate/mock-interview/:id/prepare" element={<MockPreInterviewPage />} />
           <Route path="/candidate/interviews/:id" element={<InterviewInstructionsPage />} />
-          <Route path="/candidate/interviews/:id/start" element={<PreInterviewPage />} />
           <Route path="/candidate/subscriptions" element={<CandidateSubscriptionsPage />} />
           <Route path="/candidate/help" element={<CandidateHelpSupportPage />} />
           <Route path="/candidate/profile" element={<ProfilePage />} />
         </Route>
         <Route
           path="/candidate/interviews/:id/live"
+          element={
+            <ProtectedRoute role="candidate">
+              <LiveInterviewPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/candidate/mock-interview/:id/live"
+          element={
+            <ProtectedRoute role="candidate">
+              <LiveInterviewPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/candidate/mock-interview/:id/prepare"
           element={
             <ProtectedRoute role="candidate">
               <LiveInterviewPage />

@@ -4,74 +4,83 @@
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", monospace;
 
+  /* Exponent Theme Color Tokens */
+  --color-canvas: #0B0B0E;
+  --color-canvas-secondary: #101015;
+  --color-surface: #16161E;
+  --color-surface-hover: #1E1E2A;
+
+  --color-primary: #5B3AF2;
+  --color-primary-hover: #472CD7;
+  --color-primary-tint: rgba(99, 56, 246, 0.15);
+
+  --color-border: #232330;
+  --color-border-active: #6338F6;
+
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #94A3B8;
+  --color-text-muted: #6E7A8A;
+  --color-text-accent: #C4B5FD;
+
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #F43F5E;
+  --color-info: #818CF8;
+
   /* Theme variables mapped to Tailwind colors */
   --color-background: var(--background);
   --color-background-secondary: var(--background-secondary);
   --color-card: var(--card);
-  --color-border: var(--border);
-  
-  --color-text-primary: var(--text-primary);
-  --color-text-secondary: var(--text-secondary);
-  --color-text-muted: var(--text-muted);
-  
-  --color-primary: var(--primary);
-  --color-primary-hover: var(--primary-hover);
-  
-  /* Status Colors */
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
-  --color-danger: #EF4444;
-  --color-info: #3B82F6;
-  
-  /* MD3 HTML Template Colors */
-  --color-surface-variant: #2d3449;
-  --color-error-container: #93000a;
-  --color-on-surface-variant: #cbc3d7;
-  --color-outline-variant: #494454;
-  --color-on-error-container: #ffdad6;
-  --color-on-background: #dae2fd;
-  --color-primary-container: #a078ff;
-  --color-on-primary-fixed-variant: #5516be;
-  --color-surface-tint: #d0bcff;
-  --color-surface-container: #171f33;
-  --color-surface-container-highest: #2d3449;
-  --color-secondary-fixed: #acedff;
-  --color-on-primary-container: #340080;
-  --color-inverse-surface: #dae2fd;
-  --color-on-tertiary: #003824;
-  --color-on-primary: #3c0091;
-  --color-tertiary: #4edea3;
-  --color-surface-container-low: #131b2e;
-  --color-on-primary-fixed: #23005c;
-  --color-secondary-container: #03b5d3;
-  --color-inverse-primary: #6d3bd7;
-  --color-surface-bright: #31394d;
-  --color-surface-container-high: #222a3d;
-  --color-error: #ffb4ab;
-  --color-tertiary-fixed: #6ffbbe;
-  --color-outline: #958ea0;
-  --color-primary-fixed-dim: #d0bcff;
-  --color-surface: #0b1326;
-  --color-secondary-fixed-dim: #4cd7f6;
-  --color-surface-container-lowest: #060e20;
-  --color-on-surface: #dae2fd;
-  --color-surface-dim: #0b1326;
-  --color-on-tertiary-fixed-variant: #005236;
-  --color-on-tertiary-container: #00311f;
-  --color-tertiary-container: #00a572;
-  --color-primary-fixed: #e9ddff;
-  --color-inverse-on-surface: #283044;
-  --color-on-secondary-fixed: #001f26;
-  --color-tertiary-fixed-dim: #4edea3;
-  --color-on-secondary: #003640;
-  --color-on-secondary-container: #00424e;
-  --color-background-md3: #0b1326;
-  --color-on-error: #690005;
-  --color-on-secondary-fixed-variant: #004e5c;
-  --color-secondary: #4cd7f6;
-  --color-on-tertiary-fixed: #002113;
-  --color-primary-md3: #8b5cf6;
-  
+
+  /* Temporary MD3 Bridge Layer (mapped to Exponent tokens) */
+  --color-surface-variant: #232330;
+  --color-error-container: #4c1d24;
+  --color-on-surface-variant: #94A3B8;
+  --color-outline-variant: #232330;
+  --color-on-error-container: #fecdd3;
+  --color-on-background: #FFFFFF;
+  --color-primary-container: #5B3AF2;
+  --color-on-primary-fixed-variant: #472CD7;
+  --color-surface-tint: #C4B5FD;
+  --color-surface-container: #16161E;
+  --color-surface-container-highest: #1E1E2A;
+  --color-secondary-fixed: #818CF8;
+  --color-on-primary-container: #FFFFFF;
+  --color-inverse-surface: #FFFFFF;
+  --color-on-tertiary: #FFFFFF;
+  --color-on-primary: #FFFFFF;
+  --color-tertiary: #10B981;
+  --color-surface-container-low: #101015;
+  --color-on-primary-fixed: #FFFFFF;
+  --color-secondary-container: #5B3AF2;
+  --color-inverse-primary: #C4B5FD;
+  --color-surface-bright: #1E1E2A;
+  --color-surface-container-high: #16161E;
+  --color-error: #F43F5E;
+  --color-tertiary-fixed: #10B981;
+  --color-outline: #232330;
+  --color-primary-fixed-dim: #C4B5FD;
+  --color-surface: #16161E;
+  --color-secondary-fixed-dim: #818CF8;
+  --color-surface-container-lowest: #0B0B0E;
+  --color-on-surface: #FFFFFF;
+  --color-surface-dim: #0B0B0E;
+  --color-on-tertiary-fixed-variant: #10B981;
+  --color-on-tertiary-container: #FFFFFF;
+  --color-tertiary-container: #10B981;
+  --color-primary-fixed: #C4B5FD;
+  --color-inverse-on-surface: #0B0B0E;
+  --color-on-secondary-fixed: #FFFFFF;
+  --color-tertiary-fixed-dim: #10B981;
+  --color-on-secondary: #FFFFFF;
+  --color-on-secondary-container: #FFFFFF;
+  --color-background-md3: #0B0B0E;
+  --color-on-error: #FFFFFF;
+  --color-on-secondary-fixed-variant: #818CF8;
+  --color-secondary: #5B3AF2;
+  --color-on-tertiary-fixed: #FFFFFF;
+  --color-primary-md3: #5B3AF2;
+
   /* Font Families from Template */
   --font-label-md: "Inter", sans-serif;
   --font-headline-sm: "Inter", sans-serif;
@@ -146,33 +155,48 @@
 }
 
 :root {
-  /* Employer Theme (Light - Bright & Spacious ATS) */
-  --background: #F3F4F6; /* Gray-100 */
-  --background-secondary: #E5E7EB; /* Gray-200 */
+  /* Default Theme: Exponent Dark */
+  --background: #0B0B0E;
+  --background-secondary: #101015;
+  --card: #16161E;
+  --border: #232330;
+  
+  --text-primary: #FFFFFF;
+  --text-secondary: #94A3B8;
+  --text-muted: #6E7A8A;
+  
+  --primary: #5B3AF2;
+  --primary-hover: #472CD7;
+}
+
+.theme-employer-light {
+  /* Employer Light Theme Option */
+  --background: #F8FAFC;
+  --background-secondary: #F1F5F9;
   --card: #FFFFFF;
-  --border: #E5E7EB;
+  --border: #E2E8F0;
   
-  --text-primary: #111827;
-  --text-secondary: #4B5563;
-  --text-muted: #9CA3AF;
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
   
-  --primary: #6366F1;
-  --primary-hover: #4F46E5;
+  --primary: #5B3AF2;
+  --primary-hover: #472CD7;
 }
 
 .theme-candidate {
-  /* Candidate Theme (Dark - Immersive & Focused AI) */
-  --background: #09090B; /* Zinc-950 */
-  --background-secondary: #18181B; /* Zinc-900 */
-  --card: #18181B; /* Zinc-900 */
-  --border: #27272A; /* Zinc-800 */
+  /* Candidate Dark Theme (Exponent tokens) */
+  --background: #0B0B0E;
+  --background-secondary: #101015;
+  --card: #16161E;
+  --border: #232330;
   
-  --text-primary: #FAFAFA;
-  --text-secondary: #A1A1AA;
-  --text-muted: #71717A;
+  --text-primary: #FFFFFF;
+  --text-secondary: #94A3B8;
+  --text-muted: #6E7A8A;
   
-  --primary: #6366F1;
-  --primary-hover: #4F46E5;
+  --primary: #5B3AF2;
+  --primary-hover: #472CD7;
 }
 
 html {
@@ -204,7 +228,21 @@ body {
   background: var(--text-secondary);
 }
 
-/* Accessibility */
+/* Accessibility & Visible Focus */
+:focus-visible {
+  outline: 2px solid var(--color-border-active, #6338F6) !important;
+  outline-offset: 2px !important;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--color-border-active, #6338F6) !important;
+  outline-offset: 2px !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,

@@ -213,27 +213,75 @@ export const verifyPayment = async (req, res, next) => {
   }
 };
 
+// @desc    Mark Razorpay Order as Failed / Cancelled
+// @route   POST /api/payments/fail-order or POST /api/payments/cancel-order
+// @access  Private (Candidate)
+export const failOrder = async (req, res, next) => {
+  try {
+    const { orderId, reason } = req.body;
+    if (!orderId) {
+      return res.status(400).json({ success: false, message: "Order ID is required" });
+    }
+
+    const transaction = await Transaction.findOne({
+      razorpayOrderId: orderId,
+      userId: req.user._id,
+    });
+
+    if (transaction && transaction.status === "created") {
+      transaction.status = "failed";
+      if (reason) {
+        transaction.description = `${transaction.description} (${reason})`;
+      }
+      await transaction.save();
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Order marked as cancelled/failed",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Get Candidate Credit Transaction History
 // @route   GET /api/payments/history
 // @access  Private (Candidate)
 export const getCreditHistory = async (req, res, next) => {
   try {
+    // Auto-mark stale "created" transactions older than 10 minutes as "failed"
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+    await Transaction.updateMany(
+      {
+        userId: req.user._id,
+        status: "created",
+        createdAt: { $lt: tenMinutesAgo },
+      },
+      {
+        $set: { status: "failed" },
+      }
+    );
+
     const transactions = await Transaction.find({ userId: req.user._id })
       .sort({ createdAt: -1 })
       .lean();
 
     const formattedHistory = transactions.map((tx) => ({
+      _id: tx._id,
       id: tx._id,
       type: tx.type,
       description: tx.description,
       credits: tx.credits,
       amount: tx.amount,
+      createdAt: tx.createdAt,
       date: new Date(tx.createdAt).toLocaleDateString("en-US", {
         year: "numeric",
         month: "short",
         day: "numeric",
       }),
-      status: tx.status === "paid" ? "Completed" : tx.status,
+      status: tx.status === "paid" ? "completed" : tx.status,
+      razorpayPaymentId: tx.razorpayPaymentId,
     }));
 
     res.status(200).json({

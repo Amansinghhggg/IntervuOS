@@ -3,7 +3,7 @@ import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
 import { toast } from "react-hot-toast";
 import { motion } from "framer-motion";
-import { User, Lock, Trash2, Mail, Save, Loader2, Camera, FileText, ShieldCheck, ShieldAlert } from "lucide-react";
+import { User, Lock, Trash2, Mail, Save, Loader2, FileText, ShieldCheck, ShieldAlert, Eye, EyeOff } from "lucide-react";
 import ResumeCard from "./components/ResumeCard";
 import UploadProgress from "./components/UploadProgress";
 import profileService from "../../services/profile.service";
@@ -15,6 +15,10 @@ const ProfilePage = () => {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [isUpdatingName, setIsUpdatingName] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
@@ -82,13 +86,6 @@ const ProfilePage = () => {
     }
   };
 
-  const handleDeleteAccount = () => {
-    // Dummy button functionality
-    if (window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
-      toast.error("Account deletion is disabled in this demo environment.");
-    }
-  };
-
   const handleResumeReplace = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -141,22 +138,22 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className="w-full min-h-screen bg-transparent font-['Inter'] pb-24">
-      <div className="w-full max-w-[1600px] mx-auto p-4 md:p-10 space-y-8">
+    <div className="w-full min-h-screen bg-transparent font-['Inter'] pb-24 text-[var(--color-text-primary,#FFFFFF)]">
+      <div className="w-full max-w-[1600px] mx-auto p-4 sm:p-6 md:p-10 space-y-8">
 
         {/* User Profile Hero Section */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col md:flex-row items-center gap-6 py-8 border-b border-[var(--color-outline-variant)]/30 mb-8"
+          className="flex flex-col md:flex-row items-center gap-6 py-8 border-b border-[var(--color-border,#232330)] mb-8"
         >
           <div className="relative group">
-            <div className="w-32 h-32 rounded-full border-2 border-[var(--color-primary-md3)] p-1 bg-[var(--color-surface-container-lowest)] overflow-hidden">
-              <div className="w-full h-full rounded-full bg-[var(--color-surface-container-high)] flex items-center justify-center text-[var(--color-primary-md3)] overflow-hidden">
+            <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full border border-[var(--color-border-active,#6338F6)] p-1 bg-[var(--color-surface,#16161E)] overflow-hidden shadow-xl">
+              <div className="w-full h-full rounded-full bg-[var(--color-canvas,#0B0B0E)] flex items-center justify-center text-[var(--color-text-accent,#C4B5FD)] overflow-hidden">
                 {user?.profilePicture ? (
                   <img src={user.profilePicture} alt="Profile" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-4xl font-black uppercase">
+                  <span className="text-3xl sm:text-4xl font-medium">
                     {getInitials(user?.name)}
                   </span>
                 )}
@@ -165,11 +162,15 @@ const ProfilePage = () => {
           </div>
 
           <div className="text-center md:text-left">
-            <h1 className="text-3xl font-black text-[var(--color-on-surface)] uppercase tracking-tight">{user?.name}</h1>
+            <h1 className="text-2xl sm:text-3xl font-medium text-[var(--color-text-primary,#FFFFFF)] tracking-tight">
+              {user?.name || "Account"}
+            </h1>
             <div className="flex items-center justify-center md:justify-start gap-3 mt-1.5 flex-wrap">
-              <span className="text-xs font-black text-[var(--color-primary-md3)] tracking-widest uppercase">{user?.role}</span>
+              <span className="px-2.5 py-0.5 rounded-full bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)]/30 text-xs font-medium capitalize">
+                {user?.role || "Candidate"}
+              </span>
               {user?.role === "employer" && (
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                <span className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-medium border ${
                   user?.isVerified
                     ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
                     : "bg-amber-500/10 text-amber-300 border-amber-500/30"
@@ -177,18 +178,20 @@ const ProfilePage = () => {
                   {user?.isVerified ? (
                     <>
                       <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                      Verified Employer
+                      Verified employer
                     </>
                   ) : (
                     <>
                       <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
-                      Pending Verification
+                      Pending verification
                     </>
                   )}
                 </span>
               )}
             </div>
-            <p className="text-sm text-[var(--color-on-surface-variant)] mt-2">Manage your professional identity and security settings.</p>
+            <p className="text-sm text-[var(--color-text-secondary,#94A3B8)] mt-2">
+              Manage your professional identity and security settings.
+            </p>
           </div>
         </motion.section>
 
@@ -197,51 +200,61 @@ const ProfilePage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-[var(--color-surface-container-low)] border border-[var(--color-outline-variant)]/30 p-6 rounded-2xl shadow-xl"
+          className="bg-[var(--color-surface,#16161E)] border border-[var(--color-border,#232330)] p-6 rounded-2xl shadow-xl"
         >
           <div className="flex items-center gap-3 mb-6">
-            <User className="w-5 h-5 text-[var(--color-primary-md3)]" />
-            <h3 className="text-sm font-bold text-[var(--color-on-surface)] uppercase tracking-widest">General Information</h3>
+            <User className="w-5 h-5 text-[var(--color-text-accent,#C4B5FD)]" />
+            <h2 className="text-base font-medium text-[var(--color-text-primary,#FFFFFF)]">
+              General information
+            </h2>
           </div>
 
           <form onSubmit={handleUpdateName}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-on-surface-variant)] px-1">Email Address</label>
-                <div className="flex items-center gap-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)]/30 px-4 py-3 rounded-lg">
-                  <Mail className="w-4 h-4 text-[var(--color-on-surface-variant)] shrink-0" />
+                <label className="text-xs font-medium text-[var(--color-text-secondary,#94A3B8)] px-1 block">
+                  Email address
+                </label>
+                <div className="flex items-center gap-3 bg-[var(--color-canvas,#0B0B0E)] border border-[var(--color-border,#232330)] px-4 py-3 rounded-xl opacity-80">
+                  <Mail className="w-4 h-4 text-[var(--color-text-muted,#6E7A8A)] shrink-0" />
                   <input
                     type="email"
                     value={user?.email || ""}
                     disabled
-                    className="bg-transparent border-none focus:outline-none text-sm font-semibold text-[var(--color-on-surface-variant)] w-full cursor-not-allowed"
+                    className="bg-transparent border-none focus:outline-none text-sm text-[var(--color-text-secondary,#94A3B8)] w-full cursor-not-allowed"
                   />
                 </div>
-                <p className="text-[10px] text-[var(--color-on-surface-variant)]/70 px-1 italic">Email address cannot be changed.</p>
+                <p className="text-xs text-[var(--color-text-muted,#6E7A8A)] px-1">
+                  Email address is linked to your login provider and cannot be changed.
+                </p>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-on-surface-variant)] px-1">Full Name</label>
-                <div className="flex items-center gap-3 bg-[var(--color-surface-container-high)]/30 border border-[var(--color-outline-variant)]/50 px-4 py-3 rounded-lg focus-within:border-[var(--color-primary-md3)] transition-colors">
-                  <User className="w-4 h-4 text-[var(--color-on-surface-variant)] shrink-0" />
+                <label className="text-xs font-medium text-[var(--color-text-secondary,#94A3B8)] px-1 block">
+                  Full name
+                </label>
+                <div className="flex items-center gap-3 bg-[var(--color-canvas,#0B0B0E)] border border-[var(--color-border,#232330)] px-4 py-3 rounded-xl focus-within:border-[var(--color-border-active,#6338F6)] transition-colors">
+                  <User className="w-4 h-4 text-[var(--color-text-muted,#6E7A8A)] shrink-0" />
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="bg-transparent border-none focus:outline-none text-sm font-semibold text-[var(--color-on-surface)] w-full"
+                    className="bg-transparent border-none focus:outline-none text-sm text-[var(--color-text-primary,#FFFFFF)] w-full placeholder-[var(--color-text-muted,#6E7A8A)]"
+                    placeholder="Your full name"
                   />
                 </div>
               </div>
             </div>
 
+            {/* Single Primary CTA for profile details */}
             <div className="mt-6 flex justify-end">
               <button
                 type="submit"
                 disabled={isUpdatingName || name === user?.name}
-                className="bg-[var(--color-primary-md3)] text-white text-xs font-bold uppercase tracking-widest px-6 py-3 rounded-lg hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[var(--color-primary-md3)]/20"
+                className="bg-[var(--color-primary,#5B3AF2)] hover:bg-[var(--color-primary-hover,#472CD7)] text-white text-xs sm:text-sm font-medium px-6 py-2.5 rounded-xl active:scale-[0.99] transition-all flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm focus-visible:ring-2 focus-visible:ring-[var(--color-border-active,#6338F6)] focus-visible:outline-none"
               >
                 {isUpdatingName ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                Save Changes
+                <span>Save changes</span>
               </button>
             </div>
           </form>
@@ -253,59 +266,99 @@ const ProfilePage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-[var(--color-surface-container-low)] border border-[var(--color-outline-variant)]/30 p-6 rounded-2xl shadow-xl"
+            className="bg-[var(--color-surface,#16161E)] border border-[var(--color-border,#232330)] p-6 rounded-2xl shadow-xl"
           >
             <div className="flex items-center gap-3 mb-6">
-              <Lock className="w-5 h-5 text-[var(--color-primary-md3)]" />
-              <h3 className="text-sm font-bold text-[var(--color-on-surface)] uppercase tracking-widest">Security</h3>
+              <Lock className="w-5 h-5 text-[var(--color-text-accent,#C4B5FD)]" />
+              <h2 className="text-base font-medium text-[var(--color-text-primary,#FFFFFF)]">
+                Security
+              </h2>
             </div>
 
             <form onSubmit={handleUpdatePassword} className="space-y-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-on-surface-variant)] px-1">Current Password</label>
-                <div className="flex items-center gap-3 bg-[var(--color-surface-container-high)]/30 border border-[var(--color-outline-variant)]/50 px-4 py-3 rounded-lg focus-within:border-[var(--color-primary-md3)] transition-colors">
-                  <Lock className="w-4 h-4 text-[var(--color-on-surface-variant)] shrink-0" />
+                <label className="text-xs font-medium text-[var(--color-text-secondary,#94A3B8)] px-1 block">
+                  Current password
+                </label>
+                <div className="flex items-center gap-3 bg-[var(--color-canvas,#0B0B0E)] border border-[var(--color-border,#232330)] px-4 py-3 rounded-xl focus-within:border-[var(--color-border-active,#6338F6)] transition-colors">
+                  <Lock className="w-4 h-4 text-[var(--color-text-muted,#6E7A8A)] shrink-0" />
                   <input
-                    type="password"
+                    type={showCurrentPassword ? "text" : "password"}
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="bg-transparent border-none focus:outline-none text-sm font-semibold text-[var(--color-on-surface)] w-full"
+                    placeholder="Enter current password"
+                    className="bg-transparent border-none focus:outline-none text-sm text-[var(--color-text-primary,#FFFFFF)] w-full placeholder-[var(--color-text-muted,#6E7A8A)]"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    className="text-[var(--color-text-muted,#6E7A8A)] hover:text-[var(--color-text-primary,#FFFFFF)] transition-colors focus:outline-none"
+                    aria-label={showCurrentPassword ? "Hide current password" : "Show current password"}
+                  >
+                    {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-on-surface-variant)] px-1">New Password</label>
-                  <input
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full bg-[var(--color-surface-container-high)]/30 border border-[var(--color-outline-variant)]/50 px-4 py-3 rounded-lg text-sm font-semibold text-[var(--color-on-surface)] focus:outline-none focus:border-[var(--color-primary-md3)] transition-colors"
-                  />
+                  <label className="text-xs font-medium text-[var(--color-text-secondary,#94A3B8)] px-1 block">
+                    New password
+                  </label>
+                  <div className="flex items-center gap-3 bg-[var(--color-canvas,#0B0B0E)] border border-[var(--color-border,#232330)] px-4 py-3 rounded-xl focus-within:border-[var(--color-border-active,#6338F6)] transition-colors">
+                    <Lock className="w-4 h-4 text-[var(--color-text-muted,#6E7A8A)] shrink-0" />
+                    <input
+                      type={showNewPassword ? "text" : "password"}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="At least 6 characters"
+                      className="bg-transparent border-none focus:outline-none text-sm text-[var(--color-text-primary,#FFFFFF)] w-full placeholder-[var(--color-text-muted,#6E7A8A)]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="text-[var(--color-text-muted,#6E7A8A)] hover:text-[var(--color-text-primary,#FFFFFF)] transition-colors focus:outline-none"
+                      aria-label={showNewPassword ? "Hide new password" : "Show new password"}
+                    >
+                      {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
+
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-on-surface-variant)] px-1">Confirm New Password</label>
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full bg-[var(--color-surface-container-high)]/30 border border-[var(--color-outline-variant)]/50 px-4 py-3 rounded-lg text-sm font-semibold text-[var(--color-on-surface)] focus:outline-none focus:border-[var(--color-primary-md3)] transition-colors"
-                  />
+                  <label className="text-xs font-medium text-[var(--color-text-secondary,#94A3B8)] px-1 block">
+                    Confirm new password
+                  </label>
+                  <div className="flex items-center gap-3 bg-[var(--color-canvas,#0B0B0E)] border border-[var(--color-border,#232330)] px-4 py-3 rounded-xl focus-within:border-[var(--color-border-active,#6338F6)] transition-colors">
+                    <Lock className="w-4 h-4 text-[var(--color-text-muted,#6E7A8A)] shrink-0" />
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Repeat new password"
+                      className="bg-transparent border-none focus:outline-none text-sm text-[var(--color-text-primary,#FFFFFF)] w-full placeholder-[var(--color-text-muted,#6E7A8A)]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="text-[var(--color-text-muted,#6E7A8A)] hover:text-[var(--color-text-primary,#FFFFFF)] transition-colors focus:outline-none"
+                      aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
               </div>
 
+              {/* Secondary Tint Fill CTA for password update */}
               <div className="mt-6 flex justify-end">
                 <button
                   type="submit"
                   disabled={isUpdatingPassword || !currentPassword || !newPassword || !confirmPassword}
-                  className="bg-[var(--color-surface-container-high)] border border-[var(--color-outline-variant)]/50 text-[var(--color-on-surface)] text-xs font-bold uppercase tracking-widest px-6 py-3 rounded-lg hover:bg-[var(--color-surface-container-highest)] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-[var(--primary-tint,rgba(99,56,246,0.15))] hover:bg-[var(--primary-tint,rgba(99,56,246,0.25))] border border-[var(--color-border-active,#6338F6)]/40 text-[var(--color-text-accent,#C4B5FD)] text-xs sm:text-sm font-medium px-6 py-2.5 rounded-xl active:scale-[0.99] transition-all flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm focus-visible:ring-2 focus-visible:ring-[var(--color-border-active,#6338F6)] focus-visible:outline-none"
                 >
                   {isUpdatingPassword ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
-                  Update Password
+                  <span>Update password</span>
                 </button>
               </div>
             </form>
@@ -318,11 +371,13 @@ const ProfilePage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-[var(--color-surface-container-low)] border border-[var(--color-outline-variant)]/30 p-6 rounded-2xl shadow-xl"
+            className="bg-[var(--color-surface,#16161E)] border border-[var(--color-border,#232330)] p-6 rounded-2xl shadow-xl"
           >
             <div className="flex items-center gap-3 mb-6">
-              <FileText className="w-5 h-5 text-[var(--color-primary-md3)]" />
-              <h3 className="text-sm font-bold text-[var(--color-on-surface)] uppercase tracking-widest">Resume & Documents</h3>
+              <FileText className="w-5 h-5 text-[var(--color-text-accent,#C4B5FD)]" />
+              <h2 className="text-base font-medium text-[var(--color-text-primary,#FFFFFF)]">
+                Resume & documents
+              </h2>
             </div>
 
             <ResumeCard
@@ -334,7 +389,7 @@ const ProfilePage = () => {
             />
 
             {uploadProgress !== null && (
-              <UploadProgress progress={uploadProgress} fileName="Replacement Resume" />
+              <UploadProgress progress={uploadProgress} fileName="Replacement resume" />
             )}
 
             <input
@@ -353,23 +408,33 @@ const ProfilePage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="border border-[var(--color-error)]/30 p-6 rounded-2xl bg-[var(--color-surface-container-lowest)] relative overflow-hidden group"
+          className="border border-rose-500/20 p-6 rounded-2xl bg-[var(--color-surface,#16161E)] relative overflow-hidden shadow-xl"
         >
-          <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-error)]/5 rounded-full blur-[40px] pointer-events-none" />
           <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-3 text-[var(--color-error)]">
+            <div className="flex items-center gap-3 mb-3 text-rose-400">
               <Trash2 className="w-5 h-5" />
-              <h3 className="text-sm font-bold uppercase tracking-widest">Danger Zone</h3>
+              <h2 className="text-base font-medium">
+                Danger zone
+              </h2>
             </div>
-            <p className="text-sm text-[var(--color-on-surface-variant)] mb-6">
-              Once you delete your account, there is no going back. All recruitment history, active applications, and interview data will be permanently erased.
+            <p className="text-sm text-[var(--color-text-secondary,#94A3B8)] mb-6 leading-relaxed">
+              Once your account is deleted, all past assessments, mock reports, and campaign history will be permanently erased.
             </p>
-            <button
-              onClick={handleDeleteAccount}
-              className="px-6 py-3 border border-[var(--color-error)]/50 text-[var(--color-error)] font-bold text-xs uppercase tracking-widest rounded-lg hover:bg-[var(--color-error)]/10 transition-all active:scale-95 flex items-center"
-            >
-              Delete Account
-            </button>
+            
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <button
+                type="button"
+                disabled
+                className="px-5 py-2.5 border border-rose-500/30 bg-rose-500/5 text-rose-400/60 font-medium text-xs rounded-xl cursor-not-allowed opacity-60 flex items-center gap-2"
+                title="Account deletion is restricted in beta. Please contact support."
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete account</span>
+              </button>
+              <span className="text-xs text-[var(--color-text-muted,#6E7A8A)]">
+                Account deletion is restricted in beta. Contact support to request account removal.
+              </span>
+            </div>
           </div>
         </motion.section>
 

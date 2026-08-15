@@ -582,7 +582,7 @@ export default function AdminDashboardPage() {
                         <span className="text-purple-400 font-mono text-[10px]">{c.ticketId}</span>
                         <span>{c.name}</span>
                       </p>
-                      <p className="text-[10px] text-slate-400 uppercase font-bold mt-0.5">{c.category} • {c.urgency} urgency</p>
+                      <p className="text-[10px] text-slate-400 uppercase font-bold mt-0.5">{c.category}</p>
                     </div>
                     <span className={`px-2 py-0.5 text-[9px] font-black uppercase rounded ${c.status === "PENDING" ? "bg-rose-500/20 text-rose-300" : c.status === "IN_PROGRESS" ? "bg-amber-500/20 text-amber-300" : "bg-emerald-500/20 text-emerald-300"}`}>
                       {c.status}
@@ -1123,11 +1123,6 @@ export default function AdminDashboardPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span className={`px-2 py-0.5 text-[9px] font-black uppercase rounded ${
-                        c.urgency === "urgent" ? "bg-rose-500/20 text-rose-300 border border-rose-500/30" : "bg-purple-500/10 text-purple-300"
-                      }`}>
-                        {c.urgency} urgency
-                      </span>
                       <span className={`px-2.5 py-0.5 text-[9px] font-black uppercase rounded-full ${
                         c.status === "PENDING"
                           ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"

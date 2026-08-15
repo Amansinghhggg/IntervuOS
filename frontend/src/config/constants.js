@@ -1,0 +1,5 @@
+export const SUPPORT_CONFIG = {
+  ADMIN_EMAIL: "intervuos@gmail.com",
+  WHATSAPP_NUMBER: "+91 86550 21064",
+  WHATSAPP_CLEAN_NUMBER: "8655021064",
+};

@@ -55,6 +55,30 @@ const LiveInterviewAIContent = ({
   // Mode flag for automatic vs manual orchestration
   const isAutomaticMode = true;
 
+  // Ensure fullscreen is active upon mounting/resuming live session
+  useEffect(() => {
+    const triggerFullscreen = () => {
+      const elem = document.documentElement;
+      if (elem.requestFullscreen && !document.fullscreenElement) {
+        elem.requestFullscreen().catch(() => {});
+      }
+    };
+
+    triggerFullscreen();
+
+    const handleInteraction = () => {
+      triggerFullscreen();
+    };
+
+    window.addEventListener("click", handleInteraction, { once: true });
+    window.addEventListener("keydown", handleInteraction, { once: true });
+
+    return () => {
+      window.removeEventListener("click", handleInteraction);
+      window.removeEventListener("keydown", handleInteraction);
+    };
+  }, []);
+
   // Start recording automatically when runtime is ready
   useEffect(() => {
     if (runtime.state === INTERVIEW_RUNTIME_STATES.RECORDING_READY) {

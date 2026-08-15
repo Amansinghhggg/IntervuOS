@@ -18,16 +18,16 @@ export const PageHeader = ({
     >
       <div className="space-y-1.5 min-w-0">
         {badgeText && (
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--color-primary-md3)]/10 border border-[var(--color-primary-md3)]/20 text-[var(--color-primary-md3)] text-[10px] sm:text-[11px] font-black uppercase tracking-widest max-w-full truncate">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--primary-tint,rgba(99,56,246,0.15))] border border-[var(--primary)]/30 text-[var(--color-text-accent,#C4B5FD)] text-[10px] sm:text-[11px] font-black uppercase tracking-widest max-w-full truncate">
             {BadgeIcon && <BadgeIcon className="w-3.5 h-3.5 shrink-0" />}
             <span className="truncate">{badgeText}</span>
           </div>
         )}
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-black uppercase tracking-tight text-[var(--color-on-surface,#dae2fd)] break-words">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-black uppercase tracking-tight text-[var(--text-primary)] break-words">
           {title}
         </h1>
         {description && (
-          <p className="text-xs sm:text-sm text-[var(--color-on-surface-variant,#9098b6)] font-medium max-w-2xl leading-relaxed">
+          <p className="text-xs sm:text-sm text-[var(--text-secondary)] font-medium max-w-2xl leading-relaxed">
             {description}
           </p>
         )}

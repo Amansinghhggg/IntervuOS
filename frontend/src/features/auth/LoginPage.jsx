@@ -69,34 +69,34 @@ const LoginPage = () => {
     }
   };
 
-  const inputClasses = "w-full bg-[var(--color-surface-container-highest)]/30 border border-[var(--color-outline-variant)]/30 rounded-xl px-4 py-3 text-sm text-[var(--color-on-surface)] focus:outline-none focus:border-[var(--color-primary-md3)] focus:ring-1 focus:ring-[var(--color-primary-md3)] transition-all placeholder:text-[var(--color-on-surface-variant)]/50";
+  const inputClasses = "w-full bg-[var(--background)] border border-[var(--border)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--color-border-active,#6338F6)] focus:ring-1 focus:ring-[var(--color-border-active,#6338F6)] transition-all placeholder:text-[var(--text-muted)]";
 
   return (
-    <div className="min-h-[100dvh] py-8 px-4 flex items-center justify-center relative overflow-hidden bg-[#0A0A0A] font-['Inter']">
+    <div className="min-h-[100dvh] py-8 px-4 flex items-center justify-center relative overflow-hidden bg-[var(--background)] font-['Inter']">
       {/* Background noise and decorative gradients */}
       <div className="absolute inset-0 z-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.1) 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[var(--color-primary-md3)] rounded-full blur-[150px] opacity-20 pointer-events-none"></div>
-      <div className="absolute bottom-[-20%] right-[-10%] w-[40%] h-[40%] bg-[var(--color-primary-md3)] rounded-full blur-[120px] opacity-10 pointer-events-none"></div>
+      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[var(--primary)] rounded-full blur-[150px] opacity-20 pointer-events-none"></div>
+      <div className="absolute bottom-[-20%] right-[-10%] w-[40%] h-[40%] bg-[var(--primary)] rounded-full blur-[120px] opacity-10 pointer-events-none"></div>
 
       <div className="w-full max-w-[1000px] mx-auto z-10 grid md:grid-cols-2 gap-8 lg:gap-16 items-center">
 
         {/* Left side: Branding / Copy */}
         <div className="hidden md:flex flex-col pr-8 lg:pr-12">
           <div className="flex items-center gap-4 mb-12">
-            <div className="w-14 h-14 rounded-2xl bg-[var(--color-primary-md3)] flex items-center justify-center shadow-lg shadow-[var(--color-primary-md3)]/30">
+            <div className="w-14 h-14 rounded-2xl bg-[var(--primary)] flex items-center justify-center shadow-lg shadow-[var(--primary)]/30">
               <BrainCircuit className="w-8 h-8 text-white" />
             </div>
             <div>
-              <span className="text-3xl font-black text-white tracking-tight block">
+              <span className="text-3xl font-black text-[var(--text-primary)] tracking-tight block">
                 IntervuOS
               </span>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-primary-md3)]">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-accent,#C4B5FD)]">
                 Recruitment Suite
               </span>
             </div>
           </div>
 
-          <h1 className="text-5xl lg:text-6xl font-black text-white leading-[1.1] mb-6 tracking-tight">
+          <h1 className="text-5xl lg:text-6xl font-black text-[var(--text-primary)] leading-[1.1] mb-6 tracking-tight">
             The future of <br />
             <span className="text-[var(--color-primary-md3)]">hiring is here.</span>
           </h1>

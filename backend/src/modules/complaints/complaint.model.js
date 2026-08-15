@@ -39,11 +39,6 @@ const complaintSchema = new mongoose.Schema(
       trim: true,
       default: null,
     },
-    urgency: {
-      type: String,
-      enum: ["normal", "medium", "urgent"],
-      default: "normal",
-    },
     subject: {
       type: String,
       trim: true,

@@ -976,7 +976,7 @@ const CreateInterviewPage = () => {
                 disabled={isLoading || !user?.isVerified}
                 className={`px-8 py-3.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center min-w-[200px] ${!user?.isVerified
                     ? "bg-amber-500/20 text-amber-300 border border-amber-500/30 cursor-not-allowed"
-                    : "bg-[var(--color-primary-md3)] hover:bg-[var(--color-primary-md3)]/90 text-white shadow-lg shadow-[var(--color-primary-md3)]/25"
+                    : "bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white shadow-lg shadow-[var(--primary)]/25"
                   }`}
               >
                 {isLoading ? (
@@ -1044,9 +1044,9 @@ const CreateInterviewPage = () => {
               {/* Code Samples Tabs / Blocks */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-slate-300 uppercase tracking-wider text-[10px]">Sample CSV File Structure:</span>
+                  <span className="font-bold text-[var(--text-secondary)] uppercase tracking-wider text-[10px]">Sample CSV File Structure:</span>
                 </div>
-                <pre className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 font-mono text-[11px] overflow-x-auto whitespace-pre">
+                <pre className="p-4 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--text-primary)] font-mono text-[11px] overflow-x-auto whitespace-pre">
 {`Question,Topic,Difficulty
 "Explain how Virtual DOM works in React.",React,Easy
 "What is the difference between useEffect and useMemo?",React,Medium
@@ -1054,9 +1054,9 @@ const CreateInterviewPage = () => {
                 </pre>
 
                 <div className="flex items-center justify-between pt-1">
-                  <span className="font-bold text-slate-300 uppercase tracking-wider text-[10px]">Sample JSON File Structure:</span>
+                  <span className="font-bold text-[var(--text-secondary)] uppercase tracking-wider text-[10px]">Sample JSON File Structure:</span>
                 </div>
-                <pre className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 font-mono text-[11px] overflow-x-auto whitespace-pre">
+                <pre className="p-4 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--text-primary)] font-mono text-[11px] overflow-x-auto whitespace-pre">
 {`[
   { "question": "What is debouncing in JS?", "topic": "JavaScript", "difficulty": "Easy" },
   { "question": "Explain REST vs GraphQL.", "topic": "APIs", "difficulty": "Medium" }
@@ -1065,21 +1065,21 @@ const CreateInterviewPage = () => {
               </div>
 
               {/* Upload Drop Zone */}
-              <div className="p-6 border-2 border-dashed border-indigo-500/30 hover:border-indigo-500/60 rounded-2xl bg-indigo-500/5 text-center space-y-3 relative transition-all">
+              <div className="p-6 border-2 border-dashed border-[var(--primary)]/30 hover:border-[var(--color-border-active)] rounded-2xl bg-[var(--primary-tint)] text-center space-y-3 relative transition-all">
                 <input
                   type="file"
                   accept=".csv, .txt, .json"
                   onChange={handleQuestionCsvUpload}
                   className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                 />
-                <div className="w-12 h-12 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto border border-indigo-500/30">
+                <div className="w-12 h-12 rounded-full bg-[var(--primary)]/20 text-[var(--color-text-accent)] flex items-center justify-center mx-auto border border-[var(--primary)]/30">
                   <Upload className="w-6 h-6" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-black uppercase tracking-wider text-white">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-[var(--text-primary)]">
                     Click to select CSV / JSON file or drag here
                   </h4>
-                  <p className="text-[11px] text-slate-400 mt-1 font-medium">
+                  <p className="text-[11px] text-[var(--text-secondary)] mt-1 font-medium">
                     Supports .csv, .txt, and .json question files
                   </p>
                 </div>

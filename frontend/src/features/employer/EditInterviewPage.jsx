@@ -194,7 +194,6 @@ const EditInterviewPage = () => {
     setNewQText("");
     setNewQTopic("");
     setNewQDiff("Medium");
-    toast.success("Question added to campaign!");
   };
 
   const removeCustomQuestion = (index) => {
@@ -258,7 +257,6 @@ const EditInterviewPage = () => {
 
       setCustomQuestions((prev) => [...prev, ...parsedQuestions]);
       setIsQuestionImportModalOpen(false);
-      toast.success(`Successfully imported ${parsedQuestions.length} custom question(s) from ${file.name}`);
     };
 
     reader.readAsText(file);
@@ -282,7 +280,6 @@ const EditInterviewPage = () => {
     }
     setNewCandidateEmails([...newCandidateEmails, trimmed]);
     setSingleEmailInput("");
-    toast.success(`Added ${trimmed}`);
   };
 
   const addBulkCandidates = () => {
@@ -305,7 +302,6 @@ const EditInterviewPage = () => {
 
     setNewCandidateEmails([...newCandidateEmails, ...newEmails]);
     setBulkEmailInput("");
-    toast.success(`Added ${newEmails.length} unique candidate email(s).`);
   };
 
   const handleCsvUpload = (e) => {
@@ -336,7 +332,6 @@ const EditInterviewPage = () => {
       }
 
       setNewCandidateEmails((prev) => [...prev, ...newEmails]);
-      toast.success(`Extracted & added ${newEmails.length} candidate email(s) from ${file.name}`);
     };
     reader.readAsText(file);
     e.target.value = "";

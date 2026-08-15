@@ -17,7 +17,8 @@ import {
   Briefcase,
   Brain,
   Tag,
-  Sparkles
+  Sparkles,
+  ShieldCheck
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "../../context/AuthContext";

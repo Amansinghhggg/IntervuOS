@@ -11,7 +11,6 @@ import CandidateDashboard from "../features/candidate/CandidateDashboard";
 import CreateInterviewPage from "../features/employer/CreateInterviewPage";
 import EditInterviewPage from "../features/employer/EditInterviewPage";
 import InterviewDetailsPage from "../features/employer/InterviewDetailsPage";
-import JoinInterviewPage from "../features/candidate/JoinInterviewPage";
 import InterviewInstructionsPage from "../features/candidate/InterviewInstructionsPage";
 import PreInterviewPage from "../features/candidate/PreInterviewPage";
 import CandidateLayout from "../features/candidate/CandidateLayout";
@@ -111,7 +110,7 @@ function App() {
           <Route path="/candidate/mock-interview" element={<MockInterviewPage />} />
           <Route path="/candidate/mock-reports" element={<MockReportsPage />} />
           <Route path="/candidate/dashboard" element={<CandidateDashboard />} />
-          <Route path="/candidate/join" element={<JoinInterviewPage />} />
+          <Route path="/candidate/join" element={<Navigate to="/candidate/dashboard" replace />} />
           <Route path="/candidate/mock-interview/:id/prepare" element={<MockPreInterviewPage />} />
           <Route path="/candidate/interviews/:id" element={<InterviewInstructionsPage />} />
           <Route path="/candidate/interviews/:id/start" element={<PreInterviewPage />} />

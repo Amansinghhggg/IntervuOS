@@ -21,6 +21,7 @@ import {
   Layers,
   FileText
 } from "lucide-react";
+import { JoinCampaignModal } from "./components/JoinCampaignModal";
 
 export default function CandidateDashboard() {
   const { user } = useAuth();
@@ -30,6 +31,7 @@ export default function CandidateDashboard() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL"); // ALL | READY | IN_PROGRESS | REQUESTED
+  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
 
   const fetchAssignedInterviews = async () => {
     setLoading(true);
@@ -150,8 +152,8 @@ export default function CandidateDashboard() {
 
           <div className="flex items-center gap-3">
             <button
-              onClick={() => navigate("/candidate/join")}
-              className="px-4 py-2 bg-[var(--card)] hover:bg-[var(--surface-hover,#1E1E2A)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-medium rounded-xl inline-flex items-center gap-1.5 transition-colors duration-150"
+              onClick={() => setIsJoinModalOpen(true)}
+              className="px-4 py-2 bg-[var(--card)] hover:bg-[var(--surface-hover,#1E1E2A)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-medium rounded-xl inline-flex items-center gap-1.5 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-[var(--color-border-active)] focus-visible:outline-none"
             >
               <Key className="w-3.5 h-3.5" />
               <span>Join with Access Key</span>
@@ -159,7 +161,7 @@ export default function CandidateDashboard() {
 
             <button
               onClick={() => navigate("/candidate/mock-interview")}
-              className="px-4 py-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white font-medium text-xs rounded-xl inline-flex items-center gap-1.5 transition-colors duration-150 shadow-sm shrink-0"
+              className="px-4 py-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white font-medium text-xs rounded-xl inline-flex items-center gap-1.5 transition-colors duration-150 shadow-sm shrink-0 focus-visible:ring-2 focus-visible:ring-[var(--color-border-active)] focus-visible:outline-none"
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>Practice AI Mock</span>
@@ -224,32 +226,6 @@ export default function CandidateDashboard() {
           </div>
         )}
 
-        {/* Declined Requests Notice (Quiet Collapsible Accordion / Alert) */}
-        {declinedList.length > 0 && (
-          <div className="p-4 rounded-2xl bg-[var(--card)] border border-rose-500/20 space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs font-medium text-rose-400">
-                <XCircle className="w-4 h-4" />
-                <span>Declined Join Requests ({declinedList.length})</span>
-              </div>
-              <span className="text-[11px] text-[var(--text-muted)]">Employer declined access</span>
-            </div>
-            <div className="divide-y divide-[var(--border)]">
-              {declinedList.map((dec) => (
-                <div key={dec._id} className="py-2 flex justify-between items-center text-xs">
-                  <div>
-                    <span className="font-medium text-[var(--text-primary)]">{dec.title}</span>
-                    <span className="text-[11px] text-[var(--text-secondary)] ml-2">• {dec.employer?.name || "Employer"}</span>
-                  </div>
-                  <span className="px-2 py-0.5 rounded text-[10px] bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                    Declined
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Search & Filter Controls */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
           {/* Search Input */}
@@ -270,12 +246,13 @@ export default function CandidateDashboard() {
               { key: "ALL", label: `All Active (${activeInterviews.filter(i => i.candidateStatus !== "Rejected").length})` },
               { key: "READY", label: `Ready to Start (${readyToStartList.length})` },
               { key: "IN_PROGRESS", label: `In Progress (${inProgressList.length})` },
-              { key: "REQUESTED", label: `Awaiting (${requestedList.length})` }
+              { key: "REQUESTED", label: `Awaiting (${requestedList.length})` },
+              { key: "DECLINED", label: `Declined (${declinedList.length})` }
             ].map((f) => (
               <button
                 key={f.key}
                 onClick={() => setStatusFilter(f.key)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors duration-150 border whitespace-nowrap ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors duration-150 border whitespace-nowrap focus-visible:ring-2 focus-visible:ring-[var(--color-border-active)] focus-visible:outline-none ${
                   statusFilter === f.key
                     ? "bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-[var(--color-border-active,#6338F6)]"
                     : "bg-[var(--card)] text-[var(--text-secondary)] border-[var(--border)] hover:text-[var(--text-primary)]"
@@ -298,7 +275,9 @@ export default function CandidateDashboard() {
               <div className="w-10 h-10 rounded-xl bg-[var(--primary-tint,rgba(99,56,246,0.15))] flex items-center justify-center text-[var(--primary)] mx-auto">
                 <Briefcase className="w-5 h-5" />
               </div>
-              <h3 className="text-base font-medium text-[var(--text-primary)]">No assigned interviews</h3>
+              <h3 className="text-base font-medium text-[var(--text-primary)]">
+                {statusFilter === "DECLINED" ? "No declined interviews" : "No assigned interviews"}
+              </h3>
               <p className="text-xs text-[var(--text-secondary)] max-w-sm mx-auto">
                 {searchQuery || statusFilter !== "ALL"
                   ? "No assigned interviews match your current search filters."
@@ -306,14 +285,14 @@ export default function CandidateDashboard() {
               </p>
               <div className="flex items-center justify-center gap-3 pt-2">
                 <button
-                  onClick={() => navigate("/candidate/join")}
-                  className="px-4 py-2 bg-[var(--card)] hover:bg-[var(--surface-hover,#1E1E2A)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-medium rounded-xl transition-colors duration-150"
+                  onClick={() => setIsJoinModalOpen(true)}
+                  className="px-4 py-2 bg-[var(--card)] hover:bg-[var(--surface-hover,#1E1E2A)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-medium rounded-xl transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-[var(--color-border-active)] focus-visible:outline-none"
                 >
-                  Join Campaign
+                  Join Campaign with Code
                 </button>
                 <button
                   onClick={() => navigate("/candidate/mock-interview")}
-                  className="px-4 py-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white font-medium text-xs rounded-xl transition-colors duration-150"
+                  className="px-4 py-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white font-medium text-xs rounded-xl transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-[var(--color-border-active)] focus-visible:outline-none"
                 >
                   Launch AI Mock
                 </button>
@@ -322,6 +301,7 @@ export default function CandidateDashboard() {
           ) : (
             <div className="grid grid-cols-1 gap-3">
               {filteredList.map((interview) => {
+                const isDeclined = interview.candidateStatus === "Rejected";
                 const isRequested = interview.candidateStatus === "Requested";
                 const isInProgress =
                   interview.candidateStatus?.toLowerCase() === "in progress" ||
@@ -330,14 +310,22 @@ export default function CandidateDashboard() {
                 return (
                   <div
                     key={interview._id}
-                    className="bg-[var(--card)] border border-[var(--border)] hover:border-[var(--color-border-active,#6338F6)]/60 transition-colors duration-150 rounded-2xl p-5"
+                    className={`bg-[var(--card)] border transition-colors duration-150 rounded-2xl p-5 ${
+                      isDeclined
+                        ? "border-rose-500/20 opacity-80"
+                        : "border-[var(--border)] hover:border-[var(--color-border-active,#6338F6)]/60"
+                    }`}
                   >
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                       
                       {/* Left Details */}
                       <div className="space-y-1.5 flex-1">
                         <div className="flex items-center gap-2">
-                          {isRequested ? (
+                          {isDeclined ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center gap-1">
+                              <XCircle className="w-3 h-3" /> Declined
+                            </span>
+                          ) : isRequested ? (
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--primary)]/30">
                               Awaiting Approval
                             </span>
@@ -380,7 +368,12 @@ export default function CandidateDashboard() {
 
                       {/* Right Action CTA Button */}
                       <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-[var(--border)]">
-                        {isRequested ? (
+                        {isDeclined ? (
+                          <div className="flex items-center gap-1.5 text-xs text-rose-400/90 px-3 py-2 rounded-xl bg-rose-500/5 border border-rose-500/20">
+                            <XCircle className="w-3.5 h-3.5 text-rose-400" />
+                            <span>Request Declined by Recruiter</span>
+                          </div>
+                        ) : isRequested ? (
                           <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] px-3 py-2 rounded-xl bg-[var(--background)] border border-[var(--border)]">
                             <Hourglass className="w-3.5 h-3.5 text-[var(--color-text-accent,#C4B5FD)] animate-pulse" />
                             <span>Employer Review Pending</span>
@@ -396,7 +389,7 @@ export default function CandidateDashboard() {
                         ) : (
                           <button
                             onClick={() => handleStartInterview(interview._id)}
-                            className="px-4 py-2.5 bg-[var(--primary)] hover:bg-[var(--primary-hover)] active:scale-[0.99] text-white font-medium text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all duration-150 shadow-sm w-full sm:w-auto"
+                            className="px-4 py-2.5 bg-[var(--primary)] hover:bg-[var(--primary-hover)] active:scale-[0.99] text-white font-medium text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all duration-150 shadow-sm w-full sm:w-auto focus-visible:ring-2 focus-visible:ring-[var(--color-border-active)] focus-visible:outline-none"
                           >
                             <PlayCircle className="w-3.5 h-3.5" />
                             <span>Start Interview</span>
@@ -413,6 +406,13 @@ export default function CandidateDashboard() {
         </div>
 
       </div>
+
+      {/* Join Campaign Modal */}
+      <JoinCampaignModal
+        isOpen={isJoinModalOpen}
+        onClose={() => setIsJoinModalOpen(false)}
+        onSuccess={fetchAssignedInterviews}
+      />
     </div>
   );
 }

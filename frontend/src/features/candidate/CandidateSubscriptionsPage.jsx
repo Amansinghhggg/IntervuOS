@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   CreditCard,
   Zap,
   CheckCircle2,
-  Sparkles,
   Clock,
   History,
   HelpCircle,
@@ -14,44 +13,61 @@ import {
   ChevronUp,
   AlertCircle,
   Loader2,
-  Award,
   Coins,
   Sliders,
   Plus,
   Minus,
-  ShoppingBag
+  Sparkles,
+  ArrowRight,
+  RefreshCw,
+  XCircle,
+  Info
 } from 'lucide-react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import api from '../../services/api';
 
 export default function CandidateSubscriptionsPage() {
   const { user, checkAuth } = useAuth();
+  const shouldReduceMotion = useReducedMotion();
+
+  // State Management
   const [loadingPlan, setLoadingPlan] = useState(null);
   const [history, setHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [historyError, setHistoryError] = useState(false);
+  const [historyFilter, setHistoryFilter] = useState('ALL'); // ALL | PURCHASE | USAGE | BONUS | REFUND
   const [openFaq, setOpenFaq] = useState(null);
-  const [customCredits, setCustomCredits] = useState(20);
 
-  // Dynamic pricing rate: <50 credits = ₹2.5/credit, >=50 credits = ₹1.8/credit (Min 20 credits = ₹50)
-  const rawParsedCredits = parseInt(customCredits, 10) || 0;
-  const parsedCustomCredits = rawParsedCredits < 20 ? 20 : rawParsedCredits;
-  const customRate = parsedCustomCredits < 50 ? 2.5 : 1.8;
+  // Custom Credit Slider State (20 to 500 Credits)
+  const [customCredits, setCustomCredits] = useState(50);
+
+  // Payment Failure & Recovery State
+  const [failedPaymentRecovery, setFailedPaymentRecovery] = useState(null);
+
+  // Pricing Calculation: <50 credits = ₹2.50/cr, >=50 credits = ₹1.80/cr (28% volume discount)
+  const parsedCustomCredits = Math.max(20, parseInt(customCredits, 10) || 20);
+  const isVolumeDiscountActive = parsedCustomCredits >= 50;
+  const customRate = isVolumeDiscountActive ? 1.8 : 2.5;
   const customTotalPrice = Math.round(parsedCustomCredits * customRate);
+  const savingsPercent = isVolumeDiscountActive
+    ? Math.round(((2.5 - 1.8) / 2.5) * 100)
+    : 0;
 
-  // User Credit Stats from backend user object
+  // User Wallet Statistics
   const availableCredits = user?.credits?.availableCredits ?? 15;
   const totalPurchasedCredits = user?.credits?.totalPurchasedCredits ?? 0;
-  const totalBonusCredits = user?.credits?.totalBonusCredits ?? 0;
-  const currentPlan = user?.subscription?.planId || 'FREE';
+  const totalBonusCredits = user?.credits?.totalBonusCredits ?? 15;
+  const totalUsedCredits =
+    user?.credits?.totalUsedCredits ??
+    Math.max(0, totalPurchasedCredits + totalBonusCredits - availableCredits);
+  const interviewsRemainingEstimate = Math.floor(availableCredits / 15);
 
-  // Load real transaction / credit history
-  useEffect(() => {
-    fetchCreditHistory();
-  }, []);
-
+  // Fetch real transaction history
   const fetchCreditHistory = async () => {
     setLoadingHistory(true);
+    setHistoryError(false);
     try {
       const { data } = await api.get('/payments/history');
       if (data?.success && Array.isArray(data?.history)) {
@@ -60,11 +76,15 @@ export default function CandidateSubscriptionsPage() {
         setHistory([]);
       }
     } catch {
-      setHistory([]);
+      setHistoryError(true);
     } finally {
       setLoadingHistory(false);
     }
   };
+
+  useEffect(() => {
+    fetchCreditHistory();
+  }, []);
 
   // Dynamically load Razorpay SDK
   const loadRazorpaySDK = () => {
@@ -81,11 +101,13 @@ export default function CandidateSubscriptionsPage() {
     });
   };
 
-  const handlePurchase = async (plan) => {
-    setLoadingPlan(plan.id);
+  // Generic purchase flow for both custom slider and curated bundles
+  const handlePurchase = async ({ id, credits, price, title }) => {
+    setLoadingPlan(id);
+    setFailedPaymentRecovery(null);
+
     try {
       const sdkLoaded = await loadRazorpaySDK();
-      
       if (!sdkLoaded) {
         toast.error('Razorpay SDK failed to load. Please check your internet connection.');
         setLoadingPlan(null);
@@ -94,462 +116,687 @@ export default function CandidateSubscriptionsPage() {
 
       // 1. Create Order on Backend
       const { data: orderData } = await api.post('/payments/create-order', {
-        credits: plan.credits,
-        amount: plan.price
+        credits,
+        amount: price
       });
 
-      if (!orderData?.success) {
-        toast.error(orderData?.message || 'Could not initiate payment order');
+      if (!orderData?.success || !orderData?.orderId) {
+        toast.error(orderData?.message || 'Failed to initiate purchase. Try again.');
         setLoadingPlan(null);
         return;
       }
 
-      // 2. Open Razorpay Checkout Modal Popup
+      // 2. Launch Razorpay Checkout Modal
       const options = {
-        key: orderData.key || "rzp_test_1DP5mmOlF5G5ag",
+        key: orderData.key,
         amount: orderData.amount,
-        currency: orderData.currency || "INR",
-        name: "IntervuOS AI",
-        description: `Purchase ${plan.credits} Credits`,
-        order_id: orderData.demoMode ? undefined : orderData.orderId,
+        currency: orderData.currency || 'INR',
+        name: 'IntervuOS',
+        description: `${credits} AI Interview Credits (${title || 'Credit Pack'})`,
+        order_id: orderData.orderId,
         prefill: {
           name: user?.name || '',
           email: user?.email || '',
+          contact: user?.phone || ''
         },
-        theme: { color: "#6366F1" },
-        handler: async function (response) {
+        theme: {
+          color: '#5B3AF2'
+        },
+        handler: async (response) => {
+          const verifyToast = toast.loading('Verifying transaction...');
           try {
-            const verifyRes = await api.post('/payments/verify', {
-              razorpay_order_id: response.razorpay_order_id || orderData.orderId,
-              razorpay_payment_id: response.razorpay_payment_id || `pay_demo_${Date.now()}`,
-              razorpay_signature: response.razorpay_signature || 'demo_sig',
-              demoMode: orderData.demoMode,
+            const { data: verifyData } = await api.post('/payments/verify-payment', {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
             });
 
-            if (verifyRes.data?.success) {
-              toast.success(`Successfully added ${plan.credits} Credits!`);
+            if (verifyData?.success) {
+              toast.success(`🎉 ${credits} Credits added successfully!`, { id: verifyToast });
               if (checkAuth) await checkAuth();
               fetchCreditHistory();
+              setFailedPaymentRecovery(null);
             } else {
-              toast.error(verifyRes.data?.message || 'Payment verification failed');
+              toast.error(verifyData?.message || 'Payment verification failed.', { id: verifyToast });
+              setFailedPaymentRecovery({
+                orderId: response.razorpay_order_id,
+                paymentId: response.razorpay_payment_id,
+                credits,
+                signature: response.razorpay_signature
+              });
             }
-          } catch (err) {
-            toast.error('Payment verification request failed');
-          } finally {
-            setLoadingPlan(null);
+          } catch (verifyErr) {
+            toast.error('Network drop during verification. Please click Retry below.', { id: verifyToast });
+            setFailedPaymentRecovery({
+              orderId: response.razorpay_order_id,
+              paymentId: response.razorpay_payment_id,
+              credits,
+              signature: response.razorpay_signature
+            });
           }
         },
         modal: {
-          ondismiss: function () {
-            setLoadingPlan(null);
-            toast('Payment cancelled', { icon: 'ℹ️' });
+          ondismiss: async () => {
+            toast('Payment cancelled.', { icon: 'ℹ️' });
+            try {
+              await api.post('/payments/fail-order', {
+                orderId: orderData.orderId,
+                reason: 'Dismissed by User'
+              });
+              fetchCreditHistory();
+            } catch {
+              // Ignore background fail order error
+            }
           }
         }
       };
 
       const razorpayInstance = new window.Razorpay(options);
+      razorpayInstance.on('payment.failed', async (response) => {
+        toast.error(`Payment Failed: ${response.error?.description || 'Transaction was declined.'}`);
+        try {
+          await api.post('/payments/fail-order', {
+            orderId: orderData.orderId,
+            reason: response.error?.description || 'Payment Failed'
+          });
+          fetchCreditHistory();
+        } catch {
+          // Ignore background fail order error
+        }
+      });
       razorpayInstance.open();
-    } catch (error) {
-      toast.error(error.response?.data?.message || error?.message || 'Could not initiate payment');
+    } catch {
+      toast.error('Could not connect to payment gateway.');
+    } finally {
       setLoadingPlan(null);
     }
   };
 
-  const creditBundles = [
+  // Retry Verification for failed transactions
+  const handleRetryVerification = async () => {
+    if (!failedPaymentRecovery) return;
+    const retryToast = toast.loading('Retrying transaction verification...');
+    try {
+      const { data: verifyData } = await api.post('/payments/verify-payment', {
+        razorpay_order_id: failedPaymentRecovery.orderId,
+        razorpay_payment_id: failedPaymentRecovery.paymentId,
+        razorpay_signature: failedPaymentRecovery.signature
+      });
+
+      if (verifyData?.success) {
+        toast.success(`🎉 ${failedPaymentRecovery.credits} Credits added to wallet!`, { id: retryToast });
+        if (checkAuth) await checkAuth();
+        fetchCreditHistory();
+        setFailedPaymentRecovery(null);
+      } else {
+        toast.error(verifyData?.message || 'Verification could not be confirmed.', { id: retryToast });
+      }
+    } catch {
+      toast.error('Verification request failed. Please reach out to support.', { id: retryToast });
+    }
+  };
+
+  // Curated Tier Packs Specification
+  const bundles = [
     {
       id: 'bundle_starter',
-      title: 'Starter Pack',
+      title: 'Starter Practice Pack',
       price: 99,
-      credits: 50,
-      badge: 'Quick Practice',
-      description: 'Perfect for 2-3 standard AI mock interviews with basic report.',
+      credits: 45,
+      ratePerCredit: '₹2.20/cr',
+      description: 'Ideal for rapid diagnostic checks & 2-3 standard interviews.',
       features: [
-        '50 AI Interview Credits',
-        'Standard Question & Voice AI',
-        'Basic Performance Scores',
+        '45 AI Interview Credits',
+        'Real-Time STAR Voice Scoring',
+        'Radar Competency Breakdown',
         'Never Expires'
       ],
-      popular: false,
-      color: 'from-blue-500/20 to-indigo-500/20',
-      borderColor: 'border-blue-500/30'
+      recommended: false
     },
     {
       id: 'bundle_pro',
-      title: 'Pro Candidate Pack',
+      title: 'Pro Placement Pack',
       price: 199,
       credits: 150,
-      badge: 'MOST POPULAR',
-      description: 'Ideal for serious job seekers taking 5-7 deep-dive interviews.',
+      ratePerCredit: '₹1.33/cr',
+      description: 'Our most popular tier for serious prep across 5-7 deep-dive sessions.',
       features: [
         '150 AI Interview Credits',
-        'Adaptive Technical Sub-Questioning',
+        'Adaptive Sub-Questioning Probing',
         'STAR Method Detailed Scoring',
         'Downloadable PDF Candidate Reports',
-        'Priority Voice Processing',
         'Never Expires'
       ],
-      popular: true,
-      color: 'from-purple-500/30 to-indigo-600/30',
-      borderColor: 'border-purple-500'
+      recommended: true
     },
     {
       id: 'bundle_master',
       title: 'Master Placement Pack',
       price: 399,
       credits: 400,
-      badge: 'BEST VALUE',
-      description: 'Maximum value for comprehensive company-specific preparation.',
+      ratePerCredit: '₹1.00/cr',
+      description: 'Maximum volume value for company-specific interview mastery.',
       features: [
         '400 AI Interview Credits',
         'Unlimited Mock Interview Retakes',
         'STAR Behavioral & Coding Sandbox',
-        'Complete Session Audio Replays',
-        '1-on-1 AI Resume Match Score',
+        'Audio Transcripts & Skill Matrix',
         'Never Expires'
       ],
-      popular: false,
-      color: 'from-amber-500/20 to-rose-500/20',
-      borderColor: 'border-amber-500/40'
+      recommended: false
     }
   ];
 
+  // Filtered Transaction History
+  const filteredHistory = useMemo(() => {
+    if (historyFilter === 'ALL') return history;
+    return history.filter((item) => item.type?.toUpperCase() === historyFilter);
+  }, [history, historyFilter]);
+
+  // FAQs
   const faqs = [
     {
-      question: "How do Interview Credits work?",
-      answer: "Credits are used during your AI mock interviews. Standard voice questions, real-time response analysis, STAR breakdown evaluation, and PDF report generation consume small amounts of credits per interview turn."
+      question: 'How do Interview Credits work in IntervuOS?',
+      answer: 'Credits correspond to session time: 1 minute of AI mock interview consumes exactly 1 Credit. Real-time speech synthesis, STAR response scoring, and PDF report generation are all included.'
     },
     {
-      question: "Do my purchased credits expire?",
-      answer: "No! Credits purchased via Credit Top-Up Packs never expire. They remain in your account balance indefinitely until you use them for interviews."
+      question: 'Do my purchased credits ever expire?',
+      answer: 'No. Purchased credits remain in your wallet indefinitely until you use them for interview practice.'
     },
     {
-      question: "What happens if my internet disconnects during an interview?",
-      answer: "Our system automatically saves your interview state. Unused credits from an incomplete session are safely retained in your wallet."
+      question: 'What happens if my connection drops during a live session?',
+      answer: 'Our state coordinator saves your question turns automatically. Unused minutes from any interrupted session remain safely protected in your wallet balance.'
     },
     {
-      question: "Is Razorpay safe for online payment?",
-      answer: "Yes, Razorpay is India's leading PCI-DSS Level 1 compliant payment gateway. It supports UPI (GPay, PhonePe, Paytm), Credit/Debit Cards, Netbanking, and Wallets with 256-bit encryption."
+      question: 'Which payment methods are supported via Razorpay?',
+      answer: 'Razorpay supports UPI (Google Pay, PhonePe, Paytm, BHIM), all major Credit & Debit Cards (Visa, Mastercard, RuPay), Netbanking across 50+ banks, and Digital Wallets.'
     }
   ];
 
   return (
-    <div className="min-h-screen bg-[var(--color-background-md3,var(--background))] text-[var(--color-on-background,var(--text-primary))] p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="w-full min-h-screen bg-[var(--background)] font-['Inter'] pb-20 text-[var(--text-primary)]">
+      <div className="w-full px-4 sm:px-6 md:px-8 xl:px-10 py-6 sm:py-8 space-y-8 max-w-7xl mx-auto">
 
-      {/* Header Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-indigo-500/20 p-6 md:p-10 shadow-2xl">
-        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/3 -mb-10 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-bold uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Subscription & Credit Management</span>
+        {/* Top Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[var(--border)]">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] text-[11px] font-medium">
+                <CreditCard className="w-3 h-3" /> Wallet & Subscriptions
+              </span>
+              <span className="text-xs text-[var(--text-muted)]">•</span>
+              <span className="text-xs text-[var(--text-secondary)] font-normal">Transparent Credit Packs</span>
             </div>
-            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white">
-              Power Your AI Mock Interviews
+            <h1 className="text-xl sm:text-2xl font-medium tracking-tight text-[var(--text-primary)]">
+              Subscription & Credit Management
             </h1>
-            <p className="text-sm md:text-base text-slate-300 max-w-2xl">
-              Manage your credit wallet balance and top-up credits via Razorpay for instant AI mock interview practice.
+          </div>
+
+          <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <span>256-bit Encrypted Checkout • Credits Never Expire</span>
+          </div>
+        </div>
+
+        {/* Section 6: Persistent Payment Failure & Recovery State */}
+        <AnimatePresence>
+          {failedPaymentRecovery && (
+            <motion.div
+              initial={shouldReduceMotion ? false : { opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm"
+            >
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400 shrink-0 mt-0.5">
+                  <AlertCircle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-xs sm:text-sm font-medium text-amber-300">
+                    Payment Verification Pending
+                  </h2>
+                  <p className="text-xs text-amber-200/80 mt-0.5 font-normal leading-relaxed">
+                    We detected a connection interruption following Razorpay checkout for Order <code className="font-mono px-1 py-0.5 rounded bg-amber-500/20">{failedPaymentRecovery.orderId}</code>. Your payment was initiated.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+                <button
+                  onClick={handleRetryVerification}
+                  className="w-full sm:w-auto px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black text-xs font-medium rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Verify Wallet Now</span>
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Section 1: WALLET HERO (Flat Surface + Accent Border) */}
+        <div className="bg-[var(--card)] border border-[var(--color-border-active,#6338F6)]/40 rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+
+            {/* Left Col: Main Available Balance */}
+            <div className="md:col-span-5 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-[var(--text-secondary)] font-normal">Current Wallet Balance</span>
+                {totalBonusCredits > 0 && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    +{totalBonusCredits} Starter Bonus
+                  </span>
+                )}
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-4xl sm:text-5xl font-medium tracking-tight text-[var(--text-primary)]">
+                  {availableCredits}
+                </span>
+                <span className="text-sm font-normal text-[var(--color-text-accent,#C4B5FD)]">
+                  Credits Available
+                </span>
+              </div>
+              <p className="text-xs text-[var(--text-secondary)] leading-relaxed font-normal">
+                1 Credit = 1 Minute of AI technical questioning, real-time voice feedback, and STAR scoring.
+              </p>
+            </div>
+
+            {/* Middle Col: Derived Interview Metric */}
+            <div className="md:col-span-4 p-4 rounded-2xl bg-[var(--background)] border border-[var(--border)] space-y-1.5">
+              <div className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
+                <Clock className="w-3.5 h-3.5 text-[var(--color-text-accent,#C4B5FD)]" />
+                <span>Estimated Interview Runway</span>
+              </div>
+              <div className="text-xl font-medium text-[var(--text-primary)]">
+                ≈ {interviewsRemainingEstimate} Mock {interviewsRemainingEstimate === 1 ? 'Interview' : 'Interviews'}
+              </div>
+              <p className="text-[11px] text-[var(--text-muted)]">
+                Based on standard 15-minute diagnostic & technical interviews.
+              </p>
+            </div>
+
+            {/* Right Col: Lifetime Usage Summary */}
+            <div className="md:col-span-3 p-4 rounded-2xl bg-[var(--background)] border border-[var(--border)] space-y-1.5">
+              <div className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
+                <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Total Practice Used</span>
+              </div>
+              <div className="text-xl font-medium text-[var(--text-primary)]">
+                {totalUsedCredits} <span className="text-xs font-normal text-[var(--text-secondary)]">Credits ({totalUsedCredits} mins)</span>
+              </div>
+              <p className="text-[11px] text-[var(--text-muted)]">
+                Purchased: {totalPurchasedCredits} cr
+              </p>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Section 2: BUNDLE CARDS (Unified Surface, Single Elevation on Recommended) */}
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-base sm:text-lg font-medium text-[var(--text-primary)]">
+              Curated Practice Packs
+            </h2>
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+              Select a pre-configured credit pack for structured company and role preparation.
             </p>
           </div>
 
-          {/* Quick Active Plan Badge */}
-          <div className="bg-white/5 backdrop-blur-md border border-white/10 p-4 rounded-2xl flex items-center gap-4 shrink-0 shadow-lg">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-md">
-              <Coins className="w-6 h-6" />
-            </div>
-            <div>
-              <span className="text-xs uppercase tracking-wider text-slate-400 font-bold block">Current Balance</span>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-2xl font-black text-white">{availableCredits}</span>
-                <span className="text-xs text-indigo-300 font-semibold">Credits</span>
-              </div>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {bundles.map((bundle) => {
+              const isRecommended = bundle.recommended;
+              const isLoading = loadingPlan === bundle.id;
+
+              return (
+                <div
+                  key={bundle.id}
+                  className={`bg-[var(--card)] rounded-3xl p-6 flex flex-col justify-between space-y-6 transition-all duration-150 relative ${
+                    isRecommended
+                      ? "border border-[var(--color-border-active,#6338F6)] shadow-md"
+                      : "border border-[var(--border)]"
+                  }`}
+                >
+                  {/* Card Header & Badge */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                        {bundle.title}
+                      </span>
+                      {isRecommended && (
+                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)]/40">
+                          Recommended
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Price and Price-Per-Credit */}
+                    <div className="space-y-1">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-3xl sm:text-4xl font-medium text-[var(--text-primary)]">
+                          ₹{bundle.price}
+                        </span>
+                        <span className="text-xs text-[var(--text-secondary)] font-normal">
+                          for {bundle.credits} Credits
+                        </span>
+                      </div>
+                      <div className="inline-block text-[11px] font-medium text-[var(--color-text-accent,#C4B5FD)]">
+                        Effective rate: {bundle.ratePerCredit}
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-[var(--text-secondary)] font-normal leading-relaxed pt-1">
+                      {bundle.description}
+                    </p>
+                  </div>
+
+                  {/* Features List */}
+                  <div className="space-y-2.5 pt-2 border-t border-[var(--border)]">
+                    {bundle.features.map((feat, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <span className="leading-tight">{feat}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Buy Action Button (Tint Fill per Single Primary CTA rule) */}
+                  <div className="pt-2">
+                    <button
+                      onClick={() => handlePurchase(bundle)}
+                      disabled={Boolean(loadingPlan)}
+                      className="w-full py-2.5 px-4 rounded-xl bg-[var(--primary-tint,rgba(99,56,246,0.15))] hover:bg-[var(--primary-tint)]/80 text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)]/40 text-xs font-medium transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-[var(--color-border-active,#6338F6)] focus-visible:outline-none"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Connecting Gateway...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Buy {bundle.credits} Credits</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
-      </div>
 
-
-      {/* Plan Selector */}
-      <div className="space-y-6">
-        <div className="border-b border-[var(--color-surface-variant,var(--border))] pb-4">
-          <h2 className="text-xl font-bold text-[var(--color-on-surface)]">Choose Your Credit Plan</h2>
-          <p className="text-xs text-[var(--color-on-surface-variant)]">Instant top-up via Razorpay UPI, Cards, Netbanking</p>
-        </div>
-
-        {/* CREDIT BUNDLES GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {creditBundles.map((bundle) => (
-            <div
-              key={bundle.id}
-              className={`relative flex flex-col justify-between rounded-3xl bg-[var(--color-surface-container-lowest,var(--card))] border ${bundle.borderColor} p-6 shadow-xl transition-all duration-300 hover:scale-[1.02] ${bundle.popular ? 'ring-2 ring-purple-500 shadow-purple-500/10' : ''
-                }`}
-            >
-              {/* Popular Badge */}
-              {bundle.badge && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[10px] font-black tracking-widest uppercase shadow-md">
-                  {bundle.badge}
-                </div>
-              )}
-
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <h3 className="text-xl font-bold text-[var(--color-on-surface)]">{bundle.title}</h3>
-                  <p className="text-xs text-[var(--color-on-surface-variant)] min-h-[36px]">{bundle.description}</p>
-                </div>
-
-                {/* Price */}
-                <div className="p-4 rounded-2xl bg-[var(--color-surface-container-low,var(--card))] border border-[var(--color-surface-variant,var(--border))] flex items-baseline justify-between">
-                  <div>
-                    <span className="text-3xl font-black text-[var(--color-on-surface)]">₹{bundle.price}</span>
-                    <span className="text-xs text-[var(--color-on-surface-variant)] ml-1">one-time</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-lg font-extrabold text-indigo-400 block">{bundle.credits}</span>
-                    <span className="text-[10px] uppercase tracking-wider text-[var(--color-on-surface-variant)] font-bold">Credits</span>
-                  </div>
-                </div>
+        {/* Section 3: CUSTOM SLIDER & Single Primary High-Intent Checkout */}
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-3xl p-6 sm:p-8 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <Sliders className="w-4 h-4 text-[var(--color-text-accent,#C4B5FD)]" />
+                <h2 className="text-base sm:text-lg font-medium text-[var(--text-primary)]">
+                  Custom Credit Amount
+                </h2>
               </div>
-
-              <div className="mt-6 pt-4 border-t border-[var(--color-surface-variant,var(--border))]">
-                <button
-                  onClick={() => handlePurchase(bundle)}
-                  disabled={loadingPlan === bundle.id}
-                  className={`w-full py-3.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg ${bundle.popular
-                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-500 hover:to-purple-500 shadow-indigo-500/25'
-                    : 'bg-[var(--color-surface-variant)] text-[var(--color-on-surface)] hover:bg-[var(--color-primary-md3)] hover:text-white'
-                    }`}
-                >
-                  {loadingPlan === bundle.id ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <>
-                      <CreditCard className="w-4 h-4" />
-                      <span>Buy {bundle.credits} Credits (₹{bundle.price})</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Custom Credits Calculator Widget */}
-        <div className="bg-[var(--color-surface-container-lowest,var(--card))] border border-indigo-500/30 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden bg-gradient-to-r from-slate-900/90 via-indigo-950/40 to-slate-900/90">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-
-          <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
-            <div className="space-y-3 max-w-xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-bold uppercase tracking-wider">
-                <Sliders className="w-3.5 h-3.5" />
-                <span>Custom Credit Quantity</span>
-              </div>
-              <h3 className="text-2xl font-black text-white">Need a Specific Amount of Credits?</h3>
-              <p className="text-xs md:text-sm text-slate-300">
-                Buy any custom number of credits tailored to your practice needs.
+              <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+                Drag the slider to pick your exact preparation credit requirement (20 to 500 Credits).
               </p>
+            </div>
 
-              {/* Quick Preset Pill Buttons */}
-              <div className="flex flex-wrap items-center gap-2 pt-2">
-                <span className="text-xs text-slate-400 font-semibold mr-1">Quick Select:</span>
-                {[20, 35, 50, 75, 100, 250].map((preset) => (
-                  <button
-                    key={preset}
-                    onClick={() => setCustomCredits(preset)}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${parsedCustomCredits === preset
-                      ? 'bg-indigo-600 text-white shadow-md'
-                      : 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10'
-                      }`}
-                  >
-                    {preset} Credits
-                  </button>
-                ))}
+            {/* Volume Savings Callout */}
+            {isVolumeDiscountActive && (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-medium">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>You save {savingsPercent}% vs. standard rate</span>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-6">
+            {/* Slider Controls */}
+            <div className="space-y-3">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-[var(--text-secondary)]">20 Credits (Min)</span>
+                <span className="font-medium text-base text-[var(--text-primary)]">
+                  {parsedCustomCredits} Credits
+                </span>
+                <span className="text-[var(--text-secondary)]">500 Credits (Max)</span>
+              </div>
+
+              <input
+                type="range"
+                min="20"
+                max="500"
+                step="5"
+                value={parsedCustomCredits}
+                onChange={(e) => setCustomCredits(Number(e.target.value))}
+                className="w-full h-2 bg-[var(--background)] rounded-lg appearance-none cursor-pointer accent-[var(--primary,#5B3AF2)] focus-visible:ring-2 focus-visible:ring-[var(--color-border-active,#6338F6)] focus-visible:outline-none"
+                aria-label="Select custom credit amount"
+              />
+
+              <div className="flex justify-between items-center text-[11px] text-[var(--text-muted)]">
+                <span>Base tier (20-49 cr): ₹2.50/cr</span>
+                <span className="text-emerald-400 font-medium">Volume tier (50-500 cr): ₹1.80/cr</span>
               </div>
             </div>
 
-            {/* Custom Input & Buy Block */}
-            <div className="w-full lg:w-auto min-w-[320px] bg-slate-900/90 border border-indigo-500/30 rounded-2xl p-6 space-y-5 shadow-xl shrink-0">
-              <div className="flex items-center justify-between gap-4">
-                <label className="text-xs uppercase font-extrabold text-slate-400 tracking-wider">Enter Credits</label>
-              </div>
-
-              {/* Counter Input */}
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setCustomCredits(Math.max(20, parsedCustomCredits - 5))}
-                  className="p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-indigo-600/30 text-white transition-all"
-                  aria-label="Decrease credits"
-                >
-                  <Minus className="w-4 h-4" />
-                </button>
-
-                <input
-                  type="number"
-                  min="20"
-                  max="5000"
-                  value={customCredits}
-                  onChange={(e) => setCustomCredits(e.target.value)}
-                  className="flex-1 text-center py-2.5 px-3 rounded-xl bg-slate-950 border border-indigo-500/40 text-2xl font-black text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
-
-                <button
-                  onClick={() => setCustomCredits(parsedCustomCredits + 5)}
-                  className="p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-indigo-600/30 text-white transition-all"
-                  aria-label="Increase credits"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Dynamic Price Display */}
-              <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Amount</span>
-                  <span className="text-2xl font-black text-white">₹{customTotalPrice}</span>
+            {/* Price Preview & The Single Solid Primary CTA on Screen */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-[var(--background)] border border-[var(--border)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl sm:text-3xl font-medium text-[var(--text-primary)]">
+                    ₹{customTotalPrice}
+                  </span>
+                  <span className="text-xs text-[var(--text-secondary)] font-normal">
+                    (₹{customRate.toFixed(2)} / Credit)
+                  </span>
                 </div>
-                <div className="text-right">
-                  <span className="text-[10px] uppercase font-bold text-indigo-400 block">Min Purchase</span>
-                  <span className="text-xs font-semibold text-slate-300">20 Credits (₹50)</span>
-                </div>
+                <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+                  Provides ≈ {Math.floor(parsedCustomCredits / 15)} full 15-minute diagnostic sessions.
+                </p>
               </div>
 
+              {/* Single Solid Primary Action on the Screen */}
               <button
-                onClick={() => handlePurchase({
-                  id: `custom_${parsedCustomCredits}`,
-                  title: `Custom Pack (${parsedCustomCredits} Credits)`,
-                  price: customTotalPrice,
-                  credits: parsedCustomCredits
-                })}
-                disabled={loadingPlan === `custom_${parsedCustomCredits}` || parsedCustomCredits < 20}
-                className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() =>
+                  handlePurchase({
+                    id: 'custom_slider',
+                    credits: parsedCustomCredits,
+                    price: customTotalPrice,
+                    title: `Custom Pack (${parsedCustomCredits} Credits)`
+                  })
+                }
+                disabled={Boolean(loadingPlan)}
+                className="w-full sm:w-auto py-3 px-6 rounded-xl bg-[var(--primary,#5B3AF2)] hover:bg-[var(--primary-hover,#472CD7)] text-white text-xs font-medium transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 focus-visible:ring-2 focus-visible:ring-[var(--color-border-active,#6338F6)] focus-visible:outline-none"
               >
-                {loadingPlan === `custom_${parsedCustomCredits}` ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                {loadingPlan === 'custom_slider' ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Processing Order...</span>
+                  </>
                 ) : (
                   <>
-                    <ShoppingBag className="w-4 h-4" />
-                    <span>Buy {parsedCustomCredits} Credits (₹{customTotalPrice})</span>
+                    <span>Purchase Custom Pack (₹{customTotalPrice})</span>
+                    <ArrowRight className="w-4 h-4" />
                   </>
                 )}
               </button>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Credit Transaction History */}
-      <div className="bg-[var(--color-surface-container-lowest,var(--card))] border border-[var(--color-surface-variant,var(--border))] rounded-3xl p-6 md:p-8 space-y-6 shadow-xl">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400">
-              <History className="w-5 h-5" />
-            </div>
+        {/* Section 4: TRANSACTION HISTORY (Filterable & Semantic Badges) */}
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h3 className="text-lg font-bold text-[var(--color-on-surface)]">Credit Transaction History</h3>
-              <p className="text-xs text-[var(--color-on-surface-variant)]">Track your credit purchases and mock interview usage</p>
+              <div className="flex items-center gap-2">
+                <History className="w-4 h-4 text-[var(--color-text-accent,#C4B5FD)]" />
+                <h2 className="text-base sm:text-lg font-medium text-[var(--text-primary)]">
+                  Transaction & Usage History
+                </h2>
+              </div>
+              <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+                Audit trail of credit purchases, session deductions, and refunds.
+              </p>
+            </div>
+
+            {/* Filter Pills */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+              {[
+                { key: 'ALL', label: 'All Activity' },
+                { key: 'PURCHASE', label: 'Purchases' },
+                { key: 'USAGE', label: 'Deductions' },
+                { key: 'BONUS', label: 'Bonuses' }
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setHistoryFilter(tab.key)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors border whitespace-nowrap focus-visible:ring-2 focus-visible:ring-[var(--color-border-active,#6338F6)] focus-visible:outline-none ${
+                    historyFilter === tab.key
+                      ? "bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-[var(--color-border-active,#6338F6)]"
+                      : "bg-[var(--card)] text-[var(--text-secondary)] border-[var(--border)] hover:text-[var(--text-primary)]"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
           </div>
-        </div>
 
-        {loadingHistory ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
-          </div>
-        ) : history.length === 0 ? (
-          <div className="text-center py-8 text-xs text-[var(--color-on-surface-variant)]">
-            No transaction records found yet.
-          </div>
-        ) : (
-          <div className="overflow-x-auto w-full">
-            <table className="w-full text-left text-xs min-w-[600px]">
-              <thead>
-                <tr className="border-b border-[var(--color-surface-variant,var(--border))] text-[var(--color-on-surface-variant)] uppercase tracking-wider font-extrabold">
-                  <th className="py-3 px-4">Date</th>
-                  <th className="py-3 px-4">Description</th>
-                  <th className="py-3 px-4 text-right">Credits</th>
-                  <th className="py-3 px-4 text-right">Amount</th>
-                  <th className="py-3 px-4 text-center">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--color-surface-variant,var(--border))]">
-                {history.map((tx) => (
-                  <tr key={tx.id} className="hover:bg-[var(--color-surface-container-low,var(--card))]/50 transition-colors">
-                    <td className="py-4 px-4 font-semibold text-[var(--color-on-surface-variant)]">{tx.date}</td>
-                    <td className="py-4 px-4 font-bold text-[var(--color-on-surface)]">{tx.description}</td>
-                    <td className="py-4 px-4 text-right font-black text-emerald-400">
-                      +{tx.credits}
-                    </td>
-                    <td className="py-4 px-4 text-right font-bold text-[var(--color-on-surface)]">
-                      {tx.amount === 0 ? 'Free' : `₹${tx.amount}`}
-                    </td>
-                    <td className="py-4 px-4 text-center">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                        {tx.status}
-                      </span>
-                    </td>
-                  </tr>
+          {/* History Content */}
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-3xl overflow-hidden shadow-sm">
+            {loadingHistory ? (
+              <div className="p-8 space-y-3">
+                {[1, 2, 3].map((n) => (
+                  <div key={n} className="h-12 bg-[var(--background)] rounded-xl animate-pulse" />
                 ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Frequently Asked Questions */}
-      <div className="bg-[var(--color-surface-container-lowest,var(--card))] border border-[var(--color-surface-variant,var(--border))] rounded-3xl p-6 md:p-8 space-y-6 shadow-xl">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400">
-            <HelpCircle className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-[var(--color-on-surface)]">Frequently Asked Questions</h3>
-            <p className="text-xs text-[var(--color-on-surface-variant)]">Everything you need to know about credits & Razorpay billing</p>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          {faqs.map((faq, index) => (
-            <div
-              key={index}
-              className="border border-[var(--color-surface-variant,var(--border))] rounded-2xl overflow-hidden bg-[var(--color-surface-container-low,var(--card))]"
-            >
-              <button
-                onClick={() => setOpenFaq(openFaq === index ? null : index)}
-                className="w-full p-4 text-left font-bold text-xs md:text-sm text-[var(--color-on-surface)] flex items-center justify-between gap-4 hover:text-indigo-400 transition-colors"
-              >
-                <span>{faq.question}</span>
-                {openFaq === index ? <ChevronUp className="w-4 h-4 shrink-0 text-indigo-400" /> : <ChevronDown className="w-4 h-4 shrink-0 text-[var(--color-on-surface-variant)]" />}
-              </button>
-              {openFaq === index && (
-                <div className="px-4 pb-4 text-xs text-[var(--color-on-surface-variant)] border-t border-[var(--color-surface-variant,var(--border))]/50 pt-3 leading-relaxed">
-                  {faq.answer}
+              </div>
+            ) : historyError ? (
+              <div className="p-10 text-center space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto">
+                  <XCircle className="w-5 h-5" />
                 </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
+                <h3 className="text-sm font-medium text-[var(--text-primary)]">
+                  Failed to load transaction history
+                </h3>
+                <p className="text-xs text-[var(--text-secondary)] max-w-sm mx-auto">
+                  We could not retrieve your account history from the server.
+                </p>
+                <button
+                  onClick={fetchCreditHistory}
+                  className="px-4 py-2 bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)]/40 rounded-xl text-xs font-medium inline-flex items-center gap-1.5 hover:bg-[var(--primary-tint)]/80 transition-colors"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Retry Fetch</span>
+                </button>
+              </div>
+            ) : filteredHistory.length === 0 ? (
+              <div className="p-12 text-center space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] flex items-center justify-center mx-auto">
+                  <Coins className="w-5 h-5" />
+                </div>
+                <h3 className="text-base font-medium text-[var(--text-primary)]">
+                  No transactions found
+                </h3>
+                <p className="text-xs text-[var(--text-secondary)] max-w-sm mx-auto font-normal">
+                  {historyFilter === 'ALL'
+                    ? 'You have not made any credit purchases yet. Choose a practice pack above to power your interviews.'
+                    : `No records found under filter "${historyFilter}".`}
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b border-[var(--border)] bg-[var(--background)] text-[10px] uppercase tracking-wider text-[var(--text-secondary)]">
+                      <th className="py-3.5 px-6 font-medium">Type / Description</th>
+                      <th className="py-3.5 px-6 font-medium">Status</th>
+                      <th className="py-3.5 px-6 font-medium">Date</th>
+                      <th className="py-3.5 px-6 font-medium text-right">Credits Delta</th>
+                      <th className="py-3.5 px-6 font-medium text-right">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--border)]">
+                    {filteredHistory.map((item) => {
+                      const isAddition = item.type === 'PURCHASE' || item.type === 'BONUS';
+                      const statusColor =
+                        item.status === 'completed'
+                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                          : item.status === 'failed'
+                          ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                          : 'bg-amber-500/10 text-amber-400 border-amber-500/20';
 
-      {/* Security & Razorpay Assurance Footer */}
-      <div className="flex flex-col sm:flex-row items-center justify-between p-6 rounded-2xl bg-slate-900/40 border border-slate-800 text-xs text-slate-400 gap-4">
-        <div className="flex items-center gap-3">
-          <ShieldCheck className="w-6 h-6 text-emerald-400 shrink-0" />
-          <span>Secured with 256-bit SSL encryption & PCI-DSS Compliant Razorpay Gateway.</span>
+                      return (
+                        <tr key={item._id} className="hover:bg-[var(--surface-hover,#1E1E2A)] transition-colors">
+                          <td className="py-3.5 px-6">
+                            <div className="font-medium text-[var(--text-primary)]">
+                              {item.description || item.type}
+                            </div>
+                            {item.razorpayPaymentId && (
+                              <span className="text-[10px] text-[var(--text-muted)] font-mono">
+                                ID: {item.razorpayPaymentId}
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-6">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border uppercase tracking-wider ${statusColor}`}>
+                              {item.status || 'completed'}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-6 text-[var(--text-secondary)]">
+                            {new Date(item.createdAt).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric'
+                            })}
+                          </td>
+                          <td className={`py-3.5 px-6 text-right font-medium ${isAddition ? 'text-emerald-400' : 'text-[var(--text-secondary)]'}`}>
+                            {isAddition ? `+${item.credits}` : `-${item.credits}`} cr
+                          </td>
+                          <td className="py-3.5 px-6 text-right font-medium text-[var(--text-primary)]">
+                            {item.amount > 0 ? `₹${item.amount}` : '—'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-4 text-slate-300 font-semibold">
-          <span>UPI</span>
-          <span>•</span>
-          <span>GPay</span>
-          <span>•</span>
-          <span>PhonePe</span>
-          <span>•</span>
-          <span>Cards</span>
-          <span>•</span>
-          <span>Netbanking</span>
-        </div>
-      </div>
 
+        {/* Section 5: FAQs */}
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-3xl p-6 sm:p-8 space-y-4">
+          <div className="flex items-center gap-2">
+            <HelpCircle className="w-4 h-4 text-[var(--color-text-accent,#C4B5FD)]" />
+            <h2 className="text-base sm:text-lg font-medium text-[var(--text-primary)]">
+              Frequently Asked Questions
+            </h2>
+          </div>
+
+          <div className="divide-y divide-[var(--border)]">
+            {faqs.map((faq, idx) => {
+              const isOpen = openFaq === idx;
+              return (
+                <div key={idx} className="py-3.5">
+                  <button
+                    onClick={() => setOpenFaq(isOpen ? null : idx)}
+                    className="w-full flex items-center justify-between text-left text-xs sm:text-sm font-medium text-[var(--text-primary)] hover:text-[var(--color-text-accent,#C4B5FD)] transition-colors focus-visible:ring-2 focus-visible:ring-[var(--color-border-active,#6338F6)] focus-visible:outline-none py-1"
+                  >
+                    <span>{faq.question}</span>
+                    {isOpen ? <ChevronUp className="w-4 h-4 text-[var(--text-secondary)]" /> : <ChevronDown className="w-4 h-4 text-[var(--text-secondary)]" />}
+                  </button>
+                  {isOpen && (
+                    <p className="text-xs text-[var(--text-secondary)] mt-2 font-normal leading-relaxed">
+                      {faq.answer}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+      </div>
     </div>
   );
 }

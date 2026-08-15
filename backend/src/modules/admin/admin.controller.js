@@ -4,6 +4,7 @@ import MockInterview from "../interview/models/MockInterview.js";
 import InterviewResult from "../interview/models/InterviewResult.js";
 import Interview from "../interview/models/interview.model.js";
 import InterviewSession from "../interview/models/InterviewSession.js";
+import Transaction from "../payments/models/Transaction.js";
 
 // @desc    Get aggregate high-level metrics & graphical chart data for admin
 // @route   GET /api/admin/stats
@@ -425,6 +426,16 @@ export const grantBonusCredits = async (req, res, next) => {
     user.credits.lastTopUpAt = new Date();
 
     await user.save();
+
+    // Create persistent BONUS transaction record for audit trail & user history
+    await Transaction.create({
+      userId: user._id,
+      type: "BONUS",
+      credits: amount,
+      amount: 0,
+      status: "paid",
+      description: `Admin Granted Bonus Credits (+${amount} Credits)`,
+    });
 
     res.status(200).json({
       success: true,

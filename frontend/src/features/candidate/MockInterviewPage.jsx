@@ -27,6 +27,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { PreLaunchDisclosureModal } from "../../ui/primitives/PreLaunchDisclosureModal";
+import { InsufficientCreditsModal } from "../../ui/primitives/InsufficientCreditsModal";
 
 // Preset Role Options
 const PRESET_ROLES = [
@@ -581,63 +582,13 @@ export default function MockInterviewPage() {
         creditCost={duration}
       />
 
-      {/* Insufficient Credits Modal Popup */}
-      <AnimatePresence>
-        {showInsufficientCreditsModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm font-['Inter']">
-            <motion.div
-              initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.96, y: 8 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 8 }}
-              className="bg-[var(--card)] border border-amber-500/30 p-6 rounded-2xl max-w-sm w-full relative text-center space-y-4 shadow-2xl"
-            >
-              <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto text-amber-400">
-                <Coins className="w-5 h-5" />
-              </div>
-
-              <div>
-                <h3 className="text-base font-medium text-[var(--text-primary)]">
-                  Insufficient Practice Credits
-                </h3>
-                <p className="text-xs text-[var(--text-secondary)] mt-1 font-normal">
-                  You need <strong className="text-amber-400">{requiredCreditsNeeded} Credits</strong> for this session, but currently have <strong className="text-[var(--color-text-accent,#C4B5FD)]">{availableCredits} Credits</strong>.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2.5 bg-[var(--background)] p-3 rounded-xl border border-[var(--border)] text-left">
-                <div>
-                  <span className="text-[10px] text-[var(--text-secondary)] block">Available</span>
-                  <span className="text-sm font-medium text-[var(--color-text-accent,#C4B5FD)]">{availableCredits} Credits</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-[var(--text-secondary)] block">Required</span>
-                  <span className="text-sm font-medium text-amber-400">{requiredCreditsNeeded} Credits</span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 pt-1">
-                <button
-                  onClick={() => setShowInsufficientCreditsModal(false)}
-                  className="w-1/2 py-2 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] text-xs font-medium hover:bg-[var(--surface-hover,#1E1E2A)] transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-[var(--color-border-active,#6338F6)] focus-visible:outline-none"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  onClick={() => {
-                    setShowInsufficientCreditsModal(false);
-                    navigate("/candidate/subscriptions");
-                  }}
-                  className="w-1/2 py-2 rounded-xl bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white font-medium text-xs transition-colors duration-150 flex items-center justify-center gap-1.5 shadow-sm focus-visible:ring-2 focus-visible:ring-[var(--color-border-active,#6338F6)] focus-visible:outline-none"
-                >
-                  <Coins className="w-3.5 h-3.5" />
-                  <span>Top-up</span>
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      {/* Requirement 5: Insufficient Credits Modal Component */}
+      <InsufficientCreditsModal
+        isOpen={showInsufficientCreditsModal}
+        onClose={() => setShowInsufficientCreditsModal(false)}
+        requiredCredits={requiredCreditsNeeded}
+        availableCredits={availableCredits}
+      />
     </div>
   );
 }

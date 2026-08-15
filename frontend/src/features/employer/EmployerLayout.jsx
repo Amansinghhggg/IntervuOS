@@ -29,7 +29,6 @@ export default function EmployerLayout() {
     const navigate = useNavigate();
     const location = useLocation();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [bannerDismissed, setBannerDismissed] = useState(false);
 
     // Collapsible Sidebar State (Remembers user preference, defaults to expanded on >= 1280px, collapsed on < 1280px)
     const [isCollapsed, setIsCollapsed] = useState(() => {
@@ -90,29 +89,8 @@ export default function EmployerLayout() {
 
     return (
         <div className="min-h-screen bg-[var(--background)] text-[var(--text-primary)] font-['Inter'] flex flex-col">
-            
+
             {/* Top Exponent Style Promo Banner */}
-            {!bannerDismissed && (
-                <div className="bg-[#6338F6] text-white py-2 px-4 text-xs font-medium flex items-center justify-between relative z-50 shadow-sm">
-                    <div className="flex-1 flex items-center justify-center gap-2 text-center">
-                        <span className="bg-white/20 px-2 py-0.5 rounded-md text-[10px] uppercase font-bold tracking-wider">New</span>
-                        <span>IntervuOS AI Interview Engine 2.0 is live!</span>
-                        <button 
-                            onClick={() => navigate('/employer/create-interview')}
-                            className="hidden sm:inline-flex items-center gap-1 underline underline-offset-2 hover:opacity-90 transition-opacity font-medium ml-1"
-                        >
-                            Try it out <ArrowRight className="w-3 h-3" />
-                        </button>
-                    </div>
-                    <button 
-                        onClick={() => setBannerDismissed(true)} 
-                        className="text-white/80 hover:text-white p-1 rounded-md transition-colors"
-                        aria-label="Dismiss banner"
-                    >
-                        <X className="w-3.5 h-3.5" />
-                    </button>
-                </div>
-            )}
 
             <div className="flex-1 flex flex-col md:flex-row relative">
                 {/* Mobile Header Bar (visible on < md screens) */}
@@ -126,7 +104,7 @@ export default function EmployerLayout() {
                             <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-widest font-bold">Employer Console</p>
                         </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-2">
                         {/* Theme Toggle Control */}
                         <button
@@ -160,11 +138,10 @@ export default function EmployerLayout() {
                                             handleNavItemClick(item.path);
                                             setMobileMenuOpen(false);
                                         }}
-                                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-medium rounded-xl transition-all border-l-[3px] ${
-                                            isActive
-                                                ? 'bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-l-[var(--color-primary,#5B3AF2)] border-t-transparent border-b-transparent border-r-transparent'
-                                                : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)] border-l-transparent'
-                                        }`}
+                                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-medium rounded-xl transition-all border-l-[3px] ${isActive
+                                            ? 'bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-l-[var(--color-primary,#5B3AF2)] border-t-transparent border-b-transparent border-r-transparent'
+                                            : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)] border-l-transparent'
+                                            }`}
                                     >
                                         <item.icon className="w-4 h-4 shrink-0" />
                                         <span>{item.label}</span>
@@ -179,11 +156,10 @@ export default function EmployerLayout() {
                                     navigate('/employer/profile');
                                     setMobileMenuOpen(false);
                                 }}
-                                className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-medium rounded-xl transition-all border-l-[3px] ${
-                                    location.pathname === '/employer/profile'
-                                        ? 'bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-l-[var(--color-primary,#5B3AF2)] border-t-transparent border-b-transparent border-r-transparent'
-                                        : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)] border-l-transparent'
-                                }`}
+                                className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-medium rounded-xl transition-all border-l-[3px] ${location.pathname === '/employer/profile'
+                                    ? 'bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-l-[var(--color-primary,#5B3AF2)] border-t-transparent border-b-transparent border-r-transparent'
+                                    : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)] border-l-transparent'
+                                    }`}
                             >
                                 <User className="w-4 h-4 shrink-0" />
                                 <span>Profile</span>
@@ -193,11 +169,10 @@ export default function EmployerLayout() {
                                     navigate('/employer/contact');
                                     setMobileMenuOpen(false);
                                 }}
-                                className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-medium rounded-xl transition-all border-l-[3px] ${
-                                    location.pathname === '/employer/contact' || location.pathname === '/employer/verification-pending'
-                                        ? 'bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-l-[var(--color-primary,#5B3AF2)] border-t-transparent border-b-transparent border-r-transparent'
-                                        : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)] border-l-transparent'
-                                }`}
+                                className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-medium rounded-xl transition-all border-l-[3px] ${location.pathname === '/employer/contact' || location.pathname === '/employer/verification-pending'
+                                    ? 'bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-l-[var(--color-primary,#5B3AF2)] border-t-transparent border-b-transparent border-r-transparent'
+                                    : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)] border-l-transparent'
+                                    }`}
                             >
                                 <HelpCircle className="w-4 h-4 shrink-0" />
                                 <span>Contact Us</span>
@@ -215,9 +190,8 @@ export default function EmployerLayout() {
 
                 {/* Desktop Collapsible Sidebar (hidden on < md screens) */}
                 <aside
-                    className={`hidden md:flex flex-col fixed bottom-0 top-0 left-0 z-40 bg-[var(--card)] border-r border-[var(--border)] shadow-[1px_0_3px_0_rgba(0,0,0,0.15)] transition-all duration-300 ease-in-out ${
-                        isCollapsed ? 'w-20' : 'w-64'
-                    }`}
+                    className={`hidden md:flex flex-col fixed bottom-0 top-0 left-0 z-40 bg-[var(--card)] border-r border-[var(--border)] shadow-[1px_0_3px_0_rgba(0,0,0,0.15)] transition-all duration-300 ease-in-out ${isCollapsed ? 'w-20' : 'w-64'
+                        }`}
                 >
                     {/* Header with Logo and Collapse Toggle */}
                     <div className={`flex items-center ${isCollapsed ? 'justify-center px-2' : 'justify-between px-4'} py-5 border-b border-[var(--border)]/60 min-h-[69px]`}>
@@ -268,13 +242,11 @@ export default function EmployerLayout() {
                                     key={item.path}
                                     onClick={() => handleNavItemClick(item.path)}
                                     title={isCollapsed ? item.label : undefined}
-                                    className={`w-full flex items-center ${
-                                        isCollapsed ? 'justify-center px-0' : 'px-3 gap-3'
-                                    } py-2.5 text-xs font-medium rounded-xl transition-all border-l-[3px] ${
-                                        isActive
+                                    className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3 gap-3'
+                                        } py-2.5 text-xs font-medium rounded-xl transition-all border-l-[3px] ${isActive
                                             ? 'bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-l-[var(--color-primary,#5B3AF2)] border-t-transparent border-b-transparent border-r-transparent'
                                             : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)] border-l-transparent'
-                                    }`}
+                                        }`}
                                 >
                                     <item.icon className="w-4 h-4 shrink-0" />
                                     {!isCollapsed && <span className="truncate">{item.label}</span>}
@@ -289,9 +261,8 @@ export default function EmployerLayout() {
                         <button
                             onClick={toggleEmployerTheme}
                             title={isCollapsed ? (employerTheme === 'dark' ? 'Light Mode' : 'Dark Mode') : undefined}
-                            className={`w-full flex items-center ${
-                                isCollapsed ? 'justify-center px-0' : 'px-3 gap-3'
-                            } py-2 text-xs font-medium rounded-xl text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)] transition-all border-l-[3px] border-l-transparent`}
+                            className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3 gap-3'
+                                } py-2 text-xs font-medium rounded-xl text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)] transition-all border-l-[3px] border-l-transparent`}
                         >
                             {employerTheme === 'dark' ? (
                                 <Sun className="w-4 h-4 shrink-0 text-amber-400" />
@@ -308,13 +279,11 @@ export default function EmployerLayout() {
                         <button
                             onClick={() => navigate('/employer/profile')}
                             title={isCollapsed ? 'Profile' : undefined}
-                            className={`w-full flex items-center ${
-                                isCollapsed ? 'justify-center px-0' : 'px-3 gap-3'
-                            } py-2 text-xs font-medium rounded-xl transition-all border-l-[3px] ${
-                                location.pathname === '/employer/profile'
+                            className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3 gap-3'
+                                } py-2 text-xs font-medium rounded-xl transition-all border-l-[3px] ${location.pathname === '/employer/profile'
                                     ? 'bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-l-[var(--color-primary,#5B3AF2)] border-t-transparent border-b-transparent border-r-transparent'
                                     : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)] border-l-transparent'
-                            }`}
+                                }`}
                         >
                             {user?.profilePicture ? (
                                 <img src={user.profilePicture} alt="Profile" referrerPolicy="no-referrer" className="w-5 h-5 rounded-full object-cover shrink-0" />
@@ -329,13 +298,11 @@ export default function EmployerLayout() {
                         <button
                             onClick={() => navigate('/employer/contact')}
                             title={isCollapsed ? 'Contact Us' : undefined}
-                            className={`w-full flex items-center ${
-                                isCollapsed ? 'justify-center px-0' : 'px-3 gap-3'
-                            } py-2 text-xs font-medium rounded-xl transition-all border-l-[3px] ${
-                                location.pathname === '/employer/contact' || location.pathname === '/employer/verification-pending'
+                            className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3 gap-3'
+                                } py-2 text-xs font-medium rounded-xl transition-all border-l-[3px] ${location.pathname === '/employer/contact' || location.pathname === '/employer/verification-pending'
                                     ? 'bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-l-[var(--color-primary,#5B3AF2)] border-t-transparent border-b-transparent border-r-transparent'
                                     : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)] border-l-transparent'
-                            }`}
+                                }`}
                         >
                             <HelpCircle className="w-4 h-4 shrink-0" />
                             {!isCollapsed && <span className="truncate">Contact Us</span>}
@@ -344,9 +311,8 @@ export default function EmployerLayout() {
                         <button
                             onClick={handleLogout}
                             title={isCollapsed ? 'Logout' : undefined}
-                            className={`w-full flex items-center ${
-                                isCollapsed ? 'justify-center px-0' : 'px-3 gap-3'
-                            } py-2 text-xs font-medium text-rose-400 hover:bg-rose-500/10 rounded-xl transition-all border-l-[3px] border-l-transparent`}
+                            className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3 gap-3'
+                                } py-2 text-xs font-medium text-rose-400 hover:bg-rose-500/10 rounded-xl transition-all border-l-[3px] border-l-transparent`}
                         >
                             <LogOut className="w-4 h-4 shrink-0" />
                             {!isCollapsed && <span className="truncate">Logout</span>}
@@ -356,9 +322,8 @@ export default function EmployerLayout() {
 
                 {/* Main Content Area: margin-left strictly matches the sidebar width */}
                 <main
-                    className={`flex-1 ${
-                        isCollapsed ? 'md:ml-20' : 'md:ml-64'
-                    } transition-all duration-300 ease-in-out w-full min-w-0 overflow-x-clip`}
+                    className={`flex-1 ${isCollapsed ? 'md:ml-20' : 'md:ml-64'
+                        } transition-all duration-300 ease-in-out w-full min-w-0 overflow-x-clip`}
                 >
                     <Outlet />
                 </main>

@@ -131,7 +131,7 @@ export default function CandidateSubscriptionsPage() {
         key: orderData.key,
         amount: orderData.amount,
         currency: orderData.currency || 'INR',
-        name: 'IntervuOS',
+        name: 'ForkTalent',
         description: `${credits} AI Interview Credits (${title || 'Credit Pack'})`,
         order_id: orderData.orderId,
         prefill: {
@@ -296,7 +296,7 @@ export default function CandidateSubscriptionsPage() {
   // FAQs
   const faqs = [
     {
-      question: 'How do Interview Credits work in IntervuOS?',
+      question: 'How do Interview Credits work in ForkTalent?',
       answer: 'Credits correspond to session time: 1 minute of AI mock interview consumes exactly 1 Credit. Real-time speech synthesis, STAR response scoring, and PDF report generation are all included.'
     },
     {

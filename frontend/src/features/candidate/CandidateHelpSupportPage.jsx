@@ -245,7 +245,7 @@ export default function CandidateHelpSupportPage() {
             </div>
           </div>
           <a
-            href={`https://wa.me/${whatsappCleanNumber}?text=Hi%20IntervuOS%20Support,%20I%20am%20a%20candidate%20facing%20an%20issue%20with%20my%20interview.`}
+            href={`https://wa.me/${whatsappCleanNumber}?text=Hi%20ForkTalent%20Support,%20I%20am%20a%20candidate%20facing%20an%20issue%20with%20my%20interview.`}
             target="_blank"
             rel="noopener noreferrer"
             className="px-3.5 py-2 rounded-xl text-xs font-medium text-[var(--color-success)] bg-[var(--color-success)]/10 hover:bg-[var(--color-success)]/20 border border-[var(--color-success)]/30 transition-all flex items-center gap-1.5"

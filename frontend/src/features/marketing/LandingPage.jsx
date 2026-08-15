@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { GoogleLogin } from "@react-oauth/google";
 import toast from "react-hot-toast";
+import ForkLogo from "../../ui/shared/ForkLogo";
 import {
   Sparkles,
   ArrowRight,
@@ -88,7 +89,7 @@ export default function LandingPage() {
     if (!credentialResponse?.credential) return;
     try {
       const data = await googleLogin(credentialResponse.credential);
-      toast.success(`Welcome to IntervuOS, ${data.user.name || "User"}!`);
+      toast.success(`Welcome to ForkTalent, ${data.user.name || "User"}!`);
       if (!data.user.role) {
         navigate("/select-role");
       } else if (data.user.role === "employer") {
@@ -163,7 +164,7 @@ export default function LandingPage() {
         "Yes, 100% private. Practice interviews you conduct in your mock interview studio are strictly confidential and visible only to you. They are never shared with any employer unless you explicitly participate in a verified employer campaign."
     },
     {
-      question: "How do interview credits work in IntervuOS?",
+      question: "How do interview credits work in ForkTalent?",
       audienceTag: "Candidate",
       answer:
         "Credits correspond directly to session time: 1 minute of AI technical interview consumes exactly 1 Credit. All features — including speech synthesis, STAR response scoring, transcript logs, and PDF export — are included."
@@ -202,11 +203,11 @@ export default function LandingPage() {
         <div className="w-full px-4 sm:px-6 md:px-8 xl:px-10 h-16 flex items-center justify-between gap-4">
           {/* Logo & Brand */}
           <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
-            <div className="w-8 h-8 rounded-xl bg-[var(--color-primary)] text-white flex items-center justify-center font-bold text-sm shadow-xs">
-              IO
+            <div className="w-8 h-8 rounded-xl bg-[var(--color-primary)] text-white flex items-center justify-center p-1.5 shadow-xs transition-transform group-hover:scale-105">
+              <ForkLogo className="w-5 h-5 text-white" />
             </div>
             <span className="text-base font-medium tracking-tight text-[var(--color-text-primary)]">
-              Intervu<span className="text-[var(--color-text-accent)]">OS</span>
+              Fork<span className="text-[var(--color-text-accent)]">Talent</span>
             </span>
           </Link>
 
@@ -429,7 +430,7 @@ export default function LandingPage() {
               {audience === "candidate" ? "Candidate Workflow" : "Employer Workflow"}
             </span>
             <h2 className="text-2xl sm:text-3xl font-medium tracking-tight text-[var(--color-text-primary)]">
-              How IntervuOS works
+              How ForkTalent works
             </h2>
             <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] font-normal">
               {audience === "candidate"
@@ -998,7 +999,7 @@ export default function LandingPage() {
 
               <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
                 <a
-                  href="https://wa.me/8655021064?text=Hello%20IntervuOS%20Team,%20I'm%20interested%20in%20an%20Employer%20Custom%20Hiring%20Drive."
+                  href="https://wa.me/8655021064?text=Hello%20ForkTalent%20Team,%20I'm%20interested%20in%20an%20Employer%20Custom%20Hiring%20Drive."
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium transition-colors inline-flex items-center justify-center gap-2 shadow-xs"
@@ -1152,11 +1153,11 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-[var(--color-border)] pb-8">
             <div className="space-y-2">
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-xl bg-[var(--color-primary)] text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                  IO
+                <div className="w-7 h-7 rounded-xl bg-[var(--color-primary)] text-white flex items-center justify-center p-1 shadow-xs">
+                  <ForkLogo className="w-4 h-4 text-white" />
                 </div>
                 <span className="text-base font-medium tracking-tight text-[var(--color-text-primary)]">
-                  Intervu<span className="text-[var(--color-text-accent)]">OS</span>
+                  Fork<span className="text-[var(--color-text-accent)]">Talent</span>
                 </span>
               </div>
               <p className="text-[11px] text-[var(--color-text-muted)] max-w-sm">
@@ -1197,10 +1198,10 @@ export default function LandingPage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-[var(--color-text-muted)]">
             <div>
-              © 2026 IntervuOS. All rights reserved.
+              © 2026 ForkTalent. All rights reserved.
             </div>
             <div className="flex items-center gap-4">
-              <span className="select-all">Support: intervuos@gmail.com</span>
+              <span className="select-all">Support: forktalent@gmail.com</span>
               <span>•</span>
               <a
                 href="https://wa.me/8655021064"

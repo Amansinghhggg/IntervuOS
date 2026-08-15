@@ -166,10 +166,10 @@ const ConversationController = ({
   // ─── Render ───────────────────────────────────────
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 h-full w-full bg-slate-950 divide-y lg:divide-y-0 lg:divide-x divide-slate-800/80 overflow-y-auto lg:overflow-hidden">
-      {/* IntervuOS Section */}
+      {/* ForkTalent Section */}
       <section
         className="bg-slate-950 flex flex-col relative overflow-hidden min-h-[440px] lg:min-h-0 lg:h-full"
-        aria-label="IntervuOS AI Section"
+        aria-label="ForkTalent AI Section"
       >
         <InterviewAI
           currentQuestion={currentQuestion}

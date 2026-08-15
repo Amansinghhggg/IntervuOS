@@ -36,6 +36,8 @@ import {
   AlertCircle,
   Edit3,
   CheckCircle2,
+  HelpCircle,
+  Lightbulb,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PageHeader } from "../../ui/primitives/PageHeader";
@@ -429,9 +431,9 @@ const CreateInterviewPage = () => {
     "flex w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5 text-sm font-medium text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]/50 focus:outline-none focus:border-[var(--color-border-active,#6338F6)] transition-colors";
 
   return (
-    <div className="min-h-screen bg-transparent pt-6 pb-24 font-['Inter'] text-[var(--color-text-primary)] w-full px-4 sm:px-6 md:px-8 xl:px-10 space-y-8">
-      {/* Top Bar: Back Link & Page Title */}
-      <div className="max-w-5xl mx-auto space-y-6">
+    <div className="min-h-screen bg-[var(--color-canvas)] text-[var(--color-text-primary)] font-['Inter'] w-full px-4 sm:px-6 md:px-8 xl:px-10 py-6 sm:py-8 space-y-6">
+      {/* Top Header Row */}
+      <div className="space-y-4">
         <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
           <button
             type="button"
@@ -449,110 +451,112 @@ const CreateInterviewPage = () => {
           title="Create interview campaign"
           description="Configure your hiring requirements, question strategies, candidate invites, and AI proctoring parameters in 5 easy steps."
         />
+      </div>
 
-        {/* 5-Step Progress Bar Header */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] space-y-4">
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-            <div className="text-xs font-medium text-[var(--color-text-secondary)] flex items-center gap-2">
-              <span>
-                Step {currentStep} of {STEPS.length}:
-              </span>
-              <span className="text-[var(--color-text-primary)] font-medium">
-                {STEPS[currentStep - 1].label}
-              </span>
-            </div>
-
-            {/* Non-blocking Unverified Account Indicator */}
-            {!user?.isVerified && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--color-warning)]/10 text-[var(--color-warning)] border border-[var(--color-warning)]/30 text-xs font-medium">
-                <ShieldAlert className="w-3.5 h-3.5" /> Account unverified (publication blocked at Step 5)
-              </span>
-            )}
+      {/* 5-Step Progress Bar Header */}
+      <div className="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] space-y-4">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="text-xs font-medium text-[var(--color-text-secondary)] flex items-center gap-2">
+            <span>
+              Step {currentStep} of {STEPS.length}:
+            </span>
+            <span className="text-[var(--color-text-primary)] font-medium">
+              {STEPS[currentStep - 1].label}
+            </span>
           </div>
 
-          {/* Steps Stepper Bar */}
-          <div className="grid grid-cols-5 gap-2">
-            {STEPS.map((step) => {
-              const isCompleted = currentStep > step.number;
-              const isCurrent = currentStep === step.number;
-              return (
-                <button
-                  key={step.number}
-                  type="button"
-                  onClick={() => {
-                    // Only allow clicking to previously completed steps or current
-                    if (step.number < currentStep) {
-                      setCurrentStep(step.number);
-                    }
-                  }}
-                  disabled={step.number > currentStep}
-                  className={`group text-left p-2.5 sm:p-3 rounded-xl border transition-all ${
-                    isCurrent
-                      ? "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] border-[var(--color-border-active,#6338F6)] shadow-sm"
-                      : isCompleted
-                      ? "bg-[var(--color-canvas)] border-[var(--color-border)] hover:border-[var(--color-border-active,#6338F6)]/50 cursor-pointer"
-                      : "bg-[var(--color-canvas)]/40 border-[var(--color-border)]/40 opacity-60 cursor-not-allowed"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span
-                      className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium ${
-                        isCurrent
-                          ? "bg-[var(--color-primary)] text-white"
-                          : isCompleted
-                          ? "bg-[var(--color-success)]/20 text-[var(--color-success)] border border-[var(--color-success)]/40"
-                          : "bg-[var(--color-surface)] text-[var(--color-text-secondary)] border border-[var(--color-border)]"
-                      }`}
-                    >
-                      {isCompleted ? <Check className="w-3 h-3" /> : step.number}
-                    </span>
-                  </div>
-                  <div className="mt-1.5 truncate">
-                    <div
-                      className={`text-xs font-medium truncate ${
-                        isCurrent
-                          ? "text-[var(--color-text-accent,#C4B5FD)]"
-                          : isCompleted
-                          ? "text-[var(--color-text-primary)]"
-                          : "text-[var(--color-text-secondary)]"
-                      }`}
-                    >
-                      {step.label}
-                    </div>
-                    {step.optional && (
-                      <div className="text-[10px] text-[var(--color-text-secondary)]/70">
-                        (optional)
-                      </div>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+          {/* Non-blocking Unverified Account Indicator */}
+          {!user?.isVerified && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-warning)]/10 text-[var(--color-warning)] border border-[var(--color-warning)]/30 text-xs font-medium">
+              <ShieldAlert className="w-3.5 h-3.5" /> Account unverified (publishing restricted to verified employers)
+            </span>
+          )}
         </div>
 
-        {/* Wizard Form Body */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <AnimatePresence mode="wait">
-            {/* ========================================================================= */}
-            {/* STEP 1: CAMPAIGN ESSENTIALS */}
-            {/* ========================================================================= */}
-            {currentStep === 1 && (
-              <motion.div
-                key="step1"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
+        {/* Steps Stepper Bar */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          {STEPS.map((step) => {
+            const isCompleted = currentStep > step.number;
+            const isCurrent = currentStep === step.number;
+            return (
+              <button
+                key={step.number}
+                type="button"
+                onClick={() => {
+                  if (step.number < currentStep) {
+                    setCurrentStep(step.number);
+                  }
+                }}
+                disabled={step.number > currentStep}
+                className={`text-left p-3 rounded-xl border transition-all ${
+                  isCurrent
+                    ? "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] border-[var(--color-border-active,#6338F6)] shadow-sm"
+                    : isCompleted
+                    ? "bg-[var(--color-canvas)] border-[var(--color-border)] hover:border-[var(--color-border-active,#6338F6)]/50 cursor-pointer"
+                    : "bg-[var(--color-canvas)]/40 border-[var(--color-border)]/40 opacity-60 cursor-not-allowed"
+                }`}
               >
-                <GlassCard padding="p-6 md:p-8" className="space-y-6">
-                  <SectionHeader
-                    icon={Briefcase}
-                    title="Campaign essentials"
-                    subtitle="Specify the target job role, campaign title, technical topics, and session parameters."
-                  />
+                <div className="flex items-center justify-between">
+                  <span
+                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+                      isCurrent
+                        ? "bg-[var(--color-primary)] text-white"
+                        : isCompleted
+                        ? "bg-[var(--color-success)]/20 text-[var(--color-success)] border border-[var(--color-success)]/40"
+                        : "bg-[var(--color-surface)] text-[var(--color-text-secondary)] border border-[var(--color-border)]"
+                    }`}
+                  >
+                    {isCompleted ? <Check className="w-3.5 h-3.5" /> : step.number}
+                  </span>
+                </div>
+                <div className="mt-2">
+                  <div
+                    className={`text-xs font-medium truncate ${
+                      isCurrent
+                        ? "text-[var(--color-text-accent,#C4B5FD)]"
+                        : isCompleted
+                        ? "text-[var(--color-text-primary)]"
+                        : "text-[var(--color-text-secondary)]"
+                    }`}
+                  >
+                    {step.label}
+                  </div>
+                  {step.optional && (
+                    <div className="text-[10px] text-[var(--color-text-secondary)]/70">
+                      (optional)
+                    </div>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
-                  <div className="space-y-6">
+      {/* Wizard Form Body */}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <AnimatePresence mode="wait">
+          {/* ========================================================================= */}
+          {/* STEP 1: CAMPAIGN ESSENTIALS */}
+          {/* ========================================================================= */}
+          {currentStep === 1 && (
+            <motion.div
+              key="step1"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <GlassCard padding="p-6 md:p-8" className="space-y-6">
+                <SectionHeader
+                  icon={Briefcase}
+                  title="Campaign essentials"
+                  subtitle="Specify the target job role, campaign title, technical topics, and session parameters."
+                />
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                  {/* Left Column: Basic Details */}
+                  <div className="lg:col-span-7 space-y-5">
                     {/* Quick Preset Roles */}
                     <div>
                       <label className="text-xs font-medium text-[var(--color-text-secondary)] mb-2 block">
@@ -572,7 +576,7 @@ const CreateInterviewPage = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {/* Campaign Title */}
                       <div>
                         <label className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
@@ -581,7 +585,7 @@ const CreateInterviewPage = () => {
                         </label>
                         <input
                           {...register("title")}
-                          placeholder="e.g. Q3 Senior React Engineer Evaluation"
+                          placeholder="e.g. Q3 Senior React Engineer"
                           className={inputClasses}
                         />
                         {errors.title && (
@@ -629,67 +633,8 @@ const CreateInterviewPage = () => {
                       )}
                     </div>
 
-                    {/* Technical Topics */}
-                    <div>
-                      <label className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
-                        <Tag className="w-3.5 h-3.5 text-[var(--color-text-accent,#C4B5FD)]" />
-                        Technical topics * (at least 1 required)
-                      </label>
-
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {PRESET_TOPICS.map((preset) => (
-                          <Chip
-                            key={preset}
-                            label={preset}
-                            selected={topics.includes(preset)}
-                            onClick={() => {
-                              if (topics.includes(preset)) removeTopic(preset);
-                              else addTopic(preset);
-                            }}
-                          />
-                        ))}
-                      </div>
-
-                      <div className="flex gap-3 mb-2">
-                        <input
-                          type="text"
-                          value={topicInput}
-                          onChange={(e) => setTopicInput(e.target.value)}
-                          onKeyDown={handleTopicKeyDown}
-                          placeholder="Add custom topic (e.g. Docker, Redux Toolkit, Kafka)"
-                          className={inputClasses}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => addTopic()}
-                          className="px-4 py-2 bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] border border-[var(--color-border-active,#6338F6)] rounded-xl text-xs font-medium tracking-tight transition-all flex items-center shrink-0"
-                        >
-                          <Plus className="w-3.5 h-3.5 mr-1" /> Add
-                        </button>
-                      </div>
-
-                      {topicError && (
-                        <p className="mt-1 text-xs text-[var(--color-danger)] font-medium">
-                          • {topicError}
-                        </p>
-                      )}
-
-                      {topics.length > 0 && (
-                        <div className="flex flex-wrap gap-2 pt-2">
-                          {topics.map((topic) => (
-                            <Chip
-                              key={topic}
-                              label={topic}
-                              selected
-                              onRemove={() => removeTopic(topic)}
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
                     {/* Experience Level & Duration */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
                           <BookOpen className="w-3.5 h-3.5 text-[var(--color-text-accent,#C4B5FD)]" />
@@ -737,7 +682,7 @@ const CreateInterviewPage = () => {
                     {/* Require Approval Toggle */}
                     <div className="flex items-center justify-between p-4 bg-[var(--color-canvas)] border border-[var(--color-border)] rounded-xl">
                       <div>
-                        <label className="text-sm font-medium text-[var(--color-text-primary)] flex items-center gap-2 mb-1">
+                        <label className="text-sm font-medium text-[var(--color-text-primary)] flex items-center gap-2 mb-0.5">
                           <ShieldAlert className="w-4 h-4 text-[var(--color-text-accent,#C4B5FD)]" />
                           Require approval to join
                         </label>
@@ -756,201 +701,296 @@ const CreateInterviewPage = () => {
                     </div>
                   </div>
 
-                  {/* Navigation Bar */}
-                  <div className="flex items-center justify-between pt-4 border-t border-[var(--color-border)]">
-                    <button
-                      type="button"
-                      onClick={() => navigate(-1)}
-                      className="px-5 py-2.5 text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleNextStep}
-                      className="px-6 py-2.5 rounded-xl text-xs font-medium text-[var(--color-text-accent,#C4B5FD)] bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] border border-[var(--color-border-active,#6338F6)] transition-all flex items-center gap-1.5"
-                    >
-                      Next: Question strategy <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </GlassCard>
-              </motion.div>
-            )}
-
-            {/* ========================================================================= */}
-            {/* STEP 2: QUESTION STRATEGY */}
-            {/* ========================================================================= */}
-            {currentStep === 2 && (
-              <motion.div
-                key="step2"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-              >
-                <GlassCard padding="p-6 md:p-8" className="space-y-6">
-                  <SectionHeader
-                    icon={Target}
-                    title="Question strategy & custom question bank"
-                    subtitle="Select how questions will be delivered: 100% AI generated, employer preset list, or a hybrid flow."
-                  />
-
-                  <div className="space-y-6">
-                    {/* 3-Way Mode Card Selector */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {/* Mode 1: AI Generated */}
-                      <div
-                        onClick={() => setQuestionMode("AI_GENERATED")}
-                        className={`cursor-pointer p-5 rounded-2xl border transition-all relative ${
-                          questionMode === "AI_GENERATED"
-                            ? "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] border-[var(--color-border-active,#6338F6)] ring-1 ring-[var(--color-border-active,#6338F6)]"
-                            : "bg-[var(--color-surface)] border-[var(--color-border)] hover:border-[var(--color-border-active,#6338F6)]/50"
-                        }`}
-                      >
-                        <div className="w-9 h-9 rounded-xl bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] flex items-center justify-center mb-3 border border-[var(--color-border-active,#6338F6)]/30">
-                          <Bot className="w-5 h-5" />
-                        </div>
-                        <h4 className="text-sm font-medium text-[var(--color-text-primary)]">
-                          AI-adaptive
-                        </h4>
-                        <p className="text-xs text-[var(--color-text-secondary)] mt-1 font-normal leading-relaxed">
-                          Gemini AI dynamically generates all questions and adaptive follow-ups tailored to candidate responses.
-                        </p>
-                        {questionMode === "AI_GENERATED" && (
-                          <span className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-[var(--color-primary)] text-white text-[10px] font-medium">
-                            Selected
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Mode 2: Employer Preset */}
-                      <div
-                        onClick={() => setQuestionMode("EMPLOYER_PRESET")}
-                        className={`cursor-pointer p-5 rounded-2xl border transition-all relative ${
-                          questionMode === "EMPLOYER_PRESET"
-                            ? "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] border-[var(--color-border-active,#6338F6)] ring-1 ring-[var(--color-border-active,#6338F6)]"
-                            : "bg-[var(--color-surface)] border-[var(--color-border)] hover:border-[var(--color-border-active,#6338F6)]/50"
-                        }`}
-                      >
-                        <div className="w-9 h-9 rounded-xl bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] flex items-center justify-center mb-3 border border-[var(--color-border-active,#6338F6)]/30">
-                          <Target className="w-5 h-5" />
-                        </div>
-                        <h4 className="text-sm font-medium text-[var(--color-text-primary)]">
-                          Employer preset
-                        </h4>
-                        <p className="text-xs text-[var(--color-text-secondary)] mt-1 font-normal leading-relaxed">
-                          AI asks ONLY your exact pre-defined question bank in fixed order. Zero AI question generation.
-                        </p>
-                        {questionMode === "EMPLOYER_PRESET" && (
-                          <span className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-[var(--color-primary)] text-white text-[10px] font-medium">
-                            Selected
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Mode 3: Hybrid Campaign */}
-                      <div
-                        onClick={() => setQuestionMode("HYBRID")}
-                        className={`cursor-pointer p-5 rounded-2xl border transition-all relative ${
-                          questionMode === "HYBRID"
-                            ? "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] border-[var(--color-border-active,#6338F6)] ring-1 ring-[var(--color-border-active,#6338F6)]"
-                            : "bg-[var(--color-surface)] border-[var(--color-border)] hover:border-[var(--color-border-active,#6338F6)]/50"
-                        }`}
-                      >
-                        <div className="w-9 h-9 rounded-xl bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] flex items-center justify-center mb-3 border border-[var(--color-border-active,#6338F6)]/30">
-                          <Shuffle className="w-5 h-5" />
-                        </div>
-                        <h4 className="text-sm font-medium text-[var(--color-text-primary)]">
-                          Hybrid campaign
-                        </h4>
-                        <p className="text-xs text-[var(--color-text-secondary)] mt-1 font-normal leading-relaxed">
-                          AI asks your custom questions first, then smoothly transitions to adaptive AI follow-ups.
-                        </p>
-                        {questionMode === "HYBRID" && (
-                          <span className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-[var(--color-primary)] text-white text-[10px] font-medium">
-                            Selected
-                          </span>
-                        )}
-                      </div>
+                  {/* Right Column: Technical Topics Manager */}
+                  <div className="lg:col-span-5 space-y-4 p-5 rounded-2xl bg-[var(--color-canvas)] border border-[var(--color-border)]">
+                    <div>
+                      <label className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-primary)] mb-1">
+                        <Tag className="w-3.5 h-3.5 text-[var(--color-text-accent,#C4B5FD)]" />
+                        Technical topics * (at least 1 required)
+                      </label>
+                      <p className="text-xs text-[var(--color-text-secondary)]">
+                        Select from common engineering domains or add specific competencies.
+                      </p>
                     </div>
 
-                    {/* Custom Question Builder Form */}
-                    {(questionMode === "EMPLOYER_PRESET" || questionMode === "HYBRID") && (
-                      <div className="p-5 rounded-2xl bg-[var(--color-canvas)] border border-[var(--color-border)] space-y-4">
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                          <h4 className="text-xs font-medium text-[var(--color-text-primary)] flex items-center gap-2">
+                    <div className="flex flex-wrap gap-1.5">
+                      {PRESET_TOPICS.map((preset) => (
+                        <Chip
+                          key={preset}
+                          label={preset}
+                          selected={topics.includes(preset)}
+                          onClick={() => {
+                            if (topics.includes(preset)) removeTopic(preset);
+                            else addTopic(preset);
+                          }}
+                        />
+                      ))}
+                    </div>
+
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={topicInput}
+                        onChange={(e) => setTopicInput(e.target.value)}
+                        onKeyDown={handleTopicKeyDown}
+                        placeholder="Add custom topic (e.g. Docker, GraphQL)"
+                        className={inputClasses}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => addTopic()}
+                        className="px-4 py-2 bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] border border-[var(--color-border-active,#6338F6)] rounded-xl text-xs font-medium tracking-tight transition-all flex items-center shrink-0"
+                      >
+                        <Plus className="w-3.5 h-3.5 mr-1" /> Add
+                      </button>
+                    </div>
+
+                    {topicError && (
+                      <p className="text-xs text-[var(--color-danger)] font-medium">
+                        • {topicError}
+                      </p>
+                    )}
+
+                    <div className="pt-2 border-t border-[var(--color-border)]">
+                      <span className="text-xs font-medium text-[var(--color-text-secondary)] block mb-2">
+                        Active topics ({topics.length}):
+                      </span>
+                      {topics.length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {topics.map((topic) => (
+                            <Chip
+                              key={topic}
+                              label={topic}
+                              selected
+                              onRemove={() => removeTopic(topic)}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-[var(--color-text-secondary)]/70 italic">
+                          No topics added yet. Add at least one topic above.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Navigation Bar */}
+                <div className="flex items-center justify-between pt-4 border-t border-[var(--color-border)]">
+                  <button
+                    type="button"
+                    onClick={() => navigate(-1)}
+                    className="px-5 py-2.5 text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNextStep}
+                    className="px-6 py-2.5 rounded-xl text-xs font-medium text-[var(--color-text-accent,#C4B5FD)] bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] border border-[var(--color-border-active,#6338F6)] transition-all flex items-center gap-1.5"
+                  >
+                    Next: Question strategy <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </GlassCard>
+            </motion.div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* STEP 2: QUESTION STRATEGY */}
+          {/* ========================================================================= */}
+          {currentStep === 2 && (
+            <motion.div
+              key="step2"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <GlassCard padding="p-6 md:p-8" className="space-y-6">
+                <SectionHeader
+                  icon={Target}
+                  title="Question strategy & custom question bank"
+                  subtitle="Select how questions will be delivered: 100% AI generated, employer preset list, or a hybrid flow."
+                />
+
+                <div className="space-y-6">
+                  {/* 3-Way Mode Card Selector */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Mode 1: AI Generated */}
+                    <div
+                      onClick={() => setQuestionMode("AI_GENERATED")}
+                      className={`cursor-pointer p-5 rounded-2xl border transition-all relative ${
+                        questionMode === "AI_GENERATED"
+                          ? "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] border-[var(--color-border-active,#6338F6)] ring-1 ring-[var(--color-border-active,#6338F6)]"
+                          : "bg-[var(--color-surface)] border-[var(--color-border)] hover:border-[var(--color-border-active,#6338F6)]/50"
+                      }`}
+                    >
+                      <div className="w-9 h-9 rounded-xl bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] flex items-center justify-center mb-3 border border-[var(--color-border-active,#6338F6)]/30">
+                        <Bot className="w-5 h-5" />
+                      </div>
+                      <h4 className="text-sm font-medium text-[var(--color-text-primary)]">
+                        AI-adaptive
+                      </h4>
+                      <p className="text-xs text-[var(--color-text-secondary)] mt-1 font-normal leading-relaxed">
+                        Gemini AI dynamically generates all questions and adaptive follow-ups tailored to candidate responses.
+                      </p>
+                      {questionMode === "AI_GENERATED" && (
+                        <span className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-[var(--color-primary)] text-white text-[10px] font-medium">
+                          Selected
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Mode 2: Employer Preset */}
+                    <div
+                      onClick={() => setQuestionMode("EMPLOYER_PRESET")}
+                      className={`cursor-pointer p-5 rounded-2xl border transition-all relative ${
+                        questionMode === "EMPLOYER_PRESET"
+                          ? "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] border-[var(--color-border-active,#6338F6)] ring-1 ring-[var(--color-border-active,#6338F6)]"
+                          : "bg-[var(--color-surface)] border-[var(--color-border)] hover:border-[var(--color-border-active,#6338F6)]/50"
+                      }`}
+                    >
+                      <div className="w-9 h-9 rounded-xl bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] flex items-center justify-center mb-3 border border-[var(--color-border-active,#6338F6)]/30">
+                        <Target className="w-5 h-5" />
+                      </div>
+                      <h4 className="text-sm font-medium text-[var(--color-text-primary)]">
+                        Employer preset
+                      </h4>
+                      <p className="text-xs text-[var(--color-text-secondary)] mt-1 font-normal leading-relaxed">
+                        AI asks ONLY your exact pre-defined question bank in fixed order. Zero AI question generation.
+                      </p>
+                      {questionMode === "EMPLOYER_PRESET" && (
+                        <span className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-[var(--color-primary)] text-white text-[10px] font-medium">
+                          Selected
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Mode 3: Hybrid Campaign */}
+                    <div
+                      onClick={() => setQuestionMode("HYBRID")}
+                      className={`cursor-pointer p-5 rounded-2xl border transition-all relative ${
+                        questionMode === "HYBRID"
+                          ? "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] border-[var(--color-border-active,#6338F6)] ring-1 ring-[var(--color-border-active,#6338F6)]"
+                          : "bg-[var(--color-surface)] border-[var(--color-border)] hover:border-[var(--color-border-active,#6338F6)]/50"
+                      }`}
+                    >
+                      <div className="w-9 h-9 rounded-xl bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] flex items-center justify-center mb-3 border border-[var(--color-border-active,#6338F6)]/30">
+                        <Shuffle className="w-5 h-5" />
+                      </div>
+                      <h4 className="text-sm font-medium text-[var(--color-text-primary)]">
+                        Hybrid campaign
+                      </h4>
+                      <p className="text-xs text-[var(--color-text-secondary)] mt-1 font-normal leading-relaxed">
+                        AI asks your custom questions first, then smoothly transitions to adaptive AI follow-ups.
+                      </p>
+                      {questionMode === "HYBRID" && (
+                        <span className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-[var(--color-primary)] text-white text-[10px] font-medium">
+                          Selected
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Custom Question Builder Layout */}
+                  {(questionMode === "EMPLOYER_PRESET" || questionMode === "HYBRID") && (
+                    <div className="p-6 rounded-2xl bg-[var(--color-canvas)] border border-[var(--color-border)] space-y-6">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[var(--color-border)] pb-4">
+                        <div>
+                          <h4 className="text-sm font-medium text-[var(--color-text-primary)] flex items-center gap-2">
                             <FileCode className="w-4 h-4 text-[var(--color-text-accent,#C4B5FD)]" />
                             Custom questions ({customQuestions.length} added)
                           </h4>
-
-                          {/* Import CSV/JSON Button */}
-                          <button
-                            type="button"
-                            onClick={() => setIsQuestionImportModalOpen(true)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--color-surface)] hover:bg-[var(--color-surface-hover,#1E1E2A)] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border)] text-xs font-medium tracking-tight transition-all"
-                          >
-                            <FileSpreadsheet className="w-3.5 h-3.5" />
-                            <span>Import CSV / JSON</span>
-                          </button>
+                          <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+                            Add questions manually or import a batch file.
+                          </p>
                         </div>
 
-                        <div className="space-y-3">
+                        {/* Import CSV/JSON Button */}
+                        <button
+                          type="button"
+                          onClick={() => setIsQuestionImportModalOpen(true)}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[var(--color-surface)] hover:bg-[var(--color-surface-hover,#1E1E2A)] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border)] text-xs font-medium tracking-tight transition-all"
+                        >
+                          <FileSpreadsheet className="w-4 h-4" />
+                          <span>Import CSV / JSON</span>
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        {/* Add Question Form (Left) */}
+                        <div className="lg:col-span-5 space-y-3">
+                          <label className="text-xs font-medium text-[var(--color-text-secondary)] block">
+                            Question prompt *
+                          </label>
                           <textarea
                             value={newQText}
                             onChange={(e) => setNewQText(e.target.value)}
-                            placeholder="Enter question text (e.g. Explain how Virtual DOM diffing works in React)..."
-                            rows={2}
+                            placeholder="e.g. Explain how Virtual DOM diffing works in React..."
+                            rows={3}
                             className={`${inputClasses} resize-none`}
                           />
 
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            <input
-                              type="text"
-                              value={newQTopic}
-                              onChange={(e) => setNewQTopic(e.target.value)}
-                              placeholder="Topic (e.g. React)"
-                              className={inputClasses}
-                            />
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="text-xs font-medium text-[var(--color-text-secondary)] block mb-1">
+                                Topic tag
+                              </label>
+                              <input
+                                type="text"
+                                value={newQTopic}
+                                onChange={(e) => setNewQTopic(e.target.value)}
+                                placeholder="e.g. React"
+                                className={inputClasses}
+                              />
+                            </div>
 
-                            <select
-                              value={newQDiff}
-                              onChange={(e) => setNewQDiff(e.target.value)}
-                              className={`${inputClasses} cursor-pointer appearance-none`}
-                            >
-                              <option value="Easy" className="bg-[var(--color-surface)]">
-                                Easy
-                              </option>
-                              <option value="Medium" className="bg-[var(--color-surface)]">
-                                Medium
-                              </option>
-                              <option value="Hard" className="bg-[var(--color-surface)]">
-                                Hard
-                              </option>
-                            </select>
-
-                            <button
-                              type="button"
-                              onClick={addCustomQuestion}
-                              className="w-full py-2.5 px-4 bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)] rounded-xl text-xs font-medium tracking-tight transition-all flex items-center justify-center gap-1.5"
-                            >
-                              <Plus className="w-3.5 h-3.5" /> Add question
-                            </button>
+                            <div>
+                              <label className="text-xs font-medium text-[var(--color-text-secondary)] block mb-1">
+                                Difficulty
+                              </label>
+                              <select
+                                value={newQDiff}
+                                onChange={(e) => setNewQDiff(e.target.value)}
+                                className={`${inputClasses} cursor-pointer appearance-none`}
+                              >
+                                <option value="Easy" className="bg-[var(--color-surface)]">
+                                  Easy
+                                </option>
+                                <option value="Medium" className="bg-[var(--color-surface)]">
+                                  Medium
+                                </option>
+                                <option value="Hard" className="bg-[var(--color-surface)]">
+                                  Hard
+                                </option>
+                              </select>
+                            </div>
                           </div>
+
+                          <button
+                            type="button"
+                            onClick={addCustomQuestion}
+                            className="w-full py-2.5 px-4 bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)] rounded-xl text-xs font-medium tracking-tight transition-all flex items-center justify-center gap-1.5"
+                          >
+                            <Plus className="w-4 h-4" /> Add to sequence
+                          </button>
                         </div>
 
-                        {/* Added Custom Questions List */}
-                        {customQuestions.length > 0 && (
-                          <div className="space-y-2 pt-3 border-t border-[var(--color-border)]">
-                            <span className="text-xs font-medium text-[var(--color-text-secondary)] block">
-                              Configured question sequence:
-                            </span>
-                            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                        {/* Question Sequence List (Right) */}
+                        <div className="lg:col-span-7 space-y-3">
+                          <label className="text-xs font-medium text-[var(--color-text-secondary)] block">
+                            Configured question sequence ({customQuestions.length}):
+                          </label>
+
+                          {customQuestions.length > 0 ? (
+                            <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
                               {customQuestions.map((q, idx) => (
                                 <div
                                   key={idx}
                                   className="p-3.5 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] flex items-start justify-between gap-3 text-xs"
                                 >
-                                  <div className="space-y-1 flex-1">
+                                  <div className="space-y-1.5 flex-1">
                                     <div className="flex items-center gap-2">
                                       <span className="px-2 py-0.5 rounded-md bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] font-medium text-[10px]">
                                         Q{idx + 1}
@@ -976,52 +1016,59 @@ const CreateInterviewPage = () => {
                                 </div>
                               ))}
                             </div>
-                          </div>
-                        )}
+                          ) : (
+                            <div className="p-8 rounded-xl border border-dashed border-[var(--color-border)] text-center text-xs text-[var(--color-text-secondary)]">
+                              No custom questions configured yet. Add questions on the left or import a CSV/JSON file.
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
+                </div>
 
-                  {/* Navigation Bar */}
-                  <div className="flex items-center justify-between pt-4 border-t border-[var(--color-border)]">
-                    <button
-                      type="button"
-                      onClick={handlePrevStep}
-                      className="px-5 py-2.5 rounded-xl text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors flex items-center gap-1.5"
-                    >
-                      <ArrowLeft className="w-3.5 h-3.5" /> Back
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleNextStep}
-                      className="px-6 py-2.5 rounded-xl text-xs font-medium text-[var(--color-text-accent,#C4B5FD)] bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] border border-[var(--color-border-active,#6338F6)] transition-all flex items-center gap-1.5"
-                    >
-                      Next: Candidate invitations <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </GlassCard>
-              </motion.div>
-            )}
+                {/* Navigation Bar */}
+                <div className="flex items-center justify-between pt-4 border-t border-[var(--color-border)]">
+                  <button
+                    type="button"
+                    onClick={handlePrevStep}
+                    className="px-5 py-2.5 rounded-xl text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors flex items-center gap-1.5"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" /> Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNextStep}
+                    className="px-6 py-2.5 rounded-xl text-xs font-medium text-[var(--color-text-accent,#C4B5FD)] bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] border border-[var(--color-border-active,#6338F6)] transition-all flex items-center gap-1.5"
+                  >
+                    Next: Candidate invitations <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </GlassCard>
+            </motion.div>
+          )}
 
-            {/* ========================================================================= */}
-            {/* STEP 3: CANDIDATE INVITATIONS (OPTIONAL) */}
-            {/* ========================================================================= */}
-            {currentStep === 3 && (
-              <motion.div
-                key="step3"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-              >
-                <GlassCard padding="p-6 md:p-8" className="space-y-6">
-                  <SectionHeader
-                    icon={UserPlus}
-                    title="Candidate invitations (optional)"
-                    subtitle="Pre-assign candidates using single email, bulk paste, or CSV file upload. You can also invite candidates anytime after campaign creation."
-                  />
+          {/* ========================================================================= */}
+          {/* STEP 3: CANDIDATE INVITATIONS (OPTIONAL) */}
+          {/* ========================================================================= */}
+          {currentStep === 3 && (
+            <motion.div
+              key="step3"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <GlassCard padding="p-6 md:p-8" className="space-y-6">
+                <SectionHeader
+                  icon={UserPlus}
+                  title="Candidate invitations (optional)"
+                  subtitle="Pre-assign candidates using single email, bulk paste, or CSV file upload. You can also invite candidates anytime after campaign creation."
+                />
 
-                  <div className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                  {/* Left Column: Input Methods */}
+                  <div className="lg:col-span-6 space-y-4">
                     {/* Entry Mode Selector Tabs */}
                     <div className="flex flex-wrap gap-2 p-1.5 rounded-xl bg-[var(--color-canvas)] border border-[var(--color-border)]">
                       <button
@@ -1044,7 +1091,7 @@ const CreateInterviewPage = () => {
                             : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                         }`}
                       >
-                        <ListFilter className="w-3.5 h-3.5" /> Multiple / bulk paste
+                        <ListFilter className="w-3.5 h-3.5" /> Bulk paste
                       </button>
                       <button
                         type="button"
@@ -1055,43 +1102,51 @@ const CreateInterviewPage = () => {
                             : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                         }`}
                       >
-                        <FileSpreadsheet className="w-3.5 h-3.5" /> CSV / TXT upload
+                        <FileSpreadsheet className="w-3.5 h-3.5" /> CSV upload
                       </button>
                     </div>
 
                     {/* Mode 1: Single Email */}
                     {candidateMode === "single" && (
-                      <div className="flex gap-3">
-                        <input
-                          type="email"
-                          value={singleEmailInput}
-                          onChange={(e) => setSingleEmailInput(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              addSingleCandidate();
-                            }
-                          }}
-                          placeholder="candidate@company.com"
-                          className={inputClasses}
-                        />
-                        <button
-                          type="button"
-                          onClick={addSingleCandidate}
-                          className="px-5 py-2.5 bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)] rounded-xl text-xs font-medium tracking-tight transition-all flex items-center shrink-0"
-                        >
-                          <Plus className="w-3.5 h-3.5 mr-1" /> Add candidate
-                        </button>
+                      <div className="space-y-3 p-5 rounded-2xl bg-[var(--color-canvas)] border border-[var(--color-border)]">
+                        <label className="text-xs font-medium text-[var(--color-text-secondary)] block">
+                          Enter candidate email
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="email"
+                            value={singleEmailInput}
+                            onChange={(e) => setSingleEmailInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                addSingleCandidate();
+                              }
+                            }}
+                            placeholder="candidate@company.com"
+                            className={inputClasses}
+                          />
+                          <button
+                            type="button"
+                            onClick={addSingleCandidate}
+                            className="px-5 py-2.5 bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)] rounded-xl text-xs font-medium tracking-tight transition-all flex items-center shrink-0"
+                          >
+                            <Plus className="w-3.5 h-3.5 mr-1" /> Add
+                          </button>
+                        </div>
                       </div>
                     )}
 
                     {/* Mode 2: Bulk Text */}
                     {candidateMode === "bulk" && (
-                      <div className="space-y-3">
+                      <div className="space-y-3 p-5 rounded-2xl bg-[var(--color-canvas)] border border-[var(--color-border)]">
+                        <label className="text-xs font-medium text-[var(--color-text-secondary)] block">
+                          Paste multiple email addresses
+                        </label>
                         <textarea
                           value={bulkEmailInput}
                           onChange={(e) => setBulkEmailInput(e.target.value)}
-                          rows={3}
+                          rows={4}
                           placeholder="Paste candidate emails separated by commas, spaces, or newlines (e.g. john@acme.com, sarah@acme.com)..."
                           className={`${inputClasses} resize-none`}
                         />
@@ -1101,7 +1156,7 @@ const CreateInterviewPage = () => {
                             onClick={addBulkCandidates}
                             className="px-5 py-2.5 bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)] rounded-xl text-xs font-medium tracking-tight transition-all flex items-center"
                           >
-                            <Plus className="w-3.5 h-3.5 mr-1" /> Add bulk emails
+                            <Plus className="w-3.5 h-3.5 mr-1" /> Parse & add emails
                           </button>
                         </div>
                       </div>
@@ -1109,22 +1164,22 @@ const CreateInterviewPage = () => {
 
                     {/* Mode 3: CSV Upload */}
                     {candidateMode === "csv" && (
-                      <div className="p-6 border-2 border-dashed border-[var(--color-border)] rounded-2xl bg-[var(--color-canvas)] text-center space-y-3 relative hover:border-[var(--color-border-active,#6338F6)]/50 transition-colors">
+                      <div className="p-8 border-2 border-dashed border-[var(--color-border)] rounded-2xl bg-[var(--color-canvas)] text-center space-y-3 relative hover:border-[var(--color-border-active,#6338F6)]/50 transition-colors">
                         <input
                           type="file"
                           accept=".csv, .txt"
                           onChange={handleCsvUpload}
                           className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                         />
-                        <div className="w-10 h-10 rounded-full bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] flex items-center justify-center mx-auto border border-[var(--color-border-active,#6338F6)]/30">
+                        <div className="w-11 h-11 rounded-full bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] flex items-center justify-center mx-auto border border-[var(--color-border-active,#6338F6)]/30">
                           <Upload className="w-5 h-5" />
                         </div>
                         <div>
-                          <h4 className="text-xs font-medium text-[var(--color-text-primary)]">
+                          <h4 className="text-sm font-medium text-[var(--color-text-primary)]">
                             Drop CSV or TXT file here or click to browse
                           </h4>
                           <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                            Supports CSV files containing candidate emails in any column.
+                            Supports spreadsheet exports containing email columns.
                           </p>
                         </div>
                         {csvFileName && (
@@ -1134,29 +1189,33 @@ const CreateInterviewPage = () => {
                         )}
                       </div>
                     )}
+                  </div>
 
-                    {/* Candidate Emails List Preview */}
-                    {candidateEmails.length > 0 && (
-                      <div className="space-y-3 pt-3 border-t border-[var(--color-border)]">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-medium text-[var(--color-text-secondary)] flex items-center gap-1.5">
-                            <Users className="w-3.5 h-3.5 text-[var(--color-text-accent,#C4B5FD)]" />
-                            Invited candidates ({candidateEmails.length})
-                          </span>
+                  {/* Right Column: Live Invited Candidates Preview */}
+                  <div className="lg:col-span-6 space-y-3 p-5 rounded-2xl bg-[var(--color-canvas)] border border-[var(--color-border)] flex flex-col justify-between">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-3">
+                        <span className="text-xs font-medium text-[var(--color-text-primary)] flex items-center gap-1.5">
+                          <Users className="w-3.5 h-3.5 text-[var(--color-text-accent,#C4B5FD)]" />
+                          Invited candidate roster ({candidateEmails.length})
+                        </span>
+                        {candidateEmails.length > 0 && (
                           <button
                             type="button"
                             onClick={clearAllCandidates}
                             className="text-xs font-medium text-[var(--color-danger)] hover:underline transition-colors flex items-center gap-1"
                           >
-                            <Trash2 className="w-3 h-3" /> Clear all
+                            <Trash2 className="w-3.5 h-3.5" /> Clear all
                           </button>
-                        </div>
+                        )}
+                      </div>
 
-                        <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 rounded-xl bg-[var(--color-canvas)] border border-[var(--color-border)]">
+                      {candidateEmails.length > 0 ? (
+                        <div className="flex flex-wrap gap-2 max-h-72 overflow-y-auto p-1">
                           {candidateEmails.map((email) => (
                             <span
                               key={email}
-                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] text-xs font-medium text-[var(--color-text-primary)]"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-xs font-medium text-[var(--color-text-primary)]"
                             >
                               <Mail className="w-3 h-3 text-[var(--color-text-accent,#C4B5FD)] shrink-0" />
                               {email}
@@ -1170,56 +1229,71 @@ const CreateInterviewPage = () => {
                             </span>
                           ))}
                         </div>
-                      </div>
-                    )}
+                      ) : (
+                        <div className="py-12 text-center text-xs text-[var(--color-text-secondary)] space-y-1">
+                          <p className="italic">No candidates added yet.</p>
+                          <p className="text-[11px] text-[var(--color-text-secondary)]/70">
+                            You can skip this step and invite candidates anytime from your dashboard.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-xs text-[var(--color-text-secondary)] flex items-center gap-2">
+                      <Lightbulb className="w-4 h-4 text-[var(--color-text-accent,#C4B5FD)] shrink-0" />
+                      <span>Candidates will receive automated email links once the campaign is created.</span>
+                    </div>
                   </div>
+                </div>
 
-                  {/* Navigation Bar */}
-                  <div className="flex items-center justify-between pt-4 border-t border-[var(--color-border)]">
-                    <button
-                      type="button"
-                      onClick={handlePrevStep}
-                      className="px-5 py-2.5 rounded-xl text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors flex items-center gap-1.5"
-                    >
-                      <ArrowLeft className="w-3.5 h-3.5" /> Back
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleNextStep}
-                      className="px-6 py-2.5 rounded-xl text-xs font-medium text-[var(--color-text-accent,#C4B5FD)] bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] border border-[var(--color-border-active,#6338F6)] transition-all flex items-center gap-1.5"
-                    >
-                      Next: AI instructions <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </GlassCard>
-              </motion.div>
-            )}
+                {/* Navigation Bar */}
+                <div className="flex items-center justify-between pt-4 border-t border-[var(--color-border)]">
+                  <button
+                    type="button"
+                    onClick={handlePrevStep}
+                    className="px-5 py-2.5 rounded-xl text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors flex items-center gap-1.5"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" /> Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNextStep}
+                    className="px-6 py-2.5 rounded-xl text-xs font-medium text-[var(--color-text-accent,#C4B5FD)] bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] border border-[var(--color-border-active,#6338F6)] transition-all flex items-center gap-1.5"
+                  >
+                    Next: AI instructions <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </GlassCard>
+            </motion.div>
+          )}
 
-            {/* ========================================================================= */}
-            {/* STEP 4: AI SYSTEM INSTRUCTIONS (OPTIONAL) */}
-            {/* ========================================================================= */}
-            {currentStep === 4 && (
-              <motion.div
-                key="step4"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-              >
-                <GlassCard padding="p-6 md:p-8" className="space-y-6">
-                  <SectionHeader
-                    icon={Sparkles}
-                    title="AI system instructions (optional)"
-                    subtitle="Provide custom prompt focus areas, evaluation priorities, or rubric notes for the AI interviewer engine."
-                  />
+          {/* ========================================================================= */}
+          {/* STEP 4: AI SYSTEM INSTRUCTIONS (OPTIONAL) */}
+          {/* ========================================================================= */}
+          {currentStep === 4 && (
+            <motion.div
+              key="step4"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <GlassCard padding="p-6 md:p-8" className="space-y-6">
+                <SectionHeader
+                  icon={Sparkles}
+                  title="AI system instructions (optional)"
+                  subtitle="Provide custom prompt focus areas, evaluation priorities, or rubric notes for the AI interviewer engine."
+                />
 
-                  <div>
-                    <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
-                      Prompt guidelines & evaluation focus
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                  {/* Left Column: Guidelines Textarea */}
+                  <div className="lg:col-span-7 space-y-2">
+                    <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+                      Custom prompt & evaluation guidelines
                     </label>
                     <textarea
                       {...register("instructions")}
-                      rows={5}
+                      rows={8}
                       className={`${inputClasses} resize-none leading-relaxed`}
                       placeholder="Provide specific guidelines (e.g., 'Focus heavily on React performance optimization, custom hook design, and code readability. Ask 1 follow-up question if candidate answers vaguely...')"
                     />
@@ -1230,47 +1304,73 @@ const CreateInterviewPage = () => {
                     )}
                   </div>
 
-                  {/* Navigation Bar */}
-                  <div className="flex items-center justify-between pt-4 border-t border-[var(--color-border)]">
-                    <button
-                      type="button"
-                      onClick={handlePrevStep}
-                      className="px-5 py-2.5 rounded-xl text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors flex items-center gap-1.5"
-                    >
-                      <ArrowLeft className="w-3.5 h-3.5" /> Back
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleNextStep}
-                      className="px-6 py-2.5 rounded-xl text-xs font-medium text-[var(--color-text-accent,#C4B5FD)] bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] border border-[var(--color-border-active,#6338F6)] transition-all flex items-center gap-1.5"
-                    >
-                      Next: Review & create <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
+                  {/* Right Column: Suggested Rubric Guidance */}
+                  <div className="lg:col-span-5 space-y-3 p-5 rounded-2xl bg-[var(--color-canvas)] border border-[var(--color-border)]">
+                    <div className="flex items-center gap-2 text-xs font-medium text-[var(--color-text-accent,#C4B5FD)] border-b border-[var(--color-border)] pb-2.5">
+                      <HelpCircle className="w-4 h-4" />
+                      <span>Best practices for AI prompts</span>
+                    </div>
+
+                    <ul className="space-y-2.5 text-xs text-[var(--color-text-secondary)] leading-relaxed">
+                      <li className="flex items-start gap-2">
+                        <Check className="w-3.5 h-3.5 text-[var(--color-success)] mt-0.5 shrink-0" />
+                        <span><strong>State evaluation depth:</strong> Specify whether you prefer conceptual depth or practical code implementation trade-offs.</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Check className="w-3.5 h-3.5 text-[var(--color-success)] mt-0.5 shrink-0" />
+                        <span><strong>Follow-up behavior:</strong> Guide the AI on how aggressively to probe incomplete answers.</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Check className="w-3.5 h-3.5 text-[var(--color-success)] mt-0.5 shrink-0" />
+                        <span><strong>Default fallback:</strong> If left empty, the engine uses our standard battle-tested hiring rubrics.</span>
+                      </li>
+                    </ul>
                   </div>
-                </GlassCard>
-              </motion.div>
-            )}
+                </div>
 
-            {/* ========================================================================= */}
-            {/* STEP 5: REVIEW & CREATE */}
-            {/* ========================================================================= */}
-            {currentStep === 5 && (
-              <motion.div
-                key="step5"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-6"
-              >
-                <GlassCard padding="p-6 md:p-8" className="space-y-6">
-                  <SectionHeader
-                    icon={CheckCircle2}
-                    title="Review campaign configuration"
-                    subtitle="Verify all campaign details before publishing. You can click 'Edit' on any section to make quick adjustments."
-                  />
+                {/* Navigation Bar */}
+                <div className="flex items-center justify-between pt-4 border-t border-[var(--color-border)]">
+                  <button
+                    type="button"
+                    onClick={handlePrevStep}
+                    className="px-5 py-2.5 rounded-xl text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors flex items-center gap-1.5"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" /> Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNextStep}
+                    className="px-6 py-2.5 rounded-xl text-xs font-medium text-[var(--color-text-accent,#C4B5FD)] bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] border border-[var(--color-border-active,#6338F6)] transition-all flex items-center gap-1.5"
+                  >
+                    Next: Review & create <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </GlassCard>
+            </motion.div>
+          )}
 
-                  {/* Review Group 1: Essentials */}
+          {/* ========================================================================= */}
+          {/* STEP 5: REVIEW & CREATE */}
+          {/* ========================================================================= */}
+          {currentStep === 5 && (
+            <motion.div
+              key="step5"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-6"
+            >
+              <GlassCard padding="p-6 md:p-8" className="space-y-6">
+                <SectionHeader
+                  icon={CheckCircle2}
+                  title="Review campaign configuration"
+                  subtitle="Verify all campaign details before publishing. You can click 'Edit' on any section to make quick adjustments."
+                />
+
+                {/* 2-Column Review Summary Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Review Card 1: Essentials */}
                   <div className="p-5 rounded-2xl bg-[var(--color-canvas)] border border-[var(--color-border)] space-y-3">
                     <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-2.5">
                       <div className="text-xs font-medium text-[var(--color-text-accent,#C4B5FD)] flex items-center gap-1.5">
@@ -1286,7 +1386,7 @@ const CreateInterviewPage = () => {
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                    <div className="grid grid-cols-2 gap-4 text-xs">
                       <div>
                         <span className="text-[var(--color-text-secondary)] block">Title</span>
                         <span className="font-medium text-[var(--color-text-primary)]">
@@ -1323,8 +1423,8 @@ const CreateInterviewPage = () => {
                     )}
 
                     <div className="pt-2 text-xs">
-                      <span className="text-[var(--color-text-secondary)] block mb-1">
-                        Technical topics ({topics.length})
+                      <span className="text-[var(--color-text-secondary)] block mb-1.5">
+                        Technical topics ({topics.length}):
                       </span>
                       <div className="flex flex-wrap gap-1.5">
                         {topics.map((t) => (
@@ -1339,7 +1439,7 @@ const CreateInterviewPage = () => {
                     </div>
                   </div>
 
-                  {/* Review Group 2: Question Strategy */}
+                  {/* Review Card 2: Question Strategy */}
                   <div className="p-5 rounded-2xl bg-[var(--color-canvas)] border border-[var(--color-border)] space-y-3">
                     <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-2.5">
                       <div className="text-xs font-medium text-[var(--color-text-accent,#C4B5FD)] flex items-center gap-1.5">
@@ -1392,7 +1492,7 @@ const CreateInterviewPage = () => {
                     )}
                   </div>
 
-                  {/* Review Group 3: Candidate Invitations */}
+                  {/* Review Card 3: Candidate Invitations */}
                   <div className="p-5 rounded-2xl bg-[var(--color-canvas)] border border-[var(--color-border)] space-y-3">
                     <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-2.5">
                       <div className="text-xs font-medium text-[var(--color-text-accent,#C4B5FD)] flex items-center gap-1.5">
@@ -1409,13 +1509,13 @@ const CreateInterviewPage = () => {
                     </div>
 
                     {candidateEmails.length === 0 ? (
-                      <p className="text-xs text-[var(--color-text-secondary)] italic">
+                      <p className="text-xs text-[var(--color-text-secondary)] italic leading-relaxed">
                         No candidates invited yet — add them anytime from the campaign dashboard after creation
                       </p>
                     ) : (
                       <div className="space-y-2">
                         <span className="text-xs font-medium text-[var(--color-text-primary)]">
-                          {candidateEmails.length} candidate(s) will be assigned:
+                          {candidateEmails.length} candidate(s) pre-assigned:
                         </span>
                         <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
                           {candidateEmails.map((email) => (
@@ -1431,7 +1531,7 @@ const CreateInterviewPage = () => {
                     )}
                   </div>
 
-                  {/* Review Group 4: AI Instructions */}
+                  {/* Review Card 4: AI Instructions */}
                   <div className="p-5 rounded-2xl bg-[var(--color-canvas)] border border-[var(--color-border)] space-y-3">
                     <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-2.5">
                       <div className="text-xs font-medium text-[var(--color-text-accent,#C4B5FD)] flex items-center gap-1.5">
@@ -1457,76 +1557,76 @@ const CreateInterviewPage = () => {
                       </p>
                     )}
                   </div>
+                </div>
 
-                  {/* Account Verification Warning Banner (renders on Step 5 alongside Create button) */}
-                  {!user?.isVerified && (
-                    <div className="p-5 rounded-2xl bg-[var(--color-warning)]/10 border border-[var(--color-warning)]/30 text-[var(--color-warning)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                      <div className="flex items-start gap-3.5">
-                        <div className="p-2 rounded-xl bg-[var(--color-warning)]/20 text-[var(--color-warning)] shrink-0 mt-0.5">
-                          <ShieldAlert className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-medium text-[var(--color-warning)]">
-                            Employer account verification required
-                          </h4>
-                          <p className="text-xs text-[var(--color-warning)]/80 mt-1 leading-relaxed">
-                            Your account is currently pending verification. You can save your configured campaign details, but publication to candidates requires administrator approval.
-                          </p>
-                        </div>
+                {/* Account Verification Warning Banner */}
+                {!user?.isVerified && (
+                  <div className="p-5 rounded-2xl bg-[var(--color-warning)]/10 border border-[var(--color-warning)]/30 text-[var(--color-warning)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-start gap-3.5">
+                      <div className="p-2 rounded-xl bg-[var(--color-warning)]/20 text-[var(--color-warning)] shrink-0 mt-0.5">
+                        <ShieldAlert className="w-5 h-5" />
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => navigate("/employer/verification-pending")}
-                        className="px-4 py-2 bg-[var(--color-warning)]/20 hover:bg-[var(--color-warning)]/30 text-[var(--color-warning)] text-xs font-medium rounded-xl border border-[var(--color-warning)]/40 transition-all shrink-0 whitespace-nowrap"
-                      >
-                        Check status & support
-                      </button>
+                      <div>
+                        <h4 className="text-sm font-medium text-[var(--color-warning)]">
+                          Employer account verification required
+                        </h4>
+                        <p className="text-xs text-[var(--color-warning)]/80 mt-1 leading-relaxed">
+                          Your account is currently pending verification. You can save your configured campaign details, but publishing to candidates requires administrator approval.
+                        </p>
+                      </div>
                     </div>
-                  )}
-
-                  {/* Navigation and Single Primary CTA */}
-                  <div className="flex items-center justify-between pt-4 border-t border-[var(--color-border)]">
                     <button
                       type="button"
-                      onClick={handlePrevStep}
-                      className="px-5 py-2.5 rounded-xl text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors flex items-center gap-1.5"
+                      onClick={() => navigate("/employer/verification-pending")}
+                      className="px-4 py-2 bg-[var(--color-warning)]/20 hover:bg-[var(--color-warning)]/30 text-[var(--color-warning)] text-xs font-medium rounded-xl border border-[var(--color-warning)]/40 transition-all shrink-0 whitespace-nowrap"
                     >
-                      <ArrowLeft className="w-3.5 h-3.5" /> Back to instructions
-                    </button>
-
-                    <button
-                      type="submit"
-                      disabled={isLoading || !user?.isVerified}
-                      className={`px-8 py-3.5 rounded-xl text-sm font-medium tracking-tight transition-all flex items-center justify-center min-w-[220px] ${
-                        !user?.isVerified
-                          ? "bg-[var(--color-warning)]/15 text-[var(--color-warning)] border border-[var(--color-warning)]/30 cursor-not-allowed"
-                          : "bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white shadow-lg shadow-[var(--color-primary)]/30"
-                      }`}
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Publishing campaign...
-                        </>
-                      ) : !user?.isVerified ? (
-                        <>
-                          <ShieldAlert className="w-4 h-4 mr-2" />
-                          Verification required
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="w-4 h-4 mr-2" />
-                          Create campaign
-                        </>
-                      )}
+                      Check status & support
                     </button>
                   </div>
-                </GlassCard>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </form>
-      </div>
+                )}
+
+                {/* Navigation and Single Primary CTA */}
+                <div className="flex items-center justify-between pt-4 border-t border-[var(--color-border)]">
+                  <button
+                    type="button"
+                    onClick={handlePrevStep}
+                    className="px-5 py-2.5 rounded-xl text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors flex items-center gap-1.5"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" /> Back to instructions
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={isLoading || !user?.isVerified}
+                    className={`px-8 py-3.5 rounded-xl text-sm font-medium tracking-tight transition-all flex items-center justify-center min-w-[220px] ${
+                      !user?.isVerified
+                        ? "bg-[var(--color-warning)]/15 text-[var(--color-warning)] border border-[var(--color-warning)]/30 cursor-not-allowed"
+                        : "bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white shadow-lg shadow-[var(--color-primary)]/30"
+                    }`}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Publishing campaign...
+                      </>
+                    ) : !user?.isVerified ? (
+                      <>
+                        <ShieldAlert className="w-4 h-4 mr-2" />
+                        Verification required
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Create campaign
+                      </>
+                    )}
+                  </button>
+                </div>
+              </GlassCard>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </form>
 
       {/* QUESTION IMPORT FORMAT GUIDE MODAL */}
       {isQuestionImportModalOpen && (

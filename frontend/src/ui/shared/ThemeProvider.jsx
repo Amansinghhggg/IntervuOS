@@ -1,43 +1,28 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { createContext, useContext, useEffect } from 'react';
 
 const ThemeContext = createContext({
-  employerTheme: 'dark',
-  toggleEmployerTheme: () => {},
+  theme: 'dark',
 });
 
 export const useTheme = () => useContext(ThemeContext);
 
 export default function ThemeProvider({ children }) {
-  const location = useLocation();
-  const [employerTheme, setEmployerTheme] = useState(() => {
-    return localStorage.getItem('employer_theme') || 'dark';
-  });
-
-  const toggleEmployerTheme = () => {
-    const nextTheme = employerTheme === 'dark' ? 'light' : 'dark';
-    setEmployerTheme(nextTheme);
-    localStorage.setItem('employer_theme', nextTheme);
-  };
-
   useEffect(() => {
-    const isEmployerRoute = location.pathname.startsWith('/employer');
-    const isCandidateRoute = location.pathname.startsWith('/candidate');
-
-    // Reset theme classes on document element
-    document.documentElement.classList.remove('theme-employer-light', 'theme-candidate');
-
-    if (isEmployerRoute && employerTheme === 'light') {
-      document.documentElement.classList.add('theme-employer-light');
-    } else if (isCandidateRoute) {
-      document.documentElement.classList.add('theme-candidate');
+    // Enforce dark theme
+    document.documentElement.classList.remove('theme-employer-light');
+    document.body.classList.remove('theme-employer-light');
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.body.setAttribute('data-theme', 'dark');
+    try {
+      localStorage.removeItem('employer_theme');
+    } catch {
+      // ignore
     }
-  }, [location.pathname, employerTheme]);
+  }, []);
 
   return (
-    <ThemeContext.Provider value={{ employerTheme, toggleEmployerTheme }}>
+    <ThemeContext.Provider value={{ theme: 'dark' }}>
       {children}
     </ThemeContext.Provider>
   );
 }
-

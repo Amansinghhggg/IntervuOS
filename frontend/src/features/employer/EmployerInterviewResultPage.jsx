@@ -88,48 +88,48 @@ export default function EmployerInterviewResultPage() {
   };
 
   return (
-    <div className="min-h-screen bg-transparent relative">
+    <div className="w-full min-h-screen bg-transparent relative font-['Inter'] pb-16 text-[var(--color-text-primary)]">
       {/* Background Noise */}
       <div className="absolute inset-0 noise pointer-events-none z-0"></div>
 
       {loading && (
         <div className="min-h-[80vh] flex flex-col items-center justify-center gap-4 relative z-10">
           <Loader2 className="w-10 h-10 animate-spin text-[var(--primary)]" />
-          <p className="text-[var(--text-secondary)] font-medium animate-pulse">Loading evaluation dashboard...</p>
+          <p className="text-[var(--text-secondary)] font-medium animate-pulse text-xs">Loading evaluation dashboard...</p>
         </div>
       )}
 
       {error && !loading && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 animate-fade-in-up">
-          <div className="mb-8">
+        <div className="w-full px-4 sm:px-6 md:px-8 xl:px-10 py-6 sm:py-8 relative z-10 animate-fade-in-up space-y-6">
+          <div>
             <Link
               to={`/employer/interviews/${interviewId}`}
-              className="inline-flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors text-sm font-medium"
+              className="inline-flex items-center gap-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors text-xs font-medium"
             >
               <ArrowLeft className="w-4 h-4" />
-              Back to Interview
+              Back to interview
             </Link>
           </div>
-          <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-12 flex flex-col items-center text-center shadow-lg">
+          <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-12 flex flex-col items-center text-center shadow-sm">
             {errorStatus === 404 ? (
               <>
-                <FileQuestion className="w-16 h-16 text-[var(--text-secondary)] opacity-50 mb-6" />
-                <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2 tracking-tight">No Result Found</h2>
-                <p className="text-[var(--text-secondary)] max-w-md">{error}</p>
+                <FileQuestion className="w-16 h-16 text-[var(--color-text-muted)] opacity-50 mb-6" />
+                <h2 className="text-xl font-medium text-[var(--color-text-primary)] mb-2 tracking-tight">No result found</h2>
+                <p className="text-[var(--color-text-secondary)] max-w-md text-xs">{error}</p>
               </>
             ) : (
               <>
                 <AlertCircle className="w-16 h-16 text-[var(--color-danger)] mb-6" />
-                <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2 tracking-tight">Error</h2>
-                <p className="text-[var(--color-danger)] max-w-md opacity-80 mb-6">{error}</p>
+                <h2 className="text-xl font-medium text-[var(--color-text-primary)] mb-2 tracking-tight">Evaluation error</h2>
+                <p className="text-[var(--color-danger)] max-w-md text-xs opacity-80 mb-6">{error}</p>
                 <div className="flex items-center gap-3">
                   <button
                     onClick={handleErrorReEnroll}
                     disabled={isReEnrolling}
-                    className="px-5 py-2.5 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white font-semibold rounded-xl transition-all shadow-md text-sm flex items-center gap-2 disabled:opacity-50"
+                    className="px-5 py-2.5 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white font-medium rounded-xl transition-all shadow-sm text-xs flex items-center gap-2 disabled:opacity-50"
                   >
                     <RefreshCw className={`w-4 h-4 ${isReEnrolling ? 'animate-spin' : ''}`} />
-                    {isReEnrolling ? "Re-enrolling..." : "Re-enroll Candidate"}
+                    {isReEnrolling ? "Re-enrolling..." : "Re-enroll candidate"}
                   </button>
                 </div>
               </>
@@ -139,26 +139,24 @@ export default function EmployerInterviewResultPage() {
       )}
 
       {!loading && !error && resultData && resultData.evaluation.status !== "COMPLETED" && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 animate-fade-in-up">
-          <div className="mb-8">
+        <div className="w-full px-4 sm:px-6 md:px-8 xl:px-10 py-6 sm:py-8 relative z-10 animate-fade-in-up space-y-6">
+          <div>
             <Link
               to={`/employer/interviews/${interviewId}`}
-              className="inline-flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors text-sm font-medium"
+              className="inline-flex items-center gap-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors text-xs font-medium"
             >
               <ArrowLeft className="w-4 h-4" />
-              Back to Interview
+              Back to interview
             </Link>
           </div>
 
-          <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-12 flex flex-col items-center text-center shadow-lg relative overflow-hidden">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[var(--primary)]/10 rounded-full blur-[100px] opacity-30"></div>
-
+          <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-12 flex flex-col items-center text-center shadow-sm relative overflow-hidden">
             <div className="relative z-10 flex flex-col items-center">
               {resultData.evaluation.status === "PENDING" && (
                 <>
-                  <Clock className="w-16 h-16 text-[var(--text-secondary)] opacity-50 mb-6" />
-                  <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2 tracking-tight">Evaluation Queued</h2>
-                  <p className="text-[var(--text-secondary)] max-w-md">
+                  <Clock className="w-16 h-16 text-[var(--color-text-muted)] opacity-50 mb-6" />
+                  <h2 className="text-xl font-medium text-[var(--color-text-primary)] mb-2 tracking-tight">Evaluation queued</h2>
+                  <p className="text-[var(--color-text-secondary)] text-xs max-w-md">
                     The AI evaluation has been queued and will begin shortly. Please check back later.
                   </p>
                 </>
@@ -166,8 +164,8 @@ export default function EmployerInterviewResultPage() {
               {resultData.evaluation.status === "PROCESSING" && (
                 <>
                   <Loader2 className="w-16 h-16 text-[var(--primary)] mb-6 animate-spin" />
-                  <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2 tracking-tight">Evaluation In Progress</h2>
-                  <p className="text-[var(--text-secondary)] max-w-md">
+                  <h2 className="text-xl font-medium text-[var(--color-text-primary)] mb-2 tracking-tight">Evaluation in progress</h2>
+                  <p className="text-[var(--color-text-secondary)] text-xs max-w-md">
                     Our AI is currently analyzing the transcript and generating a detailed evaluation.
                   </p>
                 </>
@@ -175,8 +173,8 @@ export default function EmployerInterviewResultPage() {
               {resultData.evaluation.status === "RETRYING" && (
                 <>
                   <RefreshCw className="w-16 h-16 text-[var(--color-warning)] mb-6 animate-spin" />
-                  <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2 tracking-tight">Retrying Evaluation</h2>
-                  <p className="text-[var(--text-secondary)] max-w-md">
+                  <h2 className="text-xl font-medium text-[var(--color-text-primary)] mb-2 tracking-tight">Retrying evaluation</h2>
+                  <p className="text-[var(--color-text-secondary)] text-xs max-w-md">
                     A previous evaluation attempt failed. We are automatically retrying it now.
                   </p>
                 </>
@@ -184,15 +182,15 @@ export default function EmployerInterviewResultPage() {
               {resultData.evaluation.status === "FAILED" && (
                 <>
                   <AlertCircle className="w-16 h-16 text-[var(--color-danger)] mb-6" />
-                  <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2 tracking-tight">Evaluation Failed</h2>
-                  <p className="text-[var(--color-danger)] opacity-80 max-w-md mb-6">
+                  <h2 className="text-xl font-medium text-[var(--color-text-primary)] mb-2 tracking-tight">Evaluation failed</h2>
+                  <p className="text-[var(--color-danger)] opacity-80 text-xs max-w-md mb-6">
                     We encountered an error while evaluating this interview.
                   </p>
                   <button
                     onClick={() => setShowReEnrollModal(true)}
-                    className="px-5 py-2.5 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white font-semibold rounded-xl transition-all shadow-md text-sm flex items-center gap-2"
+                    className="px-5 py-2.5 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white font-medium rounded-xl transition-all shadow-sm text-xs flex items-center gap-2"
                   >
-                    <RefreshCw className="w-4 h-4" /> Re-enroll Candidate
+                    <RefreshCw className="w-4 h-4" /> Re-enroll candidate
                   </button>
                 </>
               )}
@@ -202,7 +200,7 @@ export default function EmployerInterviewResultPage() {
       )}
 
       {!loading && !error && resultData && resultData.evaluation.status === "COMPLETED" && (
-        <div className="relative z-10 flex flex-col gap-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 mb-8">
+        <div className="relative z-10 w-full px-4 sm:px-6 md:px-8 xl:px-10 py-6 sm:py-8">
           <CandidateWorkspace
             resultData={resultData}
             onReEnroll={() => setShowReEnrollModal(true)}
@@ -213,42 +211,42 @@ export default function EmployerInterviewResultPage() {
 
       {/* Re-Enroll Confirmation Modal */}
       {showReEnrollModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6 w-full max-w-md shadow-2xl relative overflow-hidden animate-fade-in-up">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 w-full max-w-md shadow-2xl relative overflow-hidden animate-fade-in-up">
             <div className="flex items-center gap-4 mb-4">
-              <div className="w-12 h-12 rounded-full bg-[var(--color-danger)]/10 flex items-center justify-center shrink-0">
+              <div className="w-12 h-12 rounded-2xl bg-[var(--color-danger)]/10 flex items-center justify-center shrink-0">
                 <AlertCircle className="w-6 h-6 text-[var(--color-danger)]" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-[var(--text-primary)]">Re-enroll Candidate?</h3>
-                <p className="text-sm text-[var(--color-danger)]">This action is irreversible.</p>
+                <h3 className="text-base font-medium text-[var(--color-text-primary)]">Re-enroll Candidate?</h3>
+                <p className="text-xs text-[var(--color-danger)]">This action will reset the candidate's session.</p>
               </div>
             </div>
 
-            <p className="text-sm text-[var(--text-secondary)] mb-6 leading-relaxed">
-              Are you sure you want to re-enroll this candidate? This will result in permanent deletion of the current evaluation results and video recording. The candidate's status will be reset to Pending.
+            <p className="text-xs text-[var(--color-text-secondary)] mb-6 leading-relaxed">
+              Are you sure you want to re-enroll this candidate? This will clear the current evaluation results and video recording. The candidate's status will be reset to Pending so they can take the interview again.
             </p>
 
-            <div className="flex gap-3 justify-end">
+            <div className="flex gap-2.5 justify-end">
               <button
                 onClick={() => setShowReEnrollModal(false)}
                 disabled={isReEnrolling}
-                className="px-4 py-2 text-sm font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-variant)] rounded-xl transition-all"
+                className="px-4 py-2 text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)] rounded-xl transition-colors border border-transparent"
               >
                 Cancel
               </button>
               <button
                 onClick={handleReEnrollConfirm}
                 disabled={isReEnrolling}
-                className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-[var(--color-danger)] hover:bg-[var(--color-danger)]/90 rounded-xl transition-all shadow-lg shadow-[var(--color-danger)]/20 disabled:opacity-70 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-white bg-[var(--color-danger)] hover:bg-[var(--color-danger)]/90 rounded-xl transition-all shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {isReEnrolling ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     Processing...
                   </>
                 ) : (
-                  "Confirm Re-Enroll"
+                  "Confirm Re-enroll"
                 )}
               </button>
             </div>

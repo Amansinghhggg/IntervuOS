@@ -169,25 +169,6 @@ const ProfilePage = () => {
               <span className="px-2.5 py-0.5 rounded-full bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)]/30 text-xs font-medium capitalize">
                 {user?.role || "Candidate"}
               </span>
-              {user?.role === "employer" && (
-                <span className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-medium border ${
-                  user?.isVerified
-                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                    : "bg-amber-500/10 text-amber-300 border-amber-500/30"
-                }`}>
-                  {user?.isVerified ? (
-                    <>
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                      Verified employer
-                    </>
-                  ) : (
-                    <>
-                      <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
-                      Pending verification
-                    </>
-                  )}
-                </span>
-              )}
             </div>
             <p className="text-sm text-[var(--color-text-secondary,#94A3B8)] mt-2">
               Manage your professional identity and security settings.

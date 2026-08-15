@@ -10,22 +10,18 @@ import {
     X,
     User,
     ShieldAlert,
-    Sun,
-    Moon,
     Sparkles,
     ArrowRight,
     PanelLeftClose,
     PanelLeftOpen
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../ui/shared/ThemeProvider';
 import { toast } from 'react-hot-toast';
 
 const SIDEBAR_STORAGE_KEY = 'intervuos_employer_sidebar_collapsed';
 
 export default function EmployerLayout() {
     const { user, logout } = useAuth();
-    const { employerTheme, toggleEmployerTheme } = useTheme();
     const navigate = useNavigate();
     const location = useLocation();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -82,9 +78,8 @@ export default function EmployerLayout() {
 
     const navItems = [
         { label: "Dashboard", icon: Home, path: "/employer/dashboard" },
-        ...(!user?.isVerified ? [{ label: "Verification Status", icon: ShieldAlert, path: "/employer/verification-pending" }] : []),
         { label: "New Campaign", icon: FileText, path: "/employer/create-interview" },
-        { label: "Manage Subscriptions", icon: CreditCard, path: "/employer/subscriptions" },
+        { label: "How It Works", icon: HelpCircle, path: "/employer/how-it-works" }
     ];
 
     return (
@@ -106,15 +101,6 @@ export default function EmployerLayout() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                        {/* Theme Toggle Control */}
-                        <button
-                            onClick={toggleEmployerTheme}
-                            className="p-2 rounded-xl bg-[var(--background-secondary)] text-[var(--text-primary)] hover:border-[var(--border-active,#6338F6)] transition-colors border border-[var(--border)]"
-                            title={`Switch to ${employerTheme === 'dark' ? 'Light' : 'Dark'} Theme`}
-                            aria-label="Toggle Employer theme"
-                        >
-                            {employerTheme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-400" />}
-                        </button>
                         <button
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                             className="p-2 rounded-xl bg-[var(--background-secondary)] text-[var(--text-primary)] hover:border-[var(--border-active,#6338F6)] transition-colors border border-[var(--border)]"
@@ -169,7 +155,7 @@ export default function EmployerLayout() {
                                     navigate('/employer/contact');
                                     setMobileMenuOpen(false);
                                 }}
-                                className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-medium rounded-xl transition-all border-l-[3px] ${location.pathname === '/employer/contact' || location.pathname === '/employer/verification-pending'
+                                className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-medium rounded-xl transition-all border-l-[3px] ${location.pathname === '/employer/contact'
                                     ? 'bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-l-[var(--color-primary,#5B3AF2)] border-t-transparent border-b-transparent border-r-transparent'
                                     : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)] border-l-transparent'
                                     }`}
@@ -257,25 +243,6 @@ export default function EmployerLayout() {
 
                     {/* Footer Section */}
                     <div className="p-3 border-t border-[var(--border)]/60 space-y-1.5">
-                        {/* Theme Toggle Button */}
-                        <button
-                            onClick={toggleEmployerTheme}
-                            title={isCollapsed ? (employerTheme === 'dark' ? 'Light Mode' : 'Dark Mode') : undefined}
-                            className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3 gap-3'
-                                } py-2 text-xs font-medium rounded-xl text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)] transition-all border-l-[3px] border-l-transparent`}
-                        >
-                            {employerTheme === 'dark' ? (
-                                <Sun className="w-4 h-4 shrink-0 text-amber-400" />
-                            ) : (
-                                <Moon className="w-4 h-4 shrink-0 text-indigo-400" />
-                            )}
-                            {!isCollapsed && (
-                                <span className="truncate">
-                                    {employerTheme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-                                </span>
-                            )}
-                        </button>
-
                         <button
                             onClick={() => navigate('/employer/profile')}
                             title={isCollapsed ? 'Profile' : undefined}
@@ -299,7 +266,7 @@ export default function EmployerLayout() {
                             onClick={() => navigate('/employer/contact')}
                             title={isCollapsed ? 'Contact Us' : undefined}
                             className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3 gap-3'
-                                } py-2 text-xs font-medium rounded-xl transition-all border-l-[3px] ${location.pathname === '/employer/contact' || location.pathname === '/employer/verification-pending'
+                                } py-2 text-xs font-medium rounded-xl transition-all border-l-[3px] ${location.pathname === '/employer/contact'
                                     ? 'bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-l-[var(--color-primary,#5B3AF2)] border-t-transparent border-b-transparent border-r-transparent'
                                     : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)] border-l-transparent'
                                 }`}

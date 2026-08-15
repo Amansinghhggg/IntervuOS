@@ -51,10 +51,13 @@ Always use centralized design tokens defined in `frontend/src/index.css`:
 
 ---
 
-## 3. Pre-Commit Build Verification
+## 3. Build Verification
 
 Always run and verify the frontend production build before finishing any task:
 ```bash
 cmd /c "cd /d c:\PROJECTS\IntervuOS\frontend && npm run build"
 ```
 Ensure **0 errors** and **0 syntax issues**.
+
+> **Note on Git**: Never run `git commit` or `git add` automatically. The user will review changes and commit manually.
+

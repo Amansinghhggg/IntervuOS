@@ -1,34 +1,29 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { useAuth } from "../../context/AuthContext";
 import { GoogleLogin } from "@react-oauth/google";
 import toast from "react-hot-toast";
 import {
-  Mail,
+  Sparkles,
+  ShieldCheck,
+  CheckCircle2,
   Lock,
-  Eye,
-  EyeOff,
   Loader2,
-  BrainCircuit,
-  ArrowRight
+  ArrowRight,
+  GraduationCap,
+  Building2,
+  Bot
 } from "lucide-react";
-const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email"),
-  password: z.string().min(1, "Password is required"),
-});
 
-const LoginPage = () => {
-  const { login, googleLogin } = useAuth();
+export default function LoginPage() {
+  const { googleLogin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const getRedirectRoute = (role) => {
     if (location.state?.from) return location.state.from;
+    if (!role) return "/select-role";
     return role === "employer" ? "/employer/dashboard" : "/candidate/mock-interview";
   };
 
@@ -37,210 +32,136 @@ const LoginPage = () => {
     setIsLoading(true);
     try {
       const data = await googleLogin(credentialResponse.credential);
-      toast.success(`Welcome back, ${data.user.name}!`);
+      toast.success(`Welcome to IntervuOS, ${data.user.name || "User"}!`);
       navigate(getRedirectRoute(data.user.role), { replace: true });
     } catch (error) {
-      toast.error(error.response?.data?.message || "Google login failed.");
+      toast.error(error.response?.data?.message || "Google authentication failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({
-    resolver: zodResolver(loginSchema),
-  });
-
-  const onSubmit = async (formData) => {
-    setIsLoading(true);
-    try {
-      const data = await login(formData.email, formData.password);
-      toast.success(`Welcome back, ${data.user.name}!`);
-      navigate(getRedirectRoute(data.user.role), { replace: true });
-    } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Login failed. Please try again."
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const inputClasses = "w-full bg-[var(--background)] border border-[var(--border)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--color-border-active,#6338F6)] focus:ring-1 focus:ring-[var(--color-border-active,#6338F6)] transition-all placeholder:text-[var(--text-muted)]";
 
   return (
-    <div className="min-h-[100dvh] py-8 px-4 flex items-center justify-center relative overflow-hidden bg-[var(--background)] font-['Inter']">
-      {/* Background noise and decorative gradients */}
-      <div className="absolute inset-0 z-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.1) 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[var(--primary)] rounded-full blur-[150px] opacity-20 pointer-events-none"></div>
-      <div className="absolute bottom-[-20%] right-[-10%] w-[40%] h-[40%] bg-[var(--primary)] rounded-full blur-[120px] opacity-10 pointer-events-none"></div>
+    <div className="min-h-[100dvh] w-full bg-[var(--color-canvas)] text-[var(--color-text-primary)] font-['Inter'] flex flex-col justify-between p-4 sm:p-6 md:p-10">
 
-      <div className="w-full max-w-[1000px] mx-auto z-10 grid md:grid-cols-2 gap-8 lg:gap-16 items-center">
+      {/* Top Header */}
+      <header className="w-full max-w-6xl mx-auto flex items-center justify-between">
+        <Link to="/" className="flex items-center gap-2.5 group">
+          <div className="w-8 h-8 rounded-xl bg-[var(--color-primary)] text-white flex items-center justify-center font-bold text-sm shadow-xs">
+            IO
+          </div>
+          <span className="text-base font-medium tracking-tight text-[var(--color-text-primary)]">
+            Intervu<span className="text-[var(--color-text-accent)]">OS</span>
+          </span>
+        </Link>
 
-        {/* Left side: Branding / Copy */}
-        <div className="hidden md:flex flex-col pr-8 lg:pr-12">
-          <div className="flex items-center gap-4 mb-12">
-            <div className="w-14 h-14 rounded-2xl bg-[var(--primary)] flex items-center justify-center shadow-lg shadow-[var(--primary)]/30">
-              <BrainCircuit className="w-8 h-8 text-white" />
+        <Link
+          to="/"
+          className="text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors flex items-center gap-1 font-medium"
+        >
+          <span>Back to Home</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
+      </header>
+
+      {/* Main Authentication Container */}
+      <main className="w-full max-w-4xl mx-auto my-auto py-8">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center bg-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl p-6 sm:p-10 shadow-xs">
+
+          {/* Left Column: Product Value Points (7 cols) */}
+          <div className="md:col-span-7 space-y-6 md:pr-4">
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)]/30 text-xs font-medium">
+                <Sparkles className="w-3 h-3" />
+                <span>AI-Powered Autonomous Interview Platform</span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-medium tracking-tight text-[var(--color-text-primary)] leading-snug">
+                One unified account for candidate practice and employer hiring.
+              </h1>
+              <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] leading-relaxed font-normal">
+                Sign in with your Google account to access adaptive AI voice mock interviews, STAR competency diagnostic reports, or manage your organization's recruitment campaigns.
+              </p>
             </div>
-            <div>
-              <span className="text-3xl font-black text-[var(--text-primary)] tracking-tight block">
-                IntervuOS
-              </span>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-accent,#C4B5FD)]">
-                Recruitment Suite
-              </span>
+
+            {/* Feature Highlights */}
+            <div className="space-y-3 pt-2 border-t border-[var(--color-border)] text-xs text-[var(--color-text-secondary)]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-5 h-5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                  <GraduationCap className="w-3 h-3" />
+                </div>
+                <span><strong>Candidates:</strong> 15 free practice credits on first signup with instant STAR scoring.</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <div className="w-5 h-5 rounded-md bg-[var(--primary-tint)] text-[var(--color-text-accent)] border border-[var(--color-border-active)]/30 flex items-center justify-center shrink-0">
+                  <Building2 className="w-3 h-3" />
+                </div>
+                <span><strong>Employers:</strong> Automated technical screenings, full video replays, and custom rubrics.</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <div className="w-5 h-5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-3 h-3" />
+                </div>
+                <span><strong>Security:</strong> 256-bit encrypted data with strict candidate privacy protection.</span>
+              </div>
             </div>
           </div>
 
-          <h1 className="text-5xl lg:text-6xl font-black text-[var(--text-primary)] leading-[1.1] mb-6 tracking-tight">
-            The future of <br />
-            <span className="text-[var(--color-primary-md3)]">hiring is here.</span>
-          </h1>
-          <p className="text-[var(--color-on-surface-variant)] text-lg leading-relaxed mb-8 max-w-md">
-            Sign in to your account to conduct AI-powered interviews, analyze candidate performance, or track your job applications.
-          </p>
-        </div>
-
-        {/* Right side: Login Card */}
-        <div className="bg-[var(--color-surface-container-low)]/80 backdrop-blur-xl border border-[var(--color-outline-variant)]/30 rounded-3xl shadow-2xl p-6 sm:p-8 md:p-10 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-primary-md3)]/10 rounded-full blur-[40px] pointer-events-none" />
-
-          <div className="text-center mb-10 md:hidden flex flex-col items-center">
-            <div className="w-12 h-12 rounded-xl bg-[var(--color-primary-md3)] flex items-center justify-center shadow-lg shadow-[var(--color-primary-md3)]/30 mb-4">
-              <BrainCircuit className="w-7 h-7 text-white" />
-            </div>
-            <span className="text-2xl font-black text-white tracking-tight">IntervuOS</span>
-          </div>
-
-          <div className="mb-10 relative z-10">
-            <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight mb-2">Welcome back</h2>
-            <p className="text-[12px] font-bold uppercase tracking-widest text-[var(--color-on-surface-variant)]">Sign in to access your dashboard</p>
-          </div>
-
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 relative z-10">
-            {/* Email */}
-            <div>
-              <label
-                htmlFor="login-email"
-                className="block text-[11px] font-black uppercase tracking-widest mb-3 text-[var(--color-on-surface-variant)]"
-              >
-                Email Address
-              </label>
-              <div className="relative group">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-on-surface-variant)] group-focus-within:text-[var(--color-primary-md3)] transition-colors" />
-                <input
-                  id="login-email"
-                  type="email"
-                  {...register("email")}
-                  className={`${inputClasses} pl-12`}
-                  placeholder="you@example.com"
-                />
+          {/* Right Column: Google 1-Click Authentication Box (5 cols) */}
+          <div className="md:col-span-5 bg-[var(--color-canvas)] border border-[var(--color-border)] rounded-2xl p-6 sm:p-8 space-y-6 flex flex-col items-center justify-center text-center shadow-xs">
+            <div className="space-y-2">
+              <div className="w-12 h-12 rounded-2xl bg-[var(--primary-tint)] text-[var(--color-text-accent)] border border-[var(--color-border-active)]/30 flex items-center justify-center mx-auto shadow-xs">
+                <Bot className="w-6 h-6" />
               </div>
-              {errors.email && (
-                <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-red-400 flex items-center gap-1">
-                  <span>•</span> {errors.email.message}
-                </p>
-              )}
+              <h2 className="text-base sm:text-lg font-medium text-[var(--color-text-primary)] tracking-tight">
+                Sign in to IntervuOS
+              </h2>
+              <p className="text-xs text-[var(--color-text-secondary)] font-normal max-w-xs">
+                Continue instantly with Google to get started in seconds.
+              </p>
             </div>
 
-            {/* Password */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <label
-                  htmlFor="login-password"
-                  className="block text-[11px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)]"
-                >
-                  Password
-                </label>
-              </div>
-              <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-on-surface-variant)] group-focus-within:text-[var(--color-primary-md3)] transition-colors" />
-                <input
-                  id="login-password"
-                  type={showPassword ? "text" : "password"}
-                  {...register("password")}
-                  className={`${inputClasses} pl-12 pr-12`}
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)] hover:text-white transition-colors"
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-red-400 flex items-center gap-1">
-                  <span>•</span> {errors.password.message}
-                </p>
-              )}
-            </div>
-
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-4 mt-4 bg-[var(--color-primary-md3)] hover:bg-[var(--color-primary-md3)]/90 disabled:opacity-50 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-colors shadow-lg shadow-[var(--color-primary-md3)]/30 flex items-center justify-center group"
-            >
+            {/* Google Authentication Component */}
+            <div className="w-full flex flex-col items-center justify-center pt-2">
               {isLoading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                  Signing in...
-                </>
+                <div className="py-4 flex flex-col items-center gap-2 text-xs text-[var(--color-text-secondary)]">
+                  <Loader2 className="w-6 h-6 animate-spin text-[var(--color-primary)]" />
+                  <span>Verifying Google account...</span>
+                </div>
               ) : (
-                <>
-                  Sign in
-                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                </>
+                <div className="w-full flex justify-center scale-105">
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={() => toast.error("Google Sign-In was cancelled or encountered an error.")}
+                    theme="filled_blue"
+                    size="large"
+                    shape="pill"
+                    text="continue_with"
+                    width="260"
+                  />
+                </div>
               )}
-            </button>
-          </form>
+            </div>
 
-          {/* Divider */}
-          <div className="my-6 flex items-center justify-center gap-3 relative z-10">
-            <div className="h-px bg-[var(--color-outline-variant)]/30 flex-1" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)]">OR</span>
-            <div className="h-px bg-[var(--color-outline-variant)]/30 flex-1" />
+            {/* Security Guarantee Note */}
+            <div className="pt-4 border-t border-[var(--color-border)] text-[11px] text-[var(--color-text-muted)] space-y-1">
+              <div className="flex items-center justify-center gap-1.5 text-[var(--color-text-secondary)]">
+                <Lock className="w-3 h-3 text-emerald-400" />
+                <span>Fast, secure single sign-on</span>
+              </div>
+              <p>
+                By signing in, you agree to IntervuOS's terms of service and privacy policy.
+              </p>
+            </div>
           </div>
 
-          {/* Google Login Button */}
-          <div className="flex justify-center relative z-10">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => toast.error("Google Sign-In failed or was closed")}
-              theme="filled_blue"
-              size="large"
-              shape="pill"
-              text="continue_with"
-            />
-          </div>
-
-          {/* Sign up link */}
-          <div className="mt-8 text-center pt-8 border-t border-[var(--color-outline-variant)]/30 relative z-10">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-[var(--color-on-surface-variant)]">
-              Don't have an account yet?{" "}
-              <Link
-                to="/signup"
-                state={{ from: location.state?.from }}
-                className="text-[var(--color-primary-md3)] hover:text-white transition-colors ml-1"
-              >
-                Create an account
-              </Link>
-            </p>
-          </div>
         </div>
-      </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="w-full max-w-6xl mx-auto text-center text-[11px] text-[var(--color-text-muted)] pt-6">
+        © 2026 IntervuOS. All rights reserved. • Protected with 256-bit SSL encryption.
+      </footer>
+
     </div>
   );
-};
-
-export default LoginPage;
+}

@@ -14,13 +14,6 @@ import {
 // @access  Employer only
 const createInterview = async (req, res, next) => {
   try {
-    if (req.user?.role === "employer" && !req.user?.isVerified) {
-      return res.status(403).json({
-        success: false,
-        message: "Your employer account is not verified. Only verified employers can create campaigns.",
-      });
-    }
-
     // Strip admin-only fields if sender is not an admin
     if (req.user?.role !== "admin") {
       delete req.body.isVerified;

@@ -176,28 +176,35 @@ body {
   background: var(--color-text-secondary, #94A3B8);
 }
 
-/* Accessibility & Visible Focus */
-:focus-visible {
-  outline: 2px solid var(--color-border-active, #6338F6) !important;
-  outline-offset: 2px !important;
+/* Infinite Marquee Animation */
+@keyframes ft-marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-textarea:focus-visible,
-select:focus-visible {
-  outline: 2px solid var(--color-border-active, #6338F6) !important;
-  outline-offset: 2px !important;
+.ft-animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: ft-marquee 36s linear infinite;
+}
+
+.ft-animate-marquee:hover {
+  animation-play-state: paused;
 }
 
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,
-  ::after {
+  ::after,
+  .ft-animate-marquee {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+    animation-play-state: paused !important;
   }
 }

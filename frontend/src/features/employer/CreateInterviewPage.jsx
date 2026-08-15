@@ -8,6 +8,7 @@ import { toast } from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
 import {
   ArrowLeft,
+  ArrowRight,
   Loader2,
   FileText,
   Clock,
@@ -30,14 +31,13 @@ import {
   Bot,
   Target,
   Shuffle,
-  HelpCircle,
   FileCode,
-  Copy,
-  Download,
   Check,
   AlertCircle,
+  Edit3,
+  CheckCircle2,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { PageHeader } from "../../ui/primitives/PageHeader";
 import { SectionHeader } from "../../ui/primitives/SectionHeader";
 import { GlassCard } from "../../ui/primitives/GlassCard";
@@ -49,7 +49,7 @@ const PRESET_ROLES = [
   "Backend Engineer",
   "Data Scientist",
   "DevOps Engineer",
-  "System Architect"
+  "System Architect",
 ];
 
 const PRESET_TOPICS = [
@@ -58,7 +58,7 @@ const PRESET_TOPICS = [
   "System Design",
   "Python & Data Structures",
   "SQL & Databases",
-  "REST & GraphQL APIs"
+  "REST & GraphQL APIs",
 ];
 
 const createInterviewSchema = z.object({
@@ -86,21 +86,26 @@ const createInterviewSchema = z.object({
   requireApproval: z.boolean().default(true),
 });
 
+const STEPS = [
+  { number: 1, label: "Essentials", optional: false },
+  { number: 2, label: "Questions", optional: false },
+  { number: 3, label: "Candidates", optional: true },
+  { number: 4, label: "Instructions", optional: true },
+  { number: 5, label: "Review", optional: false },
+];
+
 const CreateInterviewPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Step 1: Topics State
   const [topics, setTopics] = useState([]);
   const [topicInput, setTopicInput] = useState("");
+  const [topicError, setTopicError] = useState("");
 
-  // Candidate invitations state
-  const [candidateEmails, setCandidateEmails] = useState([]);
-  const [candidateMode, setCandidateMode] = useState("single"); // 'single' | 'bulk' | 'csv'
-  const [singleEmailInput, setSingleEmailInput] = useState("");
-  const [bulkEmailInput, setBulkEmailInput] = useState("");
-  const [csvFileName, setCsvFileName] = useState("");
-
-  // Question Mode State ('AI_GENERATED' | 'EMPLOYER_PRESET' | 'HYBRID')
+  // Step 2: Question Mode State ('AI_GENERATED' | 'EMPLOYER_PRESET' | 'HYBRID')
   const [questionMode, setQuestionMode] = useState("AI_GENERATED");
   const [customQuestions, setCustomQuestions] = useState([]);
   const [newQText, setNewQText] = useState("");
@@ -108,6 +113,58 @@ const CreateInterviewPage = () => {
   const [newQDiff, setNewQDiff] = useState("Medium");
   const [isQuestionImportModalOpen, setIsQuestionImportModalOpen] = useState(false);
 
+  // Step 3: Candidate invitations state
+  const [candidateEmails, setCandidateEmails] = useState([]);
+  const [candidateMode, setCandidateMode] = useState("single"); // 'single' | 'bulk' | 'csv'
+  const [singleEmailInput, setSingleEmailInput] = useState("");
+  const [bulkEmailInput, setBulkEmailInput] = useState("");
+  const [csvFileName, setCsvFileName] = useState("");
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    trigger,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(createInterviewSchema),
+    defaultValues: {
+      experienceLevel: "Fresher",
+      duration: 30,
+      requireApproval: true,
+    },
+  });
+
+  const formValues = watch();
+  const selectedRole = watch("jobRole");
+
+  // Step 1 Topics Handlers
+  const addTopic = (topicToAdd) => {
+    const trimmed = (topicToAdd || topicInput).trim();
+    if (trimmed && !topics.includes(trimmed)) {
+      setTopics([...topics, trimmed]);
+      setTopicError("");
+      if (!topicToAdd) setTopicInput("");
+    }
+  };
+
+  const removeTopic = (topicToRemove) => {
+    const updated = topics.filter((t) => t !== topicToRemove);
+    setTopics(updated);
+    if (updated.length === 0) {
+      setTopicError("Add at least one technical topic");
+    }
+  };
+
+  const handleTopicKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addTopic();
+    }
+  };
+
+  // Step 2 Custom Question Handlers
   const addCustomQuestion = () => {
     if (!newQText.trim()) {
       toast.error("Please enter question text.");
@@ -151,7 +208,9 @@ const CreateInterviewPage = () => {
               parsedQuestions.push({
                 question: (item.question || item).trim(),
                 topic: (item.topic || "General").trim(),
-                difficulty: ["Easy", "Medium", "Hard"].includes(item.difficulty) ? item.difficulty : "Medium",
+                difficulty: ["Easy", "Medium", "Hard"].includes(item.difficulty)
+                  ? item.difficulty
+                  : "Medium",
               });
             }
           });
@@ -165,18 +224,25 @@ const CreateInterviewPage = () => {
           const trimmed = line.trim();
           if (!trimmed) return;
 
-          // Skip header row if contains "question" or "topic"
-          if (index === 0 && (trimmed.toLowerCase().includes("question") || trimmed.toLowerCase().includes("topic"))) {
+          if (
+            index === 0 &&
+            (trimmed.toLowerCase().includes("question") ||
+              trimmed.toLowerCase().includes("topic"))
+          ) {
             return;
           }
 
-          const parts = trimmed.split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/).map((p) => p.replace(/^"|"$/g, "").trim());
+          const parts = trimmed
+            .split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/)
+            .map((p) => p.replace(/^"|"$/g, "").trim());
 
           if (parts[0]) {
             parsedQuestions.push({
               question: parts[0],
               topic: parts[1] || "General",
-              difficulty: ["Easy", "Medium", "Hard"].includes(parts[2]) ? parts[2] : "Medium",
+              difficulty: ["Easy", "Medium", "Hard"].includes(parts[2])
+                ? parts[2]
+                : "Medium",
             });
           }
         });
@@ -189,50 +255,16 @@ const CreateInterviewPage = () => {
 
       setCustomQuestions((prev) => [...prev, ...parsedQuestions]);
       setIsQuestionImportModalOpen(false);
-      toast.success(`Successfully imported ${parsedQuestions.length} custom question(s) from ${file.name}`);
+      toast.success(
+        `Successfully imported ${parsedQuestions.length} custom question(s) from ${file.name}`
+      );
     };
 
     reader.readAsText(file);
     e.target.value = "";
   };
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    formState: { errors },
-  } = useForm({
-    resolver: zodResolver(createInterviewSchema),
-    defaultValues: {
-      experienceLevel: "Fresher",
-      duration: 30,
-      requireApproval: true,
-    },
-  });
-
-  const selectedRole = watch("jobRole");
-
-  const addTopic = (topicToAdd) => {
-    const trimmed = (topicToAdd || topicInput).trim();
-    if (trimmed && !topics.includes(trimmed)) {
-      setTopics([...topics, trimmed]);
-      if (!topicToAdd) setTopicInput("");
-    }
-  };
-
-  const removeTopic = (topicToRemove) => {
-    setTopics(topics.filter((t) => t !== topicToRemove));
-  };
-
-  const handleTopicKeyDown = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      addTopic();
-    }
-  };
-
-  // Candidate invitation handlers
+  // Step 3 Candidate Invitation Handlers
   const isValidEmail = (email) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
@@ -252,7 +284,8 @@ const CreateInterviewPage = () => {
   };
 
   const addBulkCandidates = () => {
-    const matches = bulkEmailInput.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || [];
+    const matches =
+      bulkEmailInput.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || [];
     if (matches.length === 0) {
       return toast.error("No valid email addresses found in the text.");
     }
@@ -281,7 +314,8 @@ const CreateInterviewPage = () => {
     const reader = new FileReader();
     reader.onload = (event) => {
       const content = event.target?.result || "";
-      const matches = content.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || [];
+      const matches =
+        content.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || [];
       if (matches.length === 0) {
         toast.error("No valid email addresses found in file.");
         return;
@@ -300,7 +334,9 @@ const CreateInterviewPage = () => {
       }
 
       setCandidateEmails((prev) => [...prev, ...newEmails]);
-      toast.success(`Extracted & added ${newEmails.length} candidate email(s) from ${file.name}`);
+      toast.success(
+        `Extracted & added ${newEmails.length} candidate email(s) from ${file.name}`
+      );
     };
     reader.readAsText(file);
     e.target.value = "";
@@ -315,9 +351,54 @@ const CreateInterviewPage = () => {
     setCsvFileName("");
   };
 
+  // Step Transition Validation
+  const handleNextStep = async () => {
+    if (currentStep === 1) {
+      const isFormValid = await trigger([
+        "title",
+        "jobRole",
+        "experienceLevel",
+        "duration",
+      ]);
+      if (topics.length === 0) {
+        setTopicError("Add at least one technical topic");
+        return;
+      }
+      if (!isFormValid) return;
+      setCurrentStep(2);
+    } else if (currentStep === 2) {
+      if (questionMode === "EMPLOYER_PRESET" && customQuestions.length === 0) {
+        toast.error(
+          "Add at least one custom question for Employer Preset mode or select AI-Adaptive."
+        );
+        return;
+      }
+      setCurrentStep(3);
+    } else if (currentStep === 3) {
+      setCurrentStep(4);
+    } else if (currentStep === 4) {
+      setCurrentStep(5);
+    }
+  };
+
+  const handlePrevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  // Final Submit Handler
   const onSubmit = async (formData) => {
     if (!user?.isVerified) {
-      toast.error("Your employer account is not verified. Only verified employers can create campaigns.");
+      toast.error(
+        "Your employer account is not verified. Only verified employers can publish campaigns."
+      );
+      return;
+    }
+
+    if (topics.length === 0) {
+      setCurrentStep(1);
+      setTopicError("Add at least one technical topic");
       return;
     }
 
@@ -337,716 +418,1168 @@ const CreateInterviewPage = () => {
     } catch (error) {
       toast.error(
         error.response?.data?.message ||
-        "Failed to create campaign. Please try again."
+          "Failed to create campaign. Please try again."
       );
     } finally {
       setIsLoading(false);
     }
   };
 
-  const inputClasses = "flex w-full rounded-xl border border-[var(--color-outline-variant)]/30 bg-[var(--color-surface-container-highest)]/30 px-4 py-3 text-sm font-bold text-[var(--color-on-surface)] placeholder:text-[var(--color-on-surface-variant)]/50 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-md3)]/50 focus:border-[var(--color-primary-md3)] transition-all duration-300";
+  const inputClasses =
+    "flex w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5 text-sm font-medium text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]/50 focus:outline-none focus:border-[var(--color-border-active,#6338F6)] transition-colors";
 
   return (
-    <div className="min-h-screen bg-transparent pt-6 pb-24 font-['Inter'] text-[var(--color-on-surface,#dae2fd)]">
-      <div className="max-w-[900px] mx-auto px-4 md:px-6 space-y-8">
-
-        {/* Back Link */}
+    <div className="min-h-screen bg-transparent pt-6 pb-24 font-['Inter'] text-[var(--color-text-primary)] w-full px-4 sm:px-6 md:px-8 xl:px-10 space-y-8">
+      {/* Top Bar: Back Link & Page Title */}
+      <div className="max-w-5xl mx-auto space-y-6">
         <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
           <button
+            type="button"
             onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary-md3)] transition-colors text-xs font-black uppercase tracking-widest"
+            className="inline-flex items-center gap-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors text-xs font-medium tracking-tight"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
+            Back to dashboard
           </button>
         </motion.div>
 
-        {/* Page Header */}
         <PageHeader
           badgeIcon={Sparkles}
-          badgeText="Campaign Creator"
-          title="Create Interview Campaign"
-          description="Configure candidate requirements, preset technical topics, invited candidate list, and AI evaluation criteria."
+          badgeText="Campaign Creator Wizard"
+          title="Create interview campaign"
+          description="Configure your hiring requirements, question strategies, candidate invites, and AI proctoring parameters in 5 easy steps."
         />
 
-        {/* Account Verification Warning Banner */}
-        {!user?.isVerified && (
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg"
-          >
-            <div className="flex items-start gap-4">
-              <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-400 shrink-0 mt-0.5">
-                <ShieldAlert className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="text-sm font-black uppercase tracking-wider text-amber-300">
-                  Account Verification Required
-                </h4>
-                <p className="text-xs text-amber-200/80 mt-1 font-medium leading-relaxed">
-                  Your employer account is currently unverified. You can configure campaign details below, but publishing requires admin verification.
-                </p>
-              </div>
+        {/* 5-Step Progress Bar Header */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] space-y-4">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="text-xs font-medium text-[var(--color-text-secondary)] flex items-center gap-2">
+              <span>
+                Step {currentStep} of {STEPS.length}:
+              </span>
+              <span className="text-[var(--color-text-primary)] font-medium">
+                {STEPS[currentStep - 1].label}
+              </span>
             </div>
-            <button
-              type="button"
-              onClick={() => navigate("/employer/verification-pending")}
-              className="px-4 py-2.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-black uppercase tracking-wider rounded-xl border border-amber-500/40 transition-all shrink-0 whitespace-nowrap"
-            >
-              Check Status & Support
-            </button>
-          </motion.div>
-        )}
 
+            {/* Non-blocking Unverified Account Indicator */}
+            {!user?.isVerified && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--color-warning)]/10 text-[var(--color-warning)] border border-[var(--color-warning)]/30 text-xs font-medium">
+                <ShieldAlert className="w-3.5 h-3.5" /> Account unverified (publication blocked at Step 5)
+              </span>
+            )}
+          </div>
+
+          {/* Steps Stepper Bar */}
+          <div className="grid grid-cols-5 gap-2">
+            {STEPS.map((step) => {
+              const isCompleted = currentStep > step.number;
+              const isCurrent = currentStep === step.number;
+              return (
+                <button
+                  key={step.number}
+                  type="button"
+                  onClick={() => {
+                    // Only allow clicking to previously completed steps or current
+                    if (step.number < currentStep) {
+                      setCurrentStep(step.number);
+                    }
+                  }}
+                  disabled={step.number > currentStep}
+                  className={`group text-left p-2.5 sm:p-3 rounded-xl border transition-all ${
+                    isCurrent
+                      ? "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] border-[var(--color-border-active,#6338F6)] shadow-sm"
+                      : isCompleted
+                      ? "bg-[var(--color-canvas)] border-[var(--color-border)] hover:border-[var(--color-border-active,#6338F6)]/50 cursor-pointer"
+                      : "bg-[var(--color-canvas)]/40 border-[var(--color-border)]/40 opacity-60 cursor-not-allowed"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span
+                      className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium ${
+                        isCurrent
+                          ? "bg-[var(--color-primary)] text-white"
+                          : isCompleted
+                          ? "bg-[var(--color-success)]/20 text-[var(--color-success)] border border-[var(--color-success)]/40"
+                          : "bg-[var(--color-surface)] text-[var(--color-text-secondary)] border border-[var(--color-border)]"
+                      }`}
+                    >
+                      {isCompleted ? <Check className="w-3 h-3" /> : step.number}
+                    </span>
+                  </div>
+                  <div className="mt-1.5 truncate">
+                    <div
+                      className={`text-xs font-medium truncate ${
+                        isCurrent
+                          ? "text-[var(--color-text-accent,#C4B5FD)]"
+                          : isCompleted
+                          ? "text-[var(--color-text-primary)]"
+                          : "text-[var(--color-text-secondary)]"
+                      }`}
+                    >
+                      {step.label}
+                    </div>
+                    {step.optional && (
+                      <div className="text-[10px] text-[var(--color-text-secondary)]/70">
+                        (optional)
+                      </div>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Wizard Form Body */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-            <GlassCard padding="p-6 md:p-8" glowEffect>
-              <SectionHeader
-                icon={Briefcase}
-                title="Campaign Essentials"
-                subtitle="Specify target job role, campaign title, and description."
-              />
-
-              <div className="space-y-6">
-                {/* Preset Role Quick Select */}
-                <div>
-                  <label className="text-[11px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-2 block">
-                    Quick Preset Roles
-                  </label>
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {PRESET_ROLES.map((role) => (
-                      <Chip
-                        key={role}
-                        label={role}
-                        selected={selectedRole === role}
-                        onClick={() => setValue("jobRole", role, { shouldValidate: true })}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[var(--color-on-surface)] mb-2">
-                      <FileText className="w-3.5 h-3.5 text-[var(--color-primary-md3)]" />
-                      Campaign Title
-                    </label>
-                    <input
-                      {...register("title")}
-                      placeholder="e.g., Q3 Senior React Developer"
-                      className={inputClasses}
-                    />
-                    {errors.title && (
-                      <p className="mt-2 text-xs font-bold text-rose-400">
-                        • {errors.title.message}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[var(--color-on-surface)] mb-2">
-                      <Briefcase className="w-3.5 h-3.5 text-[var(--color-primary-md3)]" />
-                      Job Role
-                    </label>
-                    <input
-                      {...register("jobRole")}
-                      placeholder="e.g., Frontend Developer"
-                      className={inputClasses}
-                    />
-                    {errors.jobRole && (
-                      <p className="mt-2 text-xs font-bold text-rose-400">
-                        • {errors.jobRole.message}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[var(--color-on-surface)] mb-2">
-                    <AlignLeft className="w-3.5 h-3.5 text-[var(--color-primary-md3)]" />
-                    Description <span className="text-[var(--color-on-surface-variant)]/50">(optional)</span>
-                  </label>
-                  <textarea
-                    {...register("description")}
-                    rows={3}
-                    className={`${inputClasses} resize-none`}
-                    placeholder="Brief description of this interview campaign..."
+          <AnimatePresence mode="wait">
+            {/* ========================================================================= */}
+            {/* STEP 1: CAMPAIGN ESSENTIALS */}
+            {/* ========================================================================= */}
+            {currentStep === 1 && (
+              <motion.div
+                key="step1"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <GlassCard padding="p-6 md:p-8" className="space-y-6">
+                  <SectionHeader
+                    icon={Briefcase}
+                    title="Campaign essentials"
+                    subtitle="Specify the target job role, campaign title, technical topics, and session parameters."
                   />
-                  {errors.description && (
-                    <p className="mt-2 text-xs font-bold text-rose-400">
-                      • {errors.description.message}
-                    </p>
-                  )}
-                </div>
 
-                {/* Technical Topics Section */}
-                <div>
-                  <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[var(--color-on-surface)] mb-2">
-                    <Tag className="w-3.5 h-3.5 text-[var(--color-primary-md3)]" />
-                    Technical Topics
-                  </label>
-
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {PRESET_TOPICS.map((preset) => (
-                      <Chip
-                        key={preset}
-                        label={preset}
-                        selected={topics.includes(preset)}
-                        onClick={() => {
-                          if (topics.includes(preset)) removeTopic(preset);
-                          else addTopic(preset);
-                        }}
-                      />
-                    ))}
-                  </div>
-
-                  <div className="flex gap-3 mb-3">
-                    <input
-                      type="text"
-                      value={topicInput}
-                      onChange={(e) => setTopicInput(e.target.value)}
-                      onKeyDown={handleTopicKeyDown}
-                      placeholder="Add custom topic (e.g. Docker, GraphQL)"
-                      className={inputClasses}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => addTopic()}
-                      className="px-5 py-2.5 bg-[var(--color-primary-md3)]/15 text-[var(--color-primary-md3)] hover:bg-[var(--color-primary-md3)] hover:text-white border border-[var(--color-primary-md3)]/25 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center shrink-0"
-                    >
-                      <Plus className="w-4 h-4 mr-1.5" /> Add
-                    </button>
-                  </div>
-
-                  {topics.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {topics.map((topic) => (
-                        <Chip
-                          key={topic}
-                          label={topic}
-                          selected
-                          onRemove={() => removeTopic(topic)}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[var(--color-on-surface)] mb-2">
-                      <BookOpen className="w-3.5 h-3.5 text-[var(--color-primary-md3)]" />
-                      Experience Level
-                    </label>
-                    <select
-                      {...register("experienceLevel")}
-                      className={`${inputClasses} cursor-pointer appearance-none`}
-                    >
-                      <option value="Fresher" className="bg-[var(--color-surface-container-low)]">Fresher</option>
-                      <option value="1-2 Years" className="bg-[var(--color-surface-container-low)]">1-2 Years</option>
-                      <option value="3-5 Years" className="bg-[var(--color-surface-container-low)]">3-5 Years</option>
-                      <option value="5+ Years" className="bg-[var(--color-surface-container-low)]">5+ Years</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[var(--color-on-surface)] mb-2">
-                      <Clock className="w-3.5 h-3.5 text-[var(--color-primary-md3)]" />
-                      Duration (Minutes)
-                    </label>
-                    <input
-                      type="number"
-                      {...register("duration")}
-                      min={5}
-                      max={120}
-                      className={inputClasses}
-                    />
-                    {errors.duration && (
-                      <p className="mt-2 text-xs font-bold text-rose-400">
-                        • {errors.duration.message}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Require Approval Toggle */}
-                <div className="flex items-center justify-between p-4 bg-[var(--color-surface-container-highest)]/20 border border-[var(--color-outline-variant)]/30 rounded-xl">
-                  <div>
-                    <label className="text-sm font-bold text-[var(--color-on-surface)] flex items-center gap-2 mb-1">
-                      <ShieldAlert className="w-4 h-4 text-[var(--color-primary-md3)]" />
-                      Require Approval to Join
-                    </label>
-                    <p className="text-[11px] text-[var(--color-on-surface-variant)]">
-                      If enabled, candidates joining via code must be manually approved by you before they can start.
-                    </p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer ml-4 shrink-0">
-                    <input
-                      type="checkbox"
-                      className="sr-only peer"
-                      {...register("requireApproval")}
-                    />
-                    <div className="w-11 h-6 bg-[var(--color-surface-variant)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--color-primary-md3)] shadow-inner"></div>
-                  </label>
-                </div>
-              </div>
-            </GlassCard>
-          </motion.div>
-
-          {/* Question Strategy & Campaign Mode Section */}
-          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.11 }}>
-            <GlassCard padding="p-6 md:p-8">
-              <SectionHeader
-                icon={Target}
-                title="Question Strategy & Custom Question Bank"
-                subtitle="Select how questions will be delivered: 100% AI generated, Employer preset list, or a Hybrid campaign."
-              />
-
-              <div className="space-y-6">
-                {/* 3-Way Mode Card Selector */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Mode 1: AI Generated */}
-                  <div
-                    onClick={() => setQuestionMode("AI_GENERATED")}
-                    className={`cursor-pointer p-5 rounded-2xl border transition-all duration-300 relative ${questionMode === "AI_GENERATED"
-                        ? "bg-[var(--color-primary-md3)]/15 border-[var(--color-primary-md3)] shadow-lg shadow-[var(--color-primary-md3)]/20 ring-2 ring-[var(--color-primary-md3)]"
-                        : "bg-[var(--color-surface-container-highest)]/30 border-[var(--color-outline-variant)]/30 hover:border-[var(--color-primary-md3)]/50"
-                      }`}
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center mb-3">
-                      <Bot className="w-5 h-5" />
-                    </div>
-                    <h4 className="text-sm font-extrabold text-[var(--color-on-surface)]">AI-Adaptive</h4>
-                    <p className="text-xs text-[var(--color-on-surface-variant)] mt-1 font-medium">
-                      Gemini AI dynamically generates all questions and adaptive follow-ups based on candidate responses.
-                    </p>
-                    {questionMode === "AI_GENERATED" && (
-                      <span className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-[var(--color-primary-md3)] text-white text-[10px] font-black uppercase">
-                        Selected
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Mode 2: Employer Preset */}
-                  <div
-                    onClick={() => setQuestionMode("EMPLOYER_PRESET")}
-                    className={`cursor-pointer p-5 rounded-2xl border transition-all duration-300 relative ${questionMode === "EMPLOYER_PRESET"
-                        ? "bg-[var(--color-primary-md3)]/15 border-[var(--color-primary-md3)] shadow-lg shadow-[var(--color-primary-md3)]/20 ring-2 ring-[var(--color-primary-md3)]"
-                        : "bg-[var(--color-surface-container-highest)]/30 border-[var(--color-outline-variant)]/30 hover:border-[var(--color-primary-md3)]/50"
-                      }`}
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center mb-3">
-                      <Target className="w-5 h-5" />
-                    </div>
-                    <h4 className="text-sm font-extrabold text-[var(--color-on-surface)]">Employer Preset</h4>
-                    <p className="text-xs text-[var(--color-on-surface-variant)] mt-1 font-medium">
-                      AI asks ONLY your exact pre-defined question bank in fixed order. Zero AI question generation.
-                    </p>
-                    {questionMode === "EMPLOYER_PRESET" && (
-                      <span className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-[var(--color-primary-md3)] text-white text-[10px] font-black uppercase">
-                        Selected
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Mode 3: Hybrid Campaign */}
-                  <div
-                    onClick={() => setQuestionMode("HYBRID")}
-                    className={`cursor-pointer p-5 rounded-2xl border transition-all duration-300 relative ${questionMode === "HYBRID"
-                        ? "bg-[var(--color-primary-md3)]/15 border-[var(--color-primary-md3)] shadow-lg shadow-[var(--color-primary-md3)]/20 ring-2 ring-[var(--color-primary-md3)]"
-                        : "bg-[var(--color-surface-container-highest)]/30 border-[var(--color-outline-variant)]/30 hover:border-[var(--color-primary-md3)]/50"
-                      }`}
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center mb-3">
-                      <Shuffle className="w-5 h-5" />
-                    </div>
-                    <h4 className="text-sm font-extrabold text-[var(--color-on-surface)]">Hybrid Campaign</h4>
-                    <p className="text-xs text-[var(--color-on-surface-variant)] mt-1 font-medium">
-                      AI asks your custom questions first, then smoothly transitions to adaptive AI follow-ups.
-                    </p>
-                    {questionMode === "HYBRID" && (
-                      <span className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-[var(--color-primary-md3)] text-white text-[10px] font-black uppercase">
-                        Selected
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Custom Question Builder Form (Shown for EMPLOYER_PRESET & HYBRID modes) */}
-                {(questionMode === "EMPLOYER_PRESET" || questionMode === "HYBRID") && (
-                  <div className="p-5 rounded-2xl bg-[var(--color-surface-container-highest)]/30 border border-[var(--color-outline-variant)]/30 space-y-4">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                      <h4 className="text-xs font-black uppercase tracking-wider text-[var(--color-on-surface)] flex items-center gap-2">
-                        <FileCode className="w-4 h-4 text-[var(--color-primary-md3)]" />
-                        Add Custom Questions ({customQuestions.length} added)
-                      </h4>
-
-                      {/* CSV / JSON File Import Trigger Button */}
-                      <button
-                        type="button"
-                        onClick={() => setIsQuestionImportModalOpen(true)}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--color-primary-md3)]/15 hover:bg-[var(--color-primary-md3)]/25 text-[var(--color-primary-md3)] border border-[var(--color-primary-md3)]/30 text-[11px] font-black uppercase tracking-wider transition-all"
-                      >
-                        <FileSpreadsheet className="w-3.5 h-3.5" />
-                        <span>Import CSV / JSON</span>
-                      </button>
-                    </div>
-
-                    <div className="space-y-3">
-                      <textarea
-                        value={newQText}
-                        onChange={(e) => setNewQText(e.target.value)}
-                        placeholder="Enter question text (e.g. Explain how Virtual DOM diffing works in React)..."
-                        rows={2}
-                        className={`${inputClasses} resize-none`}
-                      />
-
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div>
-                          <input
-                            type="text"
-                            value={newQTopic}
-                            onChange={(e) => setNewQTopic(e.target.value)}
-                            placeholder="Topic (e.g. React)"
-                            className={inputClasses}
+                  <div className="space-y-6">
+                    {/* Quick Preset Roles */}
+                    <div>
+                      <label className="text-xs font-medium text-[var(--color-text-secondary)] mb-2 block">
+                        Quick preset roles
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {PRESET_ROLES.map((role) => (
+                          <Chip
+                            key={role}
+                            label={role}
+                            selected={selectedRole === role}
+                            onClick={() =>
+                              setValue("jobRole", role, { shouldValidate: true })
+                            }
                           />
-                        </div>
-                        <div>
-                          <select
-                            value={newQDiff}
-                            onChange={(e) => setNewQDiff(e.target.value)}
-                            className={`${inputClasses} cursor-pointer appearance-none`}
-                          >
-                            <option value="Easy" className="bg-[var(--color-surface-container-low)]">Easy</option>
-                            <option value="Medium" className="bg-[var(--color-surface-container-low)]">Medium</option>
-                            <option value="Hard" className="bg-[var(--color-surface-container-low)]">Hard</option>
-                          </select>
-                        </div>
-                        <div>
-                          <button
-                            type="button"
-                            onClick={addCustomQuestion}
-                            className="w-full h-full py-2.5 px-4 bg-[var(--color-primary-md3)] text-white hover:bg-[var(--color-primary-md3)]/90 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-md shadow-[var(--color-primary-md3)]/20"
-                          >
-                            <Plus className="w-4 h-4" /> Add Question
-                          </button>
-                        </div>
+                        ))}
                       </div>
                     </div>
 
-                    {/* Added Custom Questions List */}
-                    {customQuestions.length > 0 && (
-                      <div className="space-y-2 pt-2 border-t border-[var(--color-outline-variant)]/20">
-                        <span className="text-[11px] font-bold text-[var(--color-on-surface-variant)] uppercase tracking-wider block">
-                          Configured Question Sequence:
-                        </span>
-                        <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                          {customQuestions.map((q, idx) => (
-                            <div
-                              key={idx}
-                              className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex items-start justify-between gap-3 text-xs"
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      {/* Campaign Title */}
+                      <div>
+                        <label className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
+                          <FileText className="w-3.5 h-3.5 text-[var(--color-text-accent,#C4B5FD)]" />
+                          Campaign title *
+                        </label>
+                        <input
+                          {...register("title")}
+                          placeholder="e.g. Q3 Senior React Engineer Evaluation"
+                          className={inputClasses}
+                        />
+                        {errors.title && (
+                          <p className="mt-1.5 text-xs text-[var(--color-danger)] font-medium">
+                            • {errors.title.message}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Job Role */}
+                      <div>
+                        <label className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
+                          <Briefcase className="w-3.5 h-3.5 text-[var(--color-text-accent,#C4B5FD)]" />
+                          Job role *
+                        </label>
+                        <input
+                          {...register("jobRole")}
+                          placeholder="e.g. Frontend Developer"
+                          className={inputClasses}
+                        />
+                        {errors.jobRole && (
+                          <p className="mt-1.5 text-xs text-[var(--color-danger)] font-medium">
+                            • {errors.jobRole.message}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                      <label className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
+                        <AlignLeft className="w-3.5 h-3.5 text-[var(--color-text-accent,#C4B5FD)]" />
+                        Campaign description (optional)
+                      </label>
+                      <textarea
+                        {...register("description")}
+                        rows={3}
+                        className={`${inputClasses} resize-none`}
+                        placeholder="Brief summary or context for evaluating candidates..."
+                      />
+                      {errors.description && (
+                        <p className="mt-1.5 text-xs text-[var(--color-danger)] font-medium">
+                          • {errors.description.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Technical Topics */}
+                    <div>
+                      <label className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
+                        <Tag className="w-3.5 h-3.5 text-[var(--color-text-accent,#C4B5FD)]" />
+                        Technical topics * (at least 1 required)
+                      </label>
+
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {PRESET_TOPICS.map((preset) => (
+                          <Chip
+                            key={preset}
+                            label={preset}
+                            selected={topics.includes(preset)}
+                            onClick={() => {
+                              if (topics.includes(preset)) removeTopic(preset);
+                              else addTopic(preset);
+                            }}
+                          />
+                        ))}
+                      </div>
+
+                      <div className="flex gap-3 mb-2">
+                        <input
+                          type="text"
+                          value={topicInput}
+                          onChange={(e) => setTopicInput(e.target.value)}
+                          onKeyDown={handleTopicKeyDown}
+                          placeholder="Add custom topic (e.g. Docker, Redux Toolkit, Kafka)"
+                          className={inputClasses}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => addTopic()}
+                          className="px-4 py-2 bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] border border-[var(--color-border-active,#6338F6)] rounded-xl text-xs font-medium tracking-tight transition-all flex items-center shrink-0"
+                        >
+                          <Plus className="w-3.5 h-3.5 mr-1" /> Add
+                        </button>
+                      </div>
+
+                      {topicError && (
+                        <p className="mt-1 text-xs text-[var(--color-danger)] font-medium">
+                          • {topicError}
+                        </p>
+                      )}
+
+                      {topics.length > 0 && (
+                        <div className="flex flex-wrap gap-2 pt-2">
+                          {topics.map((topic) => (
+                            <Chip
+                              key={topic}
+                              label={topic}
+                              selected
+                              onRemove={() => removeTopic(topic)}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Experience Level & Duration */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div>
+                        <label className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
+                          <BookOpen className="w-3.5 h-3.5 text-[var(--color-text-accent,#C4B5FD)]" />
+                          Experience level *
+                        </label>
+                        <select
+                          {...register("experienceLevel")}
+                          className={`${inputClasses} cursor-pointer appearance-none`}
+                        >
+                          <option value="Fresher" className="bg-[var(--color-surface)]">
+                            Fresher (Entry level)
+                          </option>
+                          <option value="1-2 Years" className="bg-[var(--color-surface)]">
+                            1-2 Years (Junior)
+                          </option>
+                          <option value="3-5 Years" className="bg-[var(--color-surface)]">
+                            3-5 Years (Mid-level)
+                          </option>
+                          <option value="5+ Years" className="bg-[var(--color-surface)]">
+                            5+ Years (Senior / Lead)
+                          </option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
+                          <Clock className="w-3.5 h-3.5 text-[var(--color-text-accent,#C4B5FD)]" />
+                          Session duration (minutes) *
+                        </label>
+                        <input
+                          type="number"
+                          {...register("duration")}
+                          min={5}
+                          max={120}
+                          className={inputClasses}
+                        />
+                        {errors.duration && (
+                          <p className="mt-1.5 text-xs text-[var(--color-danger)] font-medium">
+                            • {errors.duration.message}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Require Approval Toggle */}
+                    <div className="flex items-center justify-between p-4 bg-[var(--color-canvas)] border border-[var(--color-border)] rounded-xl">
+                      <div>
+                        <label className="text-sm font-medium text-[var(--color-text-primary)] flex items-center gap-2 mb-1">
+                          <ShieldAlert className="w-4 h-4 text-[var(--color-text-accent,#C4B5FD)]" />
+                          Require approval to join
+                        </label>
+                        <p className="text-xs text-[var(--color-text-secondary)]">
+                          If enabled, candidates entering with the interview code must be approved by you before starting.
+                        </p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer ml-4 shrink-0">
+                        <input
+                          type="checkbox"
+                          className="sr-only peer"
+                          {...register("requireApproval")}
+                        />
+                        <div className="w-11 h-6 bg-[var(--color-surface)] border border-[var(--color-border)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--color-primary)]"></div>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Navigation Bar */}
+                  <div className="flex items-center justify-between pt-4 border-t border-[var(--color-border)]">
+                    <button
+                      type="button"
+                      onClick={() => navigate(-1)}
+                      className="px-5 py-2.5 text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleNextStep}
+                      className="px-6 py-2.5 rounded-xl text-xs font-medium text-[var(--color-text-accent,#C4B5FD)] bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] border border-[var(--color-border-active,#6338F6)] transition-all flex items-center gap-1.5"
+                    >
+                      Next: Question strategy <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </GlassCard>
+              </motion.div>
+            )}
+
+            {/* ========================================================================= */}
+            {/* STEP 2: QUESTION STRATEGY */}
+            {/* ========================================================================= */}
+            {currentStep === 2 && (
+              <motion.div
+                key="step2"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <GlassCard padding="p-6 md:p-8" className="space-y-6">
+                  <SectionHeader
+                    icon={Target}
+                    title="Question strategy & custom question bank"
+                    subtitle="Select how questions will be delivered: 100% AI generated, employer preset list, or a hybrid flow."
+                  />
+
+                  <div className="space-y-6">
+                    {/* 3-Way Mode Card Selector */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Mode 1: AI Generated */}
+                      <div
+                        onClick={() => setQuestionMode("AI_GENERATED")}
+                        className={`cursor-pointer p-5 rounded-2xl border transition-all relative ${
+                          questionMode === "AI_GENERATED"
+                            ? "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] border-[var(--color-border-active,#6338F6)] ring-1 ring-[var(--color-border-active,#6338F6)]"
+                            : "bg-[var(--color-surface)] border-[var(--color-border)] hover:border-[var(--color-border-active,#6338F6)]/50"
+                        }`}
+                      >
+                        <div className="w-9 h-9 rounded-xl bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] flex items-center justify-center mb-3 border border-[var(--color-border-active,#6338F6)]/30">
+                          <Bot className="w-5 h-5" />
+                        </div>
+                        <h4 className="text-sm font-medium text-[var(--color-text-primary)]">
+                          AI-adaptive
+                        </h4>
+                        <p className="text-xs text-[var(--color-text-secondary)] mt-1 font-normal leading-relaxed">
+                          Gemini AI dynamically generates all questions and adaptive follow-ups tailored to candidate responses.
+                        </p>
+                        {questionMode === "AI_GENERATED" && (
+                          <span className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-[var(--color-primary)] text-white text-[10px] font-medium">
+                            Selected
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Mode 2: Employer Preset */}
+                      <div
+                        onClick={() => setQuestionMode("EMPLOYER_PRESET")}
+                        className={`cursor-pointer p-5 rounded-2xl border transition-all relative ${
+                          questionMode === "EMPLOYER_PRESET"
+                            ? "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] border-[var(--color-border-active,#6338F6)] ring-1 ring-[var(--color-border-active,#6338F6)]"
+                            : "bg-[var(--color-surface)] border-[var(--color-border)] hover:border-[var(--color-border-active,#6338F6)]/50"
+                        }`}
+                      >
+                        <div className="w-9 h-9 rounded-xl bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] flex items-center justify-center mb-3 border border-[var(--color-border-active,#6338F6)]/30">
+                          <Target className="w-5 h-5" />
+                        </div>
+                        <h4 className="text-sm font-medium text-[var(--color-text-primary)]">
+                          Employer preset
+                        </h4>
+                        <p className="text-xs text-[var(--color-text-secondary)] mt-1 font-normal leading-relaxed">
+                          AI asks ONLY your exact pre-defined question bank in fixed order. Zero AI question generation.
+                        </p>
+                        {questionMode === "EMPLOYER_PRESET" && (
+                          <span className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-[var(--color-primary)] text-white text-[10px] font-medium">
+                            Selected
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Mode 3: Hybrid Campaign */}
+                      <div
+                        onClick={() => setQuestionMode("HYBRID")}
+                        className={`cursor-pointer p-5 rounded-2xl border transition-all relative ${
+                          questionMode === "HYBRID"
+                            ? "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] border-[var(--color-border-active,#6338F6)] ring-1 ring-[var(--color-border-active,#6338F6)]"
+                            : "bg-[var(--color-surface)] border-[var(--color-border)] hover:border-[var(--color-border-active,#6338F6)]/50"
+                        }`}
+                      >
+                        <div className="w-9 h-9 rounded-xl bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] flex items-center justify-center mb-3 border border-[var(--color-border-active,#6338F6)]/30">
+                          <Shuffle className="w-5 h-5" />
+                        </div>
+                        <h4 className="text-sm font-medium text-[var(--color-text-primary)]">
+                          Hybrid campaign
+                        </h4>
+                        <p className="text-xs text-[var(--color-text-secondary)] mt-1 font-normal leading-relaxed">
+                          AI asks your custom questions first, then smoothly transitions to adaptive AI follow-ups.
+                        </p>
+                        {questionMode === "HYBRID" && (
+                          <span className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-[var(--color-primary)] text-white text-[10px] font-medium">
+                            Selected
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Custom Question Builder Form */}
+                    {(questionMode === "EMPLOYER_PRESET" || questionMode === "HYBRID") && (
+                      <div className="p-5 rounded-2xl bg-[var(--color-canvas)] border border-[var(--color-border)] space-y-4">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                          <h4 className="text-xs font-medium text-[var(--color-text-primary)] flex items-center gap-2">
+                            <FileCode className="w-4 h-4 text-[var(--color-text-accent,#C4B5FD)]" />
+                            Custom questions ({customQuestions.length} added)
+                          </h4>
+
+                          {/* Import CSV/JSON Button */}
+                          <button
+                            type="button"
+                            onClick={() => setIsQuestionImportModalOpen(true)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--color-surface)] hover:bg-[var(--color-surface-hover,#1E1E2A)] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border)] text-xs font-medium tracking-tight transition-all"
+                          >
+                            <FileSpreadsheet className="w-3.5 h-3.5" />
+                            <span>Import CSV / JSON</span>
+                          </button>
+                        </div>
+
+                        <div className="space-y-3">
+                          <textarea
+                            value={newQText}
+                            onChange={(e) => setNewQText(e.target.value)}
+                            placeholder="Enter question text (e.g. Explain how Virtual DOM diffing works in React)..."
+                            rows={2}
+                            className={`${inputClasses} resize-none`}
+                          />
+
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <input
+                              type="text"
+                              value={newQTopic}
+                              onChange={(e) => setNewQTopic(e.target.value)}
+                              placeholder="Topic (e.g. React)"
+                              className={inputClasses}
+                            />
+
+                            <select
+                              value={newQDiff}
+                              onChange={(e) => setNewQDiff(e.target.value)}
+                              className={`${inputClasses} cursor-pointer appearance-none`}
                             >
-                              <div className="space-y-1 flex-1">
-                                <div className="flex items-center gap-2">
-                                  <span className="px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 font-bold text-[10px]">
-                                    Q{idx + 1}
-                                  </span>
-                                  <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 font-semibold text-[10px]">
-                                    {q.topic}
-                                  </span>
-                                  <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold text-[10px]">
-                                    {q.difficulty}
-                                  </span>
+                              <option value="Easy" className="bg-[var(--color-surface)]">
+                                Easy
+                              </option>
+                              <option value="Medium" className="bg-[var(--color-surface)]">
+                                Medium
+                              </option>
+                              <option value="Hard" className="bg-[var(--color-surface)]">
+                                Hard
+                              </option>
+                            </select>
+
+                            <button
+                              type="button"
+                              onClick={addCustomQuestion}
+                              className="w-full py-2.5 px-4 bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)] rounded-xl text-xs font-medium tracking-tight transition-all flex items-center justify-center gap-1.5"
+                            >
+                              <Plus className="w-3.5 h-3.5" /> Add question
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Added Custom Questions List */}
+                        {customQuestions.length > 0 && (
+                          <div className="space-y-2 pt-3 border-t border-[var(--color-border)]">
+                            <span className="text-xs font-medium text-[var(--color-text-secondary)] block">
+                              Configured question sequence:
+                            </span>
+                            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                              {customQuestions.map((q, idx) => (
+                                <div
+                                  key={idx}
+                                  className="p-3.5 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] flex items-start justify-between gap-3 text-xs"
+                                >
+                                  <div className="space-y-1 flex-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="px-2 py-0.5 rounded-md bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] font-medium text-[10px]">
+                                        Q{idx + 1}
+                                      </span>
+                                      <span className="px-2 py-0.5 rounded-md bg-[var(--color-canvas)] text-[var(--color-text-secondary)] border border-[var(--color-border)] text-[10px]">
+                                        {q.topic}
+                                      </span>
+                                      <span className="px-2 py-0.5 rounded-md bg-[var(--color-warning)]/10 text-[var(--color-warning)] text-[10px] font-medium">
+                                        {q.difficulty}
+                                      </span>
+                                    </div>
+                                    <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                                      {q.question}
+                                    </p>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeCustomQuestion(idx)}
+                                    className="p-1.5 text-[var(--color-text-secondary)] hover:text-[var(--color-danger)] transition-colors"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
                                 </div>
-                                <p className="font-semibold text-slate-100">{q.question}</p>
-                              </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Navigation Bar */}
+                  <div className="flex items-center justify-between pt-4 border-t border-[var(--color-border)]">
+                    <button
+                      type="button"
+                      onClick={handlePrevStep}
+                      className="px-5 py-2.5 rounded-xl text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors flex items-center gap-1.5"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5" /> Back
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleNextStep}
+                      className="px-6 py-2.5 rounded-xl text-xs font-medium text-[var(--color-text-accent,#C4B5FD)] bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] border border-[var(--color-border-active,#6338F6)] transition-all flex items-center gap-1.5"
+                    >
+                      Next: Candidate invitations <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </GlassCard>
+              </motion.div>
+            )}
+
+            {/* ========================================================================= */}
+            {/* STEP 3: CANDIDATE INVITATIONS (OPTIONAL) */}
+            {/* ========================================================================= */}
+            {currentStep === 3 && (
+              <motion.div
+                key="step3"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <GlassCard padding="p-6 md:p-8" className="space-y-6">
+                  <SectionHeader
+                    icon={UserPlus}
+                    title="Candidate invitations (optional)"
+                    subtitle="Pre-assign candidates using single email, bulk paste, or CSV file upload. You can also invite candidates anytime after campaign creation."
+                  />
+
+                  <div className="space-y-6">
+                    {/* Entry Mode Selector Tabs */}
+                    <div className="flex flex-wrap gap-2 p-1.5 rounded-xl bg-[var(--color-canvas)] border border-[var(--color-border)]">
+                      <button
+                        type="button"
+                        onClick={() => setCandidateMode("single")}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium tracking-tight transition-all ${
+                          candidateMode === "single"
+                            ? "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)]"
+                            : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                        }`}
+                      >
+                        <User className="w-3.5 h-3.5" /> Single candidate
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCandidateMode("bulk")}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium tracking-tight transition-all ${
+                          candidateMode === "bulk"
+                            ? "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)]"
+                            : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                        }`}
+                      >
+                        <ListFilter className="w-3.5 h-3.5" /> Multiple / bulk paste
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCandidateMode("csv")}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium tracking-tight transition-all ${
+                          candidateMode === "csv"
+                            ? "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)]"
+                            : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                        }`}
+                      >
+                        <FileSpreadsheet className="w-3.5 h-3.5" /> CSV / TXT upload
+                      </button>
+                    </div>
+
+                    {/* Mode 1: Single Email */}
+                    {candidateMode === "single" && (
+                      <div className="flex gap-3">
+                        <input
+                          type="email"
+                          value={singleEmailInput}
+                          onChange={(e) => setSingleEmailInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              addSingleCandidate();
+                            }
+                          }}
+                          placeholder="candidate@company.com"
+                          className={inputClasses}
+                        />
+                        <button
+                          type="button"
+                          onClick={addSingleCandidate}
+                          className="px-5 py-2.5 bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)] rounded-xl text-xs font-medium tracking-tight transition-all flex items-center shrink-0"
+                        >
+                          <Plus className="w-3.5 h-3.5 mr-1" /> Add candidate
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Mode 2: Bulk Text */}
+                    {candidateMode === "bulk" && (
+                      <div className="space-y-3">
+                        <textarea
+                          value={bulkEmailInput}
+                          onChange={(e) => setBulkEmailInput(e.target.value)}
+                          rows={3}
+                          placeholder="Paste candidate emails separated by commas, spaces, or newlines (e.g. john@acme.com, sarah@acme.com)..."
+                          className={`${inputClasses} resize-none`}
+                        />
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            onClick={addBulkCandidates}
+                            className="px-5 py-2.5 bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)] rounded-xl text-xs font-medium tracking-tight transition-all flex items-center"
+                          >
+                            <Plus className="w-3.5 h-3.5 mr-1" /> Add bulk emails
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Mode 3: CSV Upload */}
+                    {candidateMode === "csv" && (
+                      <div className="p-6 border-2 border-dashed border-[var(--color-border)] rounded-2xl bg-[var(--color-canvas)] text-center space-y-3 relative hover:border-[var(--color-border-active,#6338F6)]/50 transition-colors">
+                        <input
+                          type="file"
+                          accept=".csv, .txt"
+                          onChange={handleCsvUpload}
+                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                        />
+                        <div className="w-10 h-10 rounded-full bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] flex items-center justify-center mx-auto border border-[var(--color-border-active,#6338F6)]/30">
+                          <Upload className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-medium text-[var(--color-text-primary)]">
+                            Drop CSV or TXT file here or click to browse
+                          </h4>
+                          <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                            Supports CSV files containing candidate emails in any column.
+                          </p>
+                        </div>
+                        {csvFileName && (
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-success)]/10 border border-[var(--color-success)]/30 text-[var(--color-success)] text-xs font-medium">
+                            <FileSpreadsheet className="w-3.5 h-3.5" /> Uploaded: {csvFileName}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Candidate Emails List Preview */}
+                    {candidateEmails.length > 0 && (
+                      <div className="space-y-3 pt-3 border-t border-[var(--color-border)]">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-medium text-[var(--color-text-secondary)] flex items-center gap-1.5">
+                            <Users className="w-3.5 h-3.5 text-[var(--color-text-accent,#C4B5FD)]" />
+                            Invited candidates ({candidateEmails.length})
+                          </span>
+                          <button
+                            type="button"
+                            onClick={clearAllCandidates}
+                            className="text-xs font-medium text-[var(--color-danger)] hover:underline transition-colors flex items-center gap-1"
+                          >
+                            <Trash2 className="w-3 h-3" /> Clear all
+                          </button>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 rounded-xl bg-[var(--color-canvas)] border border-[var(--color-border)]">
+                          {candidateEmails.map((email) => (
+                            <span
+                              key={email}
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] text-xs font-medium text-[var(--color-text-primary)]"
+                            >
+                              <Mail className="w-3 h-3 text-[var(--color-text-accent,#C4B5FD)] shrink-0" />
+                              {email}
                               <button
                                 type="button"
-                                onClick={() => removeCustomQuestion(idx)}
-                                className="p-1.5 text-slate-400 hover:text-rose-400 transition-colors"
+                                onClick={() => removeCandidate(email)}
+                                className="hover:text-[var(--color-danger)] transition-colors ml-1"
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <X className="w-3 h-3" />
                               </button>
-                            </div>
+                            </span>
                           ))}
                         </div>
                       </div>
                     )}
                   </div>
-                )}
-              </div>
-            </GlassCard>
-          </motion.div>
 
-          {/* Candidate Invitations Section (Single, Bulk, CSV) */}
-          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.13 }}>
-            <GlassCard padding="p-6 md:p-8">
-              <SectionHeader
-                icon={UserPlus}
-                title="Candidate Invitations (Optional)"
-                subtitle="Assign candidates to this campaign using Single Email, Bulk Paste, or CSV File Upload."
-              />
-
-              <div className="space-y-6">
-                {/* Entry Mode Selector Tabs */}
-                <div className="flex flex-wrap gap-2 p-1.5 rounded-xl bg-[var(--color-surface-container-highest)]/40 border border-[var(--color-outline-variant)]/30">
-                  <button
-                    type="button"
-                    onClick={() => setCandidateMode("single")}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${candidateMode === "single"
-                        ? "bg-[var(--color-primary-md3)] text-white shadow-md shadow-[var(--color-primary-md3)]/20"
-                        : "text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)]"
-                      }`}
-                  >
-                    <User className="w-3.5 h-3.5" /> Single Candidate
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCandidateMode("bulk")}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${candidateMode === "bulk"
-                        ? "bg-[var(--color-primary-md3)] text-white shadow-md shadow-[var(--color-primary-md3)]/20"
-                        : "text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)]"
-                      }`}
-                  >
-                    <ListFilter className="w-3.5 h-3.5" /> Multiple / Bulk
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCandidateMode("csv")}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${candidateMode === "csv"
-                        ? "bg-[var(--color-primary-md3)] text-white shadow-md shadow-[var(--color-primary-md3)]/20"
-                        : "text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)]"
-                      }`}
-                  >
-                    <FileSpreadsheet className="w-3.5 h-3.5" /> CSV / TXT Upload
-                  </button>
-                </div>
-
-                {/* Mode 1: Single Email */}
-                {candidateMode === "single" && (
-                  <div className="flex gap-3">
-                    <input
-                      type="email"
-                      value={singleEmailInput}
-                      onChange={(e) => setSingleEmailInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          addSingleCandidate();
-                        }
-                      }}
-                      placeholder="candidate@company.com"
-                      className={inputClasses}
-                    />
+                  {/* Navigation Bar */}
+                  <div className="flex items-center justify-between pt-4 border-t border-[var(--color-border)]">
                     <button
                       type="button"
-                      onClick={addSingleCandidate}
-                      className="px-5 py-2.5 bg-[var(--color-primary-md3)]/15 text-[var(--color-primary-md3)] hover:bg-[var(--color-primary-md3)] hover:text-white border border-[var(--color-primary-md3)]/25 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center shrink-0"
+                      onClick={handlePrevStep}
+                      className="px-5 py-2.5 rounded-xl text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors flex items-center gap-1.5"
                     >
-                      <Plus className="w-4 h-4 mr-1.5" /> Add Candidate
+                      <ArrowLeft className="w-3.5 h-3.5" /> Back
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleNextStep}
+                      className="px-6 py-2.5 rounded-xl text-xs font-medium text-[var(--color-text-accent,#C4B5FD)] bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] border border-[var(--color-border-active,#6338F6)] transition-all flex items-center gap-1.5"
+                    >
+                      Next: AI instructions <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                )}
+                </GlassCard>
+              </motion.div>
+            )}
 
-                {/* Mode 2: Bulk Text */}
-                {candidateMode === "bulk" && (
-                  <div className="space-y-3">
+            {/* ========================================================================= */}
+            {/* STEP 4: AI SYSTEM INSTRUCTIONS (OPTIONAL) */}
+            {/* ========================================================================= */}
+            {currentStep === 4 && (
+              <motion.div
+                key="step4"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <GlassCard padding="p-6 md:p-8" className="space-y-6">
+                  <SectionHeader
+                    icon={Sparkles}
+                    title="AI system instructions (optional)"
+                    subtitle="Provide custom prompt focus areas, evaluation priorities, or rubric notes for the AI interviewer engine."
+                  />
+
+                  <div>
+                    <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
+                      Prompt guidelines & evaluation focus
+                    </label>
                     <textarea
-                      value={bulkEmailInput}
-                      onChange={(e) => setBulkEmailInput(e.target.value)}
-                      rows={3}
-                      placeholder="Paste candidate emails separated by commas, spaces, or newlines (e.g. john@acme.com, sarah@acme.com)..."
-                      className={`${inputClasses} resize-none`}
+                      {...register("instructions")}
+                      rows={5}
+                      className={`${inputClasses} resize-none leading-relaxed`}
+                      placeholder="Provide specific guidelines (e.g., 'Focus heavily on React performance optimization, custom hook design, and code readability. Ask 1 follow-up question if candidate answers vaguely...')"
                     />
-                    <div className="flex justify-end">
+                    {errors.instructions && (
+                      <p className="mt-1.5 text-xs text-[var(--color-danger)] font-medium">
+                        • {errors.instructions.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Navigation Bar */}
+                  <div className="flex items-center justify-between pt-4 border-t border-[var(--color-border)]">
+                    <button
+                      type="button"
+                      onClick={handlePrevStep}
+                      className="px-5 py-2.5 rounded-xl text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors flex items-center gap-1.5"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5" /> Back
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleNextStep}
+                      className="px-6 py-2.5 rounded-xl text-xs font-medium text-[var(--color-text-accent,#C4B5FD)] bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] border border-[var(--color-border-active,#6338F6)] transition-all flex items-center gap-1.5"
+                    >
+                      Next: Review & create <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </GlassCard>
+              </motion.div>
+            )}
+
+            {/* ========================================================================= */}
+            {/* STEP 5: REVIEW & CREATE */}
+            {/* ========================================================================= */}
+            {currentStep === 5 && (
+              <motion.div
+                key="step5"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-6"
+              >
+                <GlassCard padding="p-6 md:p-8" className="space-y-6">
+                  <SectionHeader
+                    icon={CheckCircle2}
+                    title="Review campaign configuration"
+                    subtitle="Verify all campaign details before publishing. You can click 'Edit' on any section to make quick adjustments."
+                  />
+
+                  {/* Review Group 1: Essentials */}
+                  <div className="p-5 rounded-2xl bg-[var(--color-canvas)] border border-[var(--color-border)] space-y-3">
+                    <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-2.5">
+                      <div className="text-xs font-medium text-[var(--color-text-accent,#C4B5FD)] flex items-center gap-1.5">
+                        <Briefcase className="w-3.5 h-3.5" />
+                        1. Campaign essentials
+                      </div>
                       <button
                         type="button"
-                        onClick={addBulkCandidates}
-                        className="px-5 py-2.5 bg-[var(--color-primary-md3)]/15 text-[var(--color-primary-md3)] hover:bg-[var(--color-primary-md3)] hover:text-white border border-[var(--color-primary-md3)]/25 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center"
+                        onClick={() => setCurrentStep(1)}
+                        className="text-xs font-medium text-[var(--color-text-accent,#C4B5FD)] hover:underline flex items-center gap-1"
                       >
-                        <Plus className="w-4 h-4 mr-1.5" /> Add Bulk Emails
+                        <Edit3 className="w-3 h-3" /> Edit
                       </button>
                     </div>
-                  </div>
-                )}
 
-                {/* Mode 3: CSV Upload */}
-                {candidateMode === "csv" && (
-                  <div className="p-6 border-2 border-dashed border-[var(--color-outline-variant)]/40 rounded-2xl bg-[var(--color-surface-container-highest)]/20 text-center space-y-3 relative hover:border-[var(--color-primary-md3)]/50 transition-colors">
-                    <input
-                      type="file"
-                      accept=".csv, .txt"
-                      onChange={handleCsvUpload}
-                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                    />
-                    <div className="w-12 h-12 rounded-full bg-[var(--color-primary-md3)]/15 text-[var(--color-primary-md3)] flex items-center justify-center mx-auto border border-[var(--color-primary-md3)]/30">
-                      <Upload className="w-6 h-6" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                      <div>
+                        <span className="text-[var(--color-text-secondary)] block">Title</span>
+                        <span className="font-medium text-[var(--color-text-primary)]">
+                          {formValues.title || "—"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[var(--color-text-secondary)] block">Job role</span>
+                        <span className="font-medium text-[var(--color-text-primary)]">
+                          {formValues.jobRole || "—"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[var(--color-text-secondary)] block">Experience</span>
+                        <span className="font-medium text-[var(--color-text-primary)]">
+                          {formValues.experienceLevel}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[var(--color-text-secondary)] block">Duration</span>
+                        <span className="font-medium text-[var(--color-text-primary)]">
+                          {formValues.duration} mins
+                        </span>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="text-xs font-black uppercase tracking-wider text-[var(--color-on-surface)]">
-                        Drop CSV or TXT file here or click to browse
-                      </h4>
-                      <p className="text-[11px] text-[var(--color-on-surface-variant)] mt-1 font-medium">
-                        Supports CSV files containing candidate emails in any column.
-                      </p>
+
+                    {formValues.description && (
+                      <div className="pt-2 text-xs">
+                        <span className="text-[var(--color-text-secondary)] block">Description</span>
+                        <p className="text-[var(--color-text-primary)] mt-0.5">
+                          {formValues.description}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="pt-2 text-xs">
+                      <span className="text-[var(--color-text-secondary)] block mb-1">
+                        Technical topics ({topics.length})
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {topics.map((t) => (
+                          <span
+                            key={t}
+                            className="px-2.5 py-0.5 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] text-xs text-[var(--color-text-primary)] font-medium"
+                          >
+                            {t}
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                    {csvFileName && (
-                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
-                        <FileSpreadsheet className="w-3.5 h-3.5" /> Last Uploaded: {csvFileName}
+                  </div>
+
+                  {/* Review Group 2: Question Strategy */}
+                  <div className="p-5 rounded-2xl bg-[var(--color-canvas)] border border-[var(--color-border)] space-y-3">
+                    <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-2.5">
+                      <div className="text-xs font-medium text-[var(--color-text-accent,#C4B5FD)] flex items-center gap-1.5">
+                        <Target className="w-3.5 h-3.5" />
+                        2. Question strategy
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setCurrentStep(2)}
+                        className="text-xs font-medium text-[var(--color-text-accent,#C4B5FD)] hover:underline flex items-center gap-1"
+                      >
+                        <Edit3 className="w-3 h-3" /> Edit
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <span className="px-3 py-1 rounded-full bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)] text-xs font-medium">
+                        {questionMode === "AI_GENERATED"
+                          ? "AI-Adaptive"
+                          : questionMode === "EMPLOYER_PRESET"
+                          ? "Employer Preset"
+                          : "Hybrid Campaign"}
+                      </span>
+                      <span className="text-xs text-[var(--color-text-secondary)]">
+                        {questionMode === "AI_GENERATED"
+                          ? "100% dynamic AI generation & follow-ups"
+                          : `${customQuestions.length} custom questions configured`}
+                      </span>
+                    </div>
+
+                    {customQuestions.length > 0 && (
+                      <div className="space-y-1.5 pt-2">
+                        {customQuestions.slice(0, 3).map((q, idx) => (
+                          <div
+                            key={idx}
+                            className="text-xs text-[var(--color-text-secondary)] truncate bg-[var(--color-surface)] p-2 rounded-lg border border-[var(--color-border)]"
+                          >
+                            <span className="font-medium text-[var(--color-text-primary)] mr-2">
+                              Q{idx + 1}:
+                            </span>
+                            {q.question}
+                          </div>
+                        ))}
+                        {customQuestions.length > 3 && (
+                          <span className="text-[11px] text-[var(--color-text-secondary)] italic">
+                            + {customQuestions.length - 3} more questions configured
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>
-                )}
 
-                {/* Candidate Emails List Preview */}
-                {candidateEmails.length > 0 && (
-                  <div className="space-y-3 pt-2 border-t border-[var(--color-outline-variant)]/20">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] flex items-center gap-2">
-                        <Users className="w-3.5 h-3.5 text-[var(--color-primary-md3)]" />
-                        Invited Candidates ({candidateEmails.length})
-                      </span>
+                  {/* Review Group 3: Candidate Invitations */}
+                  <div className="p-5 rounded-2xl bg-[var(--color-canvas)] border border-[var(--color-border)] space-y-3">
+                    <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-2.5">
+                      <div className="text-xs font-medium text-[var(--color-text-accent,#C4B5FD)] flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5" />
+                        3. Candidate invitations
+                      </div>
                       <button
                         type="button"
-                        onClick={clearAllCandidates}
-                        className="text-[10px] font-black uppercase tracking-wider text-rose-400 hover:text-rose-300 transition-colors flex items-center gap-1"
+                        onClick={() => setCurrentStep(3)}
+                        className="text-xs font-medium text-[var(--color-text-accent,#C4B5FD)] hover:underline flex items-center gap-1"
                       >
-                        <Trash2 className="w-3 h-3" /> Clear All
+                        <Edit3 className="w-3 h-3" /> Edit
                       </button>
                     </div>
 
-                    <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 rounded-xl bg-[var(--color-surface-container-highest)]/20 border border-[var(--color-outline-variant)]/20">
-                      {candidateEmails.map((email) => (
-                        <span
-                          key={email}
-                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[var(--color-surface-variant)]/60 border border-[var(--color-outline-variant)]/30 text-xs font-semibold text-[var(--color-on-surface)]"
-                        >
-                          <Mail className="w-3 h-3 text-[var(--color-primary-md3)] shrink-0" />
-                          {email}
-                          <button
-                            type="button"
-                            onClick={() => removeCandidate(email)}
-                            className="hover:text-rose-400 transition-colors ml-1"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
+                    {candidateEmails.length === 0 ? (
+                      <p className="text-xs text-[var(--color-text-secondary)] italic">
+                        No candidates invited yet — add them anytime from the campaign dashboard after creation
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        <span className="text-xs font-medium text-[var(--color-text-primary)]">
+                          {candidateEmails.length} candidate(s) will be assigned:
                         </span>
-                      ))}
-                    </div>
+                        <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                          {candidateEmails.map((email) => (
+                            <span
+                              key={email}
+                              className="px-2.5 py-1 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] text-xs text-[var(--color-text-secondary)] font-mono"
+                            >
+                              {email}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </GlassCard>
-          </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-            <GlassCard padding="p-6 md:p-8">
-              <SectionHeader
-                icon={Sparkles}
-                title="AI System Instructions"
-                subtitle="Provide custom prompt focus areas for the AI interviewer engine."
-              />
+                  {/* Review Group 4: AI Instructions */}
+                  <div className="p-5 rounded-2xl bg-[var(--color-canvas)] border border-[var(--color-border)] space-y-3">
+                    <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-2.5">
+                      <div className="text-xs font-medium text-[var(--color-text-accent,#C4B5FD)] flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        4. AI system instructions
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setCurrentStep(4)}
+                        className="text-xs font-medium text-[var(--color-text-accent,#C4B5FD)] hover:underline flex items-center gap-1"
+                      >
+                        <Edit3 className="w-3 h-3" /> Edit
+                      </button>
+                    </div>
 
-              <div>
-                <textarea
-                  {...register("instructions")}
-                  rows={4}
-                  className={`${inputClasses} resize-none`}
-                  placeholder="Provide specific guidelines for IntervuOS (e.g., 'Focus heavily on React performance optimization and custom hooks...')"
-                />
-                {errors.instructions && (
-                  <p className="mt-2 text-xs font-bold text-rose-400">
-                    • {errors.instructions.message}
-                  </p>
-                )}
-              </div>
-            </GlassCard>
-          </motion.div>
+                    {formValues.instructions?.trim() ? (
+                      <p className="text-xs text-[var(--color-text-primary)] leading-relaxed bg-[var(--color-surface)] p-3 rounded-xl border border-[var(--color-border)]">
+                        {formValues.instructions}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-[var(--color-text-secondary)] italic">
+                        No custom instructions — AI will use default evaluation guidance
+                      </p>
+                    )}
+                  </div>
 
-          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-            <div className="flex justify-end gap-4 pt-4">
-              <button
-                type="button"
-                onClick={() => navigate(-1)}
-                className="px-6 py-3.5 bg-transparent hover:bg-[var(--color-surface-variant)] text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] border border-[var(--color-outline-variant)]/30 rounded-xl text-xs font-black uppercase tracking-wider transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isLoading || !user?.isVerified}
-                className={`px-8 py-3.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center min-w-[200px] ${!user?.isVerified
-                    ? "bg-amber-500/20 text-amber-300 border border-amber-500/30 cursor-not-allowed"
-                    : "bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white shadow-lg shadow-[var(--primary)]/25"
-                  }`}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Creating...
-                  </>
-                ) : !user?.isVerified ? (
-                  <>
-                    <ShieldAlert className="w-4 h-4 mr-2 text-amber-400" />
-                    Verification Required
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Create Campaign
-                  </>
-                )}
-              </button>
-            </div>
-          </motion.div>
+                  {/* Account Verification Warning Banner (renders on Step 5 alongside Create button) */}
+                  {!user?.isVerified && (
+                    <div className="p-5 rounded-2xl bg-[var(--color-warning)]/10 border border-[var(--color-warning)]/30 text-[var(--color-warning)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                      <div className="flex items-start gap-3.5">
+                        <div className="p-2 rounded-xl bg-[var(--color-warning)]/20 text-[var(--color-warning)] shrink-0 mt-0.5">
+                          <ShieldAlert className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-medium text-[var(--color-warning)]">
+                            Employer account verification required
+                          </h4>
+                          <p className="text-xs text-[var(--color-warning)]/80 mt-1 leading-relaxed">
+                            Your account is currently pending verification. You can save your configured campaign details, but publication to candidates requires administrator approval.
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => navigate("/employer/verification-pending")}
+                        className="px-4 py-2 bg-[var(--color-warning)]/20 hover:bg-[var(--color-warning)]/30 text-[var(--color-warning)] text-xs font-medium rounded-xl border border-[var(--color-warning)]/40 transition-all shrink-0 whitespace-nowrap"
+                      >
+                        Check status & support
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Navigation and Single Primary CTA */}
+                  <div className="flex items-center justify-between pt-4 border-t border-[var(--color-border)]">
+                    <button
+                      type="button"
+                      onClick={handlePrevStep}
+                      className="px-5 py-2.5 rounded-xl text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors flex items-center gap-1.5"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5" /> Back to instructions
+                    </button>
+
+                    <button
+                      type="submit"
+                      disabled={isLoading || !user?.isVerified}
+                      className={`px-8 py-3.5 rounded-xl text-sm font-medium tracking-tight transition-all flex items-center justify-center min-w-[220px] ${
+                        !user?.isVerified
+                          ? "bg-[var(--color-warning)]/15 text-[var(--color-warning)] border border-[var(--color-warning)]/30 cursor-not-allowed"
+                          : "bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white shadow-lg shadow-[var(--color-primary)]/30"
+                      }`}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Publishing campaign...
+                        </>
+                      ) : !user?.isVerified ? (
+                        <>
+                          <ShieldAlert className="w-4 h-4 mr-2" />
+                          Verification required
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          Create campaign
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </GlassCard>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </form>
       </div>
 
       {/* QUESTION IMPORT FORMAT GUIDE MODAL */}
       {isQuestionImportModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 space-y-6 shadow-2xl relative overflow-hidden"
+            className="w-full max-w-2xl bg-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl p-6 md:p-8 space-y-6 shadow-2xl relative overflow-hidden text-[var(--color-text-primary)]"
           >
             {/* Close Button */}
             <button
               onClick={() => setIsQuestionImportModalOpen(false)}
-              className="absolute top-5 right-5 p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all"
+              className="absolute top-5 right-5 p-2 rounded-xl bg-[var(--color-canvas)] hover:bg-[var(--color-canvas)]/80 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-all border border-[var(--color-border)]"
             >
               <X className="w-5 h-5" />
             </button>
 
             {/* Header */}
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-400">
+              <div className="p-3 rounded-2xl bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] border border-[var(--color-border-active,#6338F6)]/30 text-[var(--color-text-accent,#C4B5FD)]">
                 <FileSpreadsheet className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-xl font-extrabold text-white">Import Custom Question Bank</h3>
-                <p className="text-xs text-slate-400">Ensure your CSV or JSON file follows the required format below before uploading.</p>
+                <h3 className="text-lg font-medium text-[var(--color-text-primary)]">
+                  Import custom question bank
+                </h3>
+                <p className="text-xs text-[var(--color-text-secondary)]">
+                  Ensure your CSV or JSON file follows the required format below before uploading.
+                </p>
               </div>
             </div>
 
             {/* Format Instructions */}
             <div className="space-y-4 text-xs">
-              <div className="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/20 space-y-2">
-                <div className="flex items-center gap-2 text-indigo-300 font-bold uppercase tracking-wider text-[11px]">
+              <div className="p-4 rounded-2xl bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] border border-[var(--color-border-active,#6338F6)]/20 space-y-1.5">
+                <div className="flex items-center gap-2 text-[var(--color-text-accent,#C4B5FD)] font-medium text-xs">
                   <AlertCircle className="w-4 h-4" />
-                  <span>File Format Guidelines</span>
+                  <span>File format guidelines</span>
                 </div>
-                <p className="text-slate-300 leading-relaxed">
+                <p className="text-[var(--color-text-secondary)] leading-relaxed">
                   Your CSV or TXT file should contain columns in this exact order: <b>Question Text</b>, <b>Topic</b>, <b>Difficulty</b> (Easy, Medium, Hard). Headers are optional and automatically detected.
                 </p>
               </div>
 
-              {/* Code Samples Tabs / Blocks */}
+              {/* Code Samples */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-[var(--text-secondary)] uppercase tracking-wider text-[10px]">Sample CSV File Structure:</span>
+                  <span className="font-medium text-[var(--color-text-secondary)] text-xs">
+                    Sample CSV file structure:
+                  </span>
                 </div>
-                <pre className="p-4 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--text-primary)] font-mono text-[11px] overflow-x-auto whitespace-pre">
+                <pre className="p-4 rounded-xl bg-[var(--color-canvas)] border border-[var(--color-border)] text-[var(--color-text-primary)] font-mono text-xs overflow-x-auto whitespace-pre">
 {`Question,Topic,Difficulty
 "Explain how Virtual DOM works in React.",React,Easy
 "What is the difference between useEffect and useMemo?",React,Medium
@@ -1054,9 +1587,11 @@ const CreateInterviewPage = () => {
                 </pre>
 
                 <div className="flex items-center justify-between pt-1">
-                  <span className="font-bold text-[var(--text-secondary)] uppercase tracking-wider text-[10px]">Sample JSON File Structure:</span>
+                  <span className="font-medium text-[var(--color-text-secondary)] text-xs">
+                    Sample JSON file structure:
+                  </span>
                 </div>
-                <pre className="p-4 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--text-primary)] font-mono text-[11px] overflow-x-auto whitespace-pre">
+                <pre className="p-4 rounded-xl bg-[var(--color-canvas)] border border-[var(--color-border)] text-[var(--color-text-primary)] font-mono text-xs overflow-x-auto whitespace-pre">
 {`[
   { "question": "What is debouncing in JS?", "topic": "JavaScript", "difficulty": "Easy" },
   { "question": "Explain REST vs GraphQL.", "topic": "APIs", "difficulty": "Medium" }
@@ -1065,21 +1600,21 @@ const CreateInterviewPage = () => {
               </div>
 
               {/* Upload Drop Zone */}
-              <div className="p-6 border-2 border-dashed border-[var(--primary)]/30 hover:border-[var(--color-border-active)] rounded-2xl bg-[var(--primary-tint)] text-center space-y-3 relative transition-all">
+              <div className="p-6 border-2 border-dashed border-[var(--color-border-active,#6338F6)]/40 hover:border-[var(--color-border-active,#6338F6)] rounded-2xl bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-center space-y-3 relative transition-all">
                 <input
                   type="file"
                   accept=".csv, .txt, .json"
                   onChange={handleQuestionCsvUpload}
                   className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                 />
-                <div className="w-12 h-12 rounded-full bg-[var(--primary)]/20 text-[var(--color-text-accent)] flex items-center justify-center mx-auto border border-[var(--primary)]/30">
-                  <Upload className="w-6 h-6" />
+                <div className="w-10 h-10 rounded-full bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] text-[var(--color-text-accent,#C4B5FD)] flex items-center justify-center mx-auto border border-[var(--color-border-active,#6338F6)]/30">
+                  <Upload className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-black uppercase tracking-wider text-[var(--text-primary)]">
+                  <h4 className="text-xs font-medium text-[var(--color-text-primary)]">
                     Click to select CSV / JSON file or drag here
                   </h4>
-                  <p className="text-[11px] text-[var(--text-secondary)] mt-1 font-medium">
+                  <p className="text-[11px] text-[var(--color-text-secondary)] mt-1">
                     Supports .csv, .txt, and .json question files
                   </p>
                 </div>

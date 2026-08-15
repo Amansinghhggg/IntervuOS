@@ -62,7 +62,7 @@ export const getAdminDashboardStats = async (req, res, next) => {
         },
       ]),
       User.find().sort({ createdAt: -1 }).limit(5).select("name email role createdAt profilePicture"),
-      Complaint.find().sort({ createdAt: -1 }).limit(5).select("ticketId name email category urgency status createdAt"),
+      Complaint.find().sort({ createdAt: -1 }).limit(5).select("ticketId name email category status createdAt"),
     ]);
 
     // Format recommendation stats map
@@ -270,12 +270,11 @@ export const getMockAttempts = async (req, res, next) => {
 // @access  Private (Admin)
 export const getComplaints = async (req, res, next) => {
   try {
-    const { status, urgency, category, search, page = 1, limit = 20 } = req.query;
+    const { status, category, search, page = 1, limit = 20 } = req.query;
 
     const query = {};
 
     if (status) query.status = status;
-    if (urgency) query.urgency = urgency;
     if (category) query.category = category;
 
     if (search) {

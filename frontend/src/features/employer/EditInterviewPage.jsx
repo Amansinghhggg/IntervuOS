@@ -449,7 +449,15 @@ const EditInterviewPage = () => {
           </motion.div>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && e.target.tagName !== "TEXTAREA") {
+              e.preventDefault();
+            }
+          }}
+          className="space-y-6"
+        >
           {/* Campaign Essentials */}
           <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
             <GlassCard padding="p-6 md:p-8" glowEffect>
@@ -749,6 +757,12 @@ const EditInterviewPage = () => {
                       <textarea
                         value={newQText}
                         onChange={(e) => setNewQText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            addCustomQuestion();
+                          }
+                        }}
                         placeholder="Enter question text (e.g. Explain how Virtual DOM diffing works in React)..."
                         rows={2}
                         className={`${inputClasses} resize-none`}
@@ -760,6 +774,12 @@ const EditInterviewPage = () => {
                             type="text"
                             value={newQTopic}
                             onChange={(e) => setNewQTopic(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                addCustomQuestion();
+                              }
+                            }}
                             placeholder="Topic (e.g. React)"
                             className={inputClasses}
                           />
@@ -768,6 +788,12 @@ const EditInterviewPage = () => {
                           <select
                             value={newQDiff}
                             onChange={(e) => setNewQDiff(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                addCustomQuestion();
+                              }
+                            }}
                             className={`${inputClasses} cursor-pointer appearance-none`}
                           >
                             <option value="Easy" className="bg-[var(--color-surface-container-low)]">Easy</option>

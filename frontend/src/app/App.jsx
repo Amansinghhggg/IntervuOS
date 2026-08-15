@@ -60,9 +60,36 @@ function App() {
         <Route path="/test/avatar" element={<AvatarTestPage />} />
 
         {/* Public Routes */}
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<Navigate to="/" replace />} />
-        <Route path="/signup" element={<Navigate to="/" replace />} />
+        <Route
+          path="/"
+          element={
+            user ? (
+              <Navigate to={getRoleDefaultRoute()} replace />
+            ) : (
+              <LandingPage />
+            )
+          }
+        />
+        <Route
+          path="/login"
+          element={
+            user ? (
+              <Navigate to={getRedirectRoute()} replace />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+        <Route
+          path="/signup"
+          element={
+            user ? (
+              <Navigate to={getRedirectRoute()} replace />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
 
         {/* Compulsory Role Selection Route */}
         <Route path="/select-role" element={<SelectRolePage />} />

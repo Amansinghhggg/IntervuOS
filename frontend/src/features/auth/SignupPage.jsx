@@ -12,13 +12,13 @@ import {
   Eye,
   EyeOff,
   Loader2,
-  BrainCircuit,
   User,
   Building2,
   UserRound,
   ArrowRight,
   FileText
 } from "lucide-react";
+import ForkLogo from "../../ui/shared/ForkLogo";
 import UploadProgress from "../shared/components/UploadProgress";
 
 const signupSchema = z
@@ -165,12 +165,12 @@ const SignupPage = () => {
         {/* Left side: Branding / Copy */}
         <div className="hidden md:flex flex-col pr-8 lg:pr-12">
           <div className="flex items-center gap-4 mb-12">
-            <div className="w-14 h-14 rounded-2xl bg-[var(--primary)] flex items-center justify-center shadow-lg shadow-[var(--primary)]/30">
-              <BrainCircuit className="w-8 h-8 text-white" />
+            <div className="w-14 h-14 rounded-2xl bg-[var(--primary)] flex items-center justify-center p-3 shadow-lg shadow-[var(--primary)]/30">
+              <ForkLogo className="w-8 h-8 text-white" />
             </div>
             <div>
               <span className="text-3xl font-black text-[var(--text-primary)] tracking-tight block">
-                IntervuOS
+                ForkTalent
               </span>
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-accent,#C4B5FD)]">
                 Recruitment Suite
@@ -207,10 +207,10 @@ const SignupPage = () => {
           <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-primary-md3)]/10 rounded-full blur-[40px] pointer-events-none" />
 
           <div className="text-center mb-8 md:hidden flex flex-col items-center">
-            <div className="w-12 h-12 rounded-xl bg-[var(--color-primary-md3)] flex items-center justify-center shadow-lg shadow-[var(--color-primary-md3)]/30 mb-4">
-              <BrainCircuit className="w-7 h-7 text-white" />
+            <div className="w-12 h-12 rounded-xl bg-[var(--color-primary-md3)] flex items-center justify-center p-2.5 shadow-lg shadow-[var(--color-primary-md3)]/30 mb-4">
+              <ForkLogo className="w-7 h-7 text-white" />
             </div>
-            <span className="text-2xl font-black text-white tracking-tight">IntervuOS</span>
+            <span className="text-2xl font-black text-white tracking-tight">ForkTalent</span>
           </div>
 
           <div className="mb-8 relative z-10">

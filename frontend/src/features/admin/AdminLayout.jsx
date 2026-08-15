@@ -17,8 +17,9 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "react-hot-toast";
+import ForkLogo from "../../ui/shared/ForkLogo";
 
-const SIDEBAR_STORAGE_KEY = 'intervuos_admin_sidebar_collapsed';
+const SIDEBAR_STORAGE_KEY = 'forktalent_admin_sidebar_collapsed';
 
 export default function AdminLayout() {
   const { user, logout } = useAuth();
@@ -81,12 +82,12 @@ export default function AdminLayout() {
       {/* Mobile Header Bar */}
       <header className="md:hidden sticky top-0 z-50 flex items-center justify-between px-4 py-3 bg-[var(--card)]/90 backdrop-blur-xl border-b border-[var(--border)]">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[var(--primary)] flex items-center justify-center text-white font-black text-xs shadow-lg shadow-[var(--primary)]/30">
-            AD
+          <div className="w-9 h-9 rounded-xl bg-[var(--primary)] flex items-center justify-center p-2 shadow-lg shadow-[var(--primary)]/30">
+            <ForkLogo className="w-5 h-5 text-white" />
           </div>
           <div>
             <h1 className="text-xs font-black tracking-tight text-white uppercase flex items-center gap-1.5">
-              IntervuOS <Sparkles className="w-3 h-3 text-[var(--color-text-accent)]" />
+              ForkTalent <Sparkles className="w-3 h-3 text-[var(--color-text-accent)]" />
             </h1>
             <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-widest font-bold">
               Single Admin Portal
@@ -162,13 +163,13 @@ export default function AdminLayout() {
         {/* Header */}
         <div className={`flex items-center ${isCollapsed ? 'justify-center px-2' : 'justify-between px-4'} py-5 border-b border-[var(--border)]/60 min-h-[69px]`}>
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 shrink-0 rounded-xl bg-[var(--primary)] flex items-center justify-center text-white font-black text-xs shadow-sm">
-              AD
+            <div className="w-9 h-9 shrink-0 rounded-xl bg-[var(--primary)] flex items-center justify-center p-2 shadow-sm">
+              <ForkLogo className="w-5 h-5 text-white" />
             </div>
             {!isCollapsed && (
               <div className="min-w-0 truncate">
                 <h1 className="text-sm font-medium tracking-tight text-white flex items-center gap-1.5 truncate">
-                  IntervuOS <Sparkles className="w-3 h-3 text-[var(--color-text-accent)]" />
+                  ForkTalent <Sparkles className="w-3 h-3 text-[var(--color-text-accent)]" />
                 </h1>
                 <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-medium truncate">
                   Root Control Center

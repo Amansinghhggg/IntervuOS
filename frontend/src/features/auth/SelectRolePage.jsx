@@ -12,6 +12,7 @@ import {
   LogOut,
   ShieldCheck
 } from "lucide-react";
+import ForkLogo from "../../ui/shared/ForkLogo";
 import { motion } from "framer-motion";
 
 const SelectRolePage = () => {
@@ -68,11 +69,11 @@ const SelectRolePage = () => {
       {/* Top Navbar with Logout Action */}
       <div className="w-full max-w-5xl flex items-center justify-between py-2 border-b border-[var(--border)]/60">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--primary)] flex items-center justify-center font-bold text-sm">
-            IV
+          <div className="w-8 h-8 rounded-lg bg-[var(--primary)] text-white flex items-center justify-center p-1.5 shadow-sm">
+            <ForkLogo className="w-5 h-5 text-white" />
           </div>
           <span className="font-medium text-sm tracking-tight text-[var(--text-primary)]">
-            IntervuOS
+            ForkTalent
           </span>
         </div>
 
@@ -104,7 +105,7 @@ const SelectRolePage = () => {
             Select your account type
           </h1>
           <p className="text-xs sm:text-sm text-[var(--text-secondary)]">
-            Signed in as <strong className="text-[var(--text-primary)] font-medium">{user.email || user.name}</strong>. Choose how you intend to use IntervuOS.
+            Signed in as <strong className="text-[var(--text-primary)] font-medium">{user.email || user.name}</strong>. Choose how you intend to use ForkTalent.
           </p>
         </div>
 
@@ -239,7 +240,7 @@ const SelectRolePage = () => {
 
       {/* Footer */}
       <div className="w-full max-w-5xl text-center py-2 text-[11px] text-[var(--text-muted)]">
-        IntervuOS AI Interviewing Platform
+        ForkTalent AI Interviewing Platform
       </div>
 
     </div>

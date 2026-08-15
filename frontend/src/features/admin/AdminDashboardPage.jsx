@@ -354,7 +354,7 @@ export default function AdminDashboardPage() {
               <Sparkles className="w-3.5 h-3.5" /> Root System Dashboard
             </div>
             <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight">
-              IntervuOS Admin Console
+              ForkTalent Admin Console
             </h1>
             <p className="text-sm text-slate-400 mt-1 max-w-xl">
               Monitor platform growth, verify employers, inspect AI mock interviews, and resolve user support complaints in real time.

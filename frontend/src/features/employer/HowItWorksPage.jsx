@@ -80,17 +80,10 @@ export default function HowItWorksPage() {
                                 </span>
                             </div>
                             <h1 className="text-2xl sm:text-3xl font-medium text-[var(--color-text-primary)] tracking-tight">
-<<<<<<< HEAD
                                 How ForkTalent works
                             </h1>
                             <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] leading-relaxed font-normal">
                                 A comprehensive walkthrough of the end-to-end recruitment lifecycle on ForkTalent — from account verification and campaign creation to candidate evaluation reports.
-=======
-                                How IntervuOS works
-                            </h1>
-                            <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] leading-relaxed font-normal">
-                                A comprehensive walkthrough of the end-to-end recruitment lifecycle on IntervuOS — from account verification and campaign creation to candidate evaluation reports.
->>>>>>> bc83f8f271ed2764f625168b80affb29ea5f449e
                             </p>
                         </div>
 
@@ -143,11 +136,7 @@ export default function HowItWorksPage() {
 
                         <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 shrink-0">
                             <a
-<<<<<<< HEAD
                                 href="https://wa.me/8655021064?text=Hello%20ForkTalent%20Team,%20I%20want%20to%20set%20up%20a%20custom%20hiring%20drive%20/%20campaign."
-=======
-                                href="https://wa.me/8655021064?text=Hello%20IntervuOS%20Team,%20I%20want%20to%20set%20up%20a%20custom%20hiring%20drive%20/%20campaign."
->>>>>>> bc83f8f271ed2764f625168b80affb29ea5f449e
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium transition-colors inline-flex items-center gap-2 shadow-xs shrink-0"
@@ -351,11 +340,7 @@ export default function HowItWorksPage() {
                                         </div>
                                     </div>
                                     <a
-<<<<<<< HEAD
                                         href="https://wa.me/8655021064?text=Hello%20ForkTalent%20Team,%20I%20want%20help%20setting%20up%20a%20custom%20campaign%20or%20hiring%20drive."
-=======
-                                        href="https://wa.me/8655021064?text=Hello%20IntervuOS%20Team,%20I%20want%20help%20setting%20up%20a%20custom%20campaign%20or%20hiring%20drive."
->>>>>>> bc83f8f271ed2764f625168b80affb29ea5f449e
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium transition-colors inline-flex items-center gap-1.5 shrink-0 self-start sm:self-auto shadow-xs"
@@ -418,11 +403,7 @@ export default function HowItWorksPage() {
 
                             <div className="space-y-4 text-xs sm:text-sm text-[var(--color-text-secondary)] leading-relaxed font-normal">
                                 <p>
-<<<<<<< HEAD
                                     ForkTalent supports two complementary ways to enroll candidates. You can use either method exclusively, or combine both on the same active campaign:
-=======
-                                    IntervuOS supports two complementary ways to enroll candidates. You can use either method exclusively, or combine both on the same active campaign:
->>>>>>> bc83f8f271ed2764f625168b80affb29ea5f449e
                                 </p>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

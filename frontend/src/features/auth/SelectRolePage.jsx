@@ -20,16 +20,20 @@ const SelectRolePage = () => {
   const [loadingRole, setLoadingRole] = useState(null); // 'employer' | 'candidate' | null
   const [loggingOut, setLoggingOut] = useState(false);
 
-  // If user is not logged in, send to login
+  // If user is not logged in, send to landing home
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   // If user already has a role assigned, redirect to their home page
+  const getRoleRoute = (role) => {
+    if (role === "admin") return "/admin";
+    if (role === "employer") return "/employer/dashboard";
+    return "/candidate/mock-interview";
+  };
+
   if (user.role) {
-    const redirectPath =
-      user.role === "employer" ? "/employer/dashboard" : "/candidate/mock-interview";
-    return <Navigate to={redirectPath} replace />;
+    return <Navigate to={getRoleRoute(user.role)} replace />;
   }
 
   const handleChooseRole = async (chosenRole) => {
@@ -37,11 +41,7 @@ const SelectRolePage = () => {
     try {
       await selectRole(chosenRole);
       toast.success(`Welcome! Account configured as ${chosenRole === "employer" ? "Employer" : "Candidate"}.`);
-      if (chosenRole === "employer") {
-        navigate("/employer/dashboard");
-      } else {
-        navigate("/candidate/mock-interview");
-      }
+      navigate(getRoleRoute(chosenRole));
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to set role. Please try again.");
     } finally {
@@ -54,7 +54,7 @@ const SelectRolePage = () => {
     try {
       await logout();
       toast.success("Logged out successfully");
-      navigate("/login");
+      navigate("/");
     } catch (error) {
       toast.error("Logout failed. Please try again.");
     } finally {

@@ -1,8 +1,6 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import ProtectedRoute from "../ui/shared/ProtectedRoute";
-import LoginPage from "../features/auth/LoginPage";
-import SignupPage from "../features/auth/SignupPage";
 import SelectRolePage from "../features/auth/SelectRolePage";
 import EmployerDashboard from "../features/employer/EmployerDashboard";
 import EmployerVerificationPage from "../features/employer/EmployerVerificationPage";
@@ -25,6 +23,7 @@ import CandidateHelpSupportPage from "../features/candidate/CandidateHelpSupport
 import MockReportsPage from "../features/candidate/MockReportsPage";
 import AdminLayout from "../features/admin/AdminLayout";
 import AdminDashboardPage from "../features/admin/AdminDashboardPage";
+import LandingPage from "../features/marketing/LandingPage";
 import { Loader2 } from "lucide-react";
 
 function App() {
@@ -61,27 +60,9 @@ function App() {
         <Route path="/test/avatar" element={<AvatarTestPage />} />
 
         {/* Public Routes */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route
-          path="/login"
-          element={
-            user ? (
-              <Navigate to={getRedirectRoute()} replace />
-            ) : (
-              <LoginPage />
-            )
-          }
-        />
-        <Route
-          path="/signup"
-          element={
-            user ? (
-              <Navigate to={getRedirectRoute()} replace />
-            ) : (
-              <SignupPage />
-            )
-          }
-        />
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<Navigate to="/" replace />} />
+        <Route path="/signup" element={<Navigate to="/" replace />} />
 
         {/* Compulsory Role Selection Route */}
         <Route path="/select-role" element={<SelectRolePage />} />

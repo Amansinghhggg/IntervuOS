@@ -46,14 +46,8 @@ export const authorize = (...roles) => {
   };
 };
 
-// Require employer account to be verified
+// Legacy employer verification helper (no-op now that campaign verification controls candidate visibility)
 export const requireVerifiedEmployer = (req, res, next) => {
-  if (req.user && req.user.role === "employer" && !req.user.isVerified) {
-    return res.status(403).json({
-      success: false,
-      message: "Your employer account is not verified. Only verified employers can create campaigns.",
-    });
-  }
   next();
 };
 

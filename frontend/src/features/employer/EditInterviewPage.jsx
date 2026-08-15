@@ -472,32 +472,6 @@ const EditInterviewPage = () => {
         />
       </div>
 
-      {/* Account Verification Warning Banner */}
-      {!user?.isVerified && (
-        <div className="p-5 rounded-2xl bg-[var(--color-warning)]/10 border border-[var(--color-warning)]/30 text-[var(--color-warning)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-start gap-3.5">
-            <div className="p-2 rounded-xl bg-[var(--color-warning)]/20 text-[var(--color-warning)] shrink-0 mt-0.5">
-              <ShieldAlert className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="text-sm font-medium text-[var(--color-warning)]">
-                Employer account verification required
-              </h4>
-              <p className="text-xs text-[var(--color-warning)]/80 mt-1 leading-relaxed">
-                Your employer account is currently unverified. Updates can be saved, but live candidate assessments require administrator verification.
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => navigate("/employer/verification-pending")}
-            className="px-4 py-2 bg-[var(--color-warning)]/20 hover:bg-[var(--color-warning)]/30 text-[var(--color-warning)] text-xs font-medium rounded-xl border border-[var(--color-warning)]/40 transition-all shrink-0 whitespace-nowrap"
-          >
-            Check status & support
-          </button>
-        </div>
-      )}
-
       <form
         onSubmit={handleSubmit(onSubmit)}
         onKeyDown={(e) => {

@@ -25,7 +25,8 @@
   --color-success: #10B981;
   --color-warning: #F59E0B;
   --color-danger: #F43F5E;
-  --color-info: #818CF8;
+  --color-info: #3B82F6;
+  --color-info-tint: rgba(59, 130, 246, 0.15);
 
   /* Theme variables mapped to Tailwind colors */
   --color-background: var(--background);

@@ -93,7 +93,6 @@ function App() {
         {/* Employer Routes */}
         <Route element={<ProtectedRoute role="employer"><EmployerLayout /></ProtectedRoute>}>
           <Route path="/employer/dashboard" element={<EmployerDashboard />} />
-          <Route path="/employer/verification-pending" element={<EmployerVerificationPage />} />
           <Route path="/employer/contact" element={<EmployerVerificationPage />} />
           <Route path="/employer/create-interview" element={<CreateInterviewPage />} />
           <Route path="/employer/interviews/:id/edit" element={<EditInterviewPage />} />

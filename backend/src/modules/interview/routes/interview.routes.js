@@ -20,7 +20,7 @@ import {
   reEnrollCandidate,
   reEnrollByResultId
 } from "../controllers/interview.controller.js";
-import { protect, authorize, requireVerifiedEmployer } from "../../auth/auth.middleware.js";
+import { protect, authorize } from "../../auth/auth.middleware.js";
 import { getCandidateResume, downloadCandidateResume } from "../../users/profile.controller.js";
 
 const router = express.Router();
@@ -31,7 +31,7 @@ router.use(protect);
 // Employer Routes
 router
   .route("/")
-  .post(authorize("employer"), requireVerifiedEmployer, createInterview)
+  .post(authorize("employer"), createInterview)
   .get(authorize("employer"), getInterviews);
 
 router.get("/:id/results/:resultId", authorize("employer"), getInterviewResult);

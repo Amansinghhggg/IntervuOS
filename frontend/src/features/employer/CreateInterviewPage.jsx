@@ -382,13 +382,6 @@ const CreateInterviewPage = () => {
 
   // Final Submit Handler
   const onSubmit = async (formData) => {
-    if (!user?.isVerified) {
-      toast.error(
-        "Your employer account is not verified. Only verified employers can publish campaigns."
-      );
-      return;
-    }
-
     if (topics.length === 0) {
       setCurrentStep(1);
       setTopicError("Add at least one technical topic");
@@ -455,13 +448,6 @@ const CreateInterviewPage = () => {
               {STEPS[currentStep - 1].label}
             </span>
           </div>
-
-          {/* Non-blocking Unverified Account Indicator */}
-          {!user?.isVerified && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-warning)]/10 text-[var(--color-warning)] border border-[var(--color-warning)]/30 text-xs font-medium">
-              <ShieldAlert className="w-3.5 h-3.5" /> Account unverified (publishing restricted to verified employers)
-            </span>
-          )}
         </div>
 
         {/* Steps Stepper Bar */}
@@ -1576,32 +1562,6 @@ const CreateInterviewPage = () => {
                   </div>
                 </div>
 
-                {/* Account Verification Warning Banner */}
-                {!user?.isVerified && (
-                  <div className="p-5 rounded-2xl bg-[var(--color-warning)]/10 border border-[var(--color-warning)]/30 text-[var(--color-warning)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div className="flex items-start gap-3.5">
-                      <div className="p-2 rounded-xl bg-[var(--color-warning)]/20 text-[var(--color-warning)] shrink-0 mt-0.5">
-                        <ShieldAlert className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-[var(--color-warning)]">
-                          Employer account verification required
-                        </h4>
-                        <p className="text-xs text-[var(--color-warning)]/80 mt-1 leading-relaxed">
-                          Your account is currently pending verification. You can save your configured campaign details, but publishing to candidates requires administrator approval.
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => navigate("/employer/verification-pending")}
-                      className="px-4 py-2 bg-[var(--color-warning)]/20 hover:bg-[var(--color-warning)]/30 text-[var(--color-warning)] text-xs font-medium rounded-xl border border-[var(--color-warning)]/40 transition-all shrink-0 whitespace-nowrap"
-                    >
-                      Check status & support
-                    </button>
-                  </div>
-                )}
-
                 {/* Navigation and Single Primary CTA */}
                 <div className="flex items-center justify-between pt-4 border-t border-[var(--color-border)]">
                   <button
@@ -1614,22 +1574,13 @@ const CreateInterviewPage = () => {
 
                   <button
                     type="submit"
-                    disabled={isLoading || !user?.isVerified}
-                    className={`px-8 py-3.5 rounded-xl text-sm font-medium tracking-tight transition-all flex items-center justify-center min-w-[220px] ${
-                      !user?.isVerified
-                        ? "bg-[var(--color-warning)]/15 text-[var(--color-warning)] border border-[var(--color-warning)]/30 cursor-not-allowed"
-                        : "bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white shadow-lg shadow-[var(--color-primary)]/30"
-                    }`}
+                    disabled={isLoading}
+                    className="px-8 py-3.5 rounded-xl text-sm font-medium tracking-tight transition-all flex items-center justify-center min-w-[220px] bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white shadow-lg shadow-[var(--color-primary)]/30 disabled:opacity-50"
                   >
                     {isLoading ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                         Publishing campaign...
-                      </>
-                    ) : !user?.isVerified ? (
-                      <>
-                        <ShieldAlert className="w-4 h-4 mr-2" />
-                        Verification required
                       </>
                     ) : (
                       <>

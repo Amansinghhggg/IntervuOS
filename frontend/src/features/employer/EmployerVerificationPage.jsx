@@ -79,64 +79,11 @@ const EmployerVerificationPage = () => {
 
         {/* Page Header */}
         <PageHeader
-          badgeIcon={user?.isVerified ? ShieldCheck : ShieldAlert}
-          badgeText={user?.isVerified ? "Account Verified" : "Verification Pending"}
-          title="Employer Verification & Platform Portal"
-          description="Track your recruitment account verification status, reach out for priority activation, and explore IntervuOS employer capabilities."
+          badgeIcon={HelpCircle}
+          badgeText="Support & Contact"
+          title="Employer platform support & contact"
+          description="Reach out directly to the IntervuOS administrative team for dedicated support, platform onboarding, and custom enterprise requirements."
         />
-
-        {/* Verification Status Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          <GlassCard padding="p-6 md:p-8" className="border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent relative overflow-hidden">
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
-              <div className="flex items-start gap-4">
-                <div className="p-3.5 rounded-2xl bg-amber-500/20 text-amber-300 shrink-0 border border-amber-500/40 shadow-lg shadow-amber-500/10 mt-1">
-                  {user?.isVerified ? (
-                    <ShieldCheck className="w-8 h-8 text-emerald-400" />
-                  ) : (
-                    <ShieldAlert className="w-8 h-8 text-amber-400 animate-pulse" />
-                  )}
-                </div>
-                <div className="space-y-1">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <h2 className="text-xl font-black uppercase tracking-tight text-[var(--color-on-surface)]">
-                      {user?.isVerified ? "Your Account is Verified!" : "Account Verification In Progress"}
-                    </h2>
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${user?.isVerified
-                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
-                      : "bg-amber-500/20 text-amber-300 border-amber-500/40"
-                      }`}>
-                      {user?.isVerified ? "Ready for Campaigns" : "Pending Admin Review"}
-                    </span>
-                  </div>
-                  <p className="text-xs md:text-sm text-[var(--color-on-surface-variant)] leading-relaxed max-w-3xl font-medium">
-                    {user?.isVerified
-                      ? "Congratulations! Your employer account has been approved by the platform administrator. You have full access to campaign creation and candidate evaluation."
-                      : "Only verified employer accounts can publish hiring campaigns. Our administrative team verifies organization credentials to maintain security and quality across candidate evaluation workflows."}
-                  </p>
-                </div>
-              </div>
-
-              {user?.isVerified ? (
-                <button
-                  onClick={() => navigate("/employer/create-interview")}
-                  className="px-6 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-emerald-500/25 flex items-center gap-2 shrink-0"
-                >
-                  <Sparkles className="w-4 h-4" /> Create Campaign Now
-                </button>
-              ) : (
-                <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold shrink-0">
-                  <Clock className="w-4 h-4 text-amber-400" />
-                  <span>SLA: &lt; 12 Hours Response</span>
-                </div>
-              )}
-            </div>
-          </GlassCard>
-        </motion.div>
 
         {/* Contact Details Section */}
         <div className="max-w-4xl mx-auto">

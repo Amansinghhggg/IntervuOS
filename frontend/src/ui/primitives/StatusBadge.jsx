@@ -9,47 +9,71 @@ export const StatusBadge = ({
   const getStatusConfig = (val) => {
     const s = String(val || "").toLowerCase();
 
-    if (s === "completed" || s === "strong_hire" || s === "strong hire" || s === "ready" || s === "pass") {
+    if (
+      s === "completed" ||
+      s === "strong_hire" ||
+      s === "strong hire" ||
+      s === "ready" ||
+      s === "pass" ||
+      s === "verified"
+    ) {
       return {
         label: customLabel || "Completed",
-        styles: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
+        styles:
+          "bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/30",
       };
     }
-    if (s === "in-progress" || s === "in progress" || s === "hire" || s === "active") {
+    if (
+      s === "in-progress" ||
+      s === "in progress" ||
+      s === "hire" ||
+      s === "active"
+    ) {
       return {
-        label: customLabel || "In Progress",
-        styles: "bg-indigo-500/10 text-indigo-400 border-indigo-500/30",
+        label: customLabel || (s === "active" ? "Active" : "In progress"),
+        styles:
+          "bg-[var(--color-info-tint,rgba(59,130,246,0.15))] text-[var(--color-info,#3B82F6)] border-[var(--color-info,#3B82F6)]/30",
       };
     }
     if (s === "pending" || s === "waiting" || s === "borderline") {
       return {
         label: customLabel || "Pending",
-        styles: "bg-amber-500/10 text-amber-400 border-amber-500/30",
+        styles:
+          "bg-[var(--color-warning)]/10 text-[var(--color-warning)] border-[var(--color-warning)]/30",
       };
     }
-    if (s === "failed" || s === "expired" || s === "no_hire" || s === "no hire" || s === "missed") {
+    if (
+      s === "failed" ||
+      s === "expired" ||
+      s === "no_hire" ||
+      s === "no hire" ||
+      s === "missed" ||
+      s === "inactive"
+    ) {
       return {
-        label: customLabel || "Failed",
-        styles: "bg-rose-500/10 text-rose-400 border-rose-500/30",
+        label: customLabel || (s === "inactive" ? "Inactive" : "Failed"),
+        styles:
+          "bg-[var(--color-danger)]/10 text-[var(--color-danger)] border-[var(--color-danger)]/30",
       };
     }
     return {
       label: customLabel || val || "Unknown",
-      styles: "bg-[var(--color-surface-variant)] text-[var(--color-on-surface-variant)] border-[var(--color-outline-variant)]/30",
+      styles:
+        "bg-[var(--color-surface)] text-[var(--color-text-secondary)] border-[var(--color-border)]",
     };
   };
 
   const config = getStatusConfig(status);
 
   const sizeStyles = {
-    sm: "px-2 py-0.5 text-[10px]",
-    md: "px-3 py-1 text-xs",
-    lg: "px-3.5 py-1.5 text-xs",
+    sm: "px-2 py-0.5 text-[11px]",
+    md: "px-2.5 py-1 text-xs",
+    lg: "px-3 py-1.5 text-xs",
   };
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 font-bold uppercase tracking-wider rounded-lg border ${
+      className={`inline-flex items-center gap-1.5 font-medium tracking-tight rounded-full border ${
         sizeStyles[size] || sizeStyles.md
       } ${config.styles} ${className}`}
     >

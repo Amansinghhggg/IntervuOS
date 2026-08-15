@@ -82,7 +82,6 @@ export default function EmployerLayout() {
 
     const navItems = [
         { label: "Dashboard", icon: Home, path: "/employer/dashboard" },
-        ...(!user?.isVerified ? [{ label: "Verification Status", icon: ShieldAlert, path: "/employer/verification-pending" }] : []),
         { label: "New Campaign", icon: FileText, path: "/employer/create-interview" },
         { label: "Manage Subscriptions", icon: CreditCard, path: "/employer/subscriptions" },
     ];
@@ -169,7 +168,7 @@ export default function EmployerLayout() {
                                     navigate('/employer/contact');
                                     setMobileMenuOpen(false);
                                 }}
-                                className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-medium rounded-xl transition-all border-l-[3px] ${location.pathname === '/employer/contact' || location.pathname === '/employer/verification-pending'
+                                className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-medium rounded-xl transition-all border-l-[3px] ${location.pathname === '/employer/contact'
                                     ? 'bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-l-[var(--color-primary,#5B3AF2)] border-t-transparent border-b-transparent border-r-transparent'
                                     : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)] border-l-transparent'
                                     }`}
@@ -299,7 +298,7 @@ export default function EmployerLayout() {
                             onClick={() => navigate('/employer/contact')}
                             title={isCollapsed ? 'Contact Us' : undefined}
                             className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3 gap-3'
-                                } py-2 text-xs font-medium rounded-xl transition-all border-l-[3px] ${location.pathname === '/employer/contact' || location.pathname === '/employer/verification-pending'
+                                } py-2 text-xs font-medium rounded-xl transition-all border-l-[3px] ${location.pathname === '/employer/contact'
                                     ? 'bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-l-[var(--color-primary,#5B3AF2)] border-t-transparent border-b-transparent border-r-transparent'
                                     : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)] border-l-transparent'
                                 }`}

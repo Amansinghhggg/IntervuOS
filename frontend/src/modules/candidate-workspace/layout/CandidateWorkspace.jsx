@@ -596,7 +596,3 @@ export const CandidateWorkspace = ({ resultData, onReEnroll, onViewResume }) => 
         </div>
     );
 };
-
-        </div >
-    );
-};

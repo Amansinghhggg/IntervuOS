@@ -8,6 +8,9 @@ export default defineConfig({
   plugins: [react(), tailwindcss(), basicSsl()],
   server: {
     host: true, // This exposes the server to the local network
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+    },
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:5000',

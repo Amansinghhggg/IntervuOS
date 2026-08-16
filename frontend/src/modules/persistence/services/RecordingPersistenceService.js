@@ -25,8 +25,11 @@ export class RecordingPersistenceService {
                 },
                 onUploadProgress: (progressEvent) => {
                     if (onProgress && progressEvent.total) {
-                        const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                        onProgress(progress);
+                        const progress = Math.min(100, Math.max(0, Math.round((progressEvent.loaded * 100) / progressEvent.total)));
+                        onProgress(progress, {
+                            bytesLoaded: progressEvent.loaded,
+                            totalBytes: progressEvent.total
+                        });
                     }
                 }
             });

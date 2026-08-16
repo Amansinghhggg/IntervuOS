@@ -27,7 +27,8 @@ import {
   HelpCircle,
   ExternalLink,
   Check,
-  FileSpreadsheet
+  FileSpreadsheet,
+  RefreshCw
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PageHeader } from "../../ui/primitives/PageHeader";
@@ -181,6 +182,33 @@ const InterviewDetailsPage = () => {
           }
         } catch (error) {
           toast.error(error.response?.data?.message || "Failed to remove candidate");
+          setConfirmModal((prev) => ({ ...prev, isLoading: false }));
+        }
+      },
+    });
+  };
+
+  // Handle Re-enroll Candidate from Table
+  const handleReEnrollCandidateFromTable = (candidate) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Re-enroll candidate",
+      description: `Are you sure you want to re-enroll ${candidate.email}? This will delete their past evaluation and recording so they can take the interview again.`,
+      confirmText: "Re-enroll candidate",
+      variant: "primary",
+      isLoading: false,
+      onConfirm: async () => {
+        setConfirmModal((prev) => ({ ...prev, isLoading: true }));
+        try {
+          const cId = candidate._id || candidate.resultId || candidate.email;
+          const { data } = await api.post(`/interviews/${id}/candidates/${cId}/re-enroll`);
+          if (data.success) {
+            toast.success("Candidate re-enrolled successfully.");
+            await fetchInterview();
+            setConfirmModal((prev) => ({ ...prev, isOpen: false, isLoading: false }));
+          }
+        } catch (error) {
+          toast.error(error.response?.data?.message || "Failed to re-enroll candidate");
           setConfirmModal((prev) => ({ ...prev, isLoading: false }));
         }
       },
@@ -683,18 +711,28 @@ const InterviewDetailsPage = () => {
                           ) : (
                             <>
                               {candidate.status === "Completed" && (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    navigate(
-                                      `/employer/interviews/${id}/results/${candidate.resultId}`
-                                    )
-                                  }
-                                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] border border-[var(--color-border-active,#6338F6)]/30 transition-all opacity-70 group-hover:opacity-100 hover:opacity-100 inline-flex items-center gap-1"
-                                >
-                                  <span>View result</span>
-                                  <ExternalLink className="w-3 h-3" />
-                                </button>
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      navigate(
+                                        `/employer/interviews/${id}/results/${candidate.resultId}`
+                                      )
+                                    }
+                                    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] border border-[var(--color-border-active,#6338F6)]/30 transition-all opacity-70 group-hover:opacity-100 hover:opacity-100 inline-flex items-center gap-1"
+                                  >
+                                    <span>View result</span>
+                                    <ExternalLink className="w-3 h-3" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleReEnrollCandidateFromTable(candidate)}
+                                    className="p-1.5 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text-accent,#C4B5FD)] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] transition-colors opacity-70 group-hover:opacity-100 hover:opacity-100"
+                                    title="Re-enroll candidate for a new attempt"
+                                  >
+                                    <RefreshCw className="w-4 h-4" />
+                                  </button>
+                                </>
                               )}
                               {candidate.status !== "Completed" &&
                                 candidate.status !== "In Progress" && (

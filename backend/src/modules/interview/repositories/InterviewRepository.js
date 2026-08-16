@@ -76,7 +76,9 @@ class InterviewRepository {
         .lean();
 
       return interviews.map((interview) => {
-        const candidateInfo = interview.assignedCandidates?.find(c => c.email === emailLower);
+        const candidateInfo = interview.assignedCandidates?.find(
+          c => c.email && c.email.toLowerCase().trim() === emailLower
+        );
         delete interview.assignedCandidates;
         delete interview.customQuestions; // Protect question bank from candidate Network tab inspection
         return {

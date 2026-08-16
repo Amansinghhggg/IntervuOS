@@ -157,24 +157,8 @@ class InterviewService {
   }
 
   async getAssignedInterviews(candidateEmail) {
-    const interviews = await Interview.find({
-      "assignedCandidates.email": candidateEmail,
-      status: { $in: ["active", "completed"] },
-      isVerified: true,
-    })
-      .populate("employer", "name")
-      .sort({ createdAt: -1 })
-      .lean();
-
-    return interviews.map(interview => {
-      const candidateInfo = interview.assignedCandidates?.find(c => c.email === candidateEmail);
-      delete interview.assignedCandidates; // Protect other candidates' data
-      delete interview.customQuestions; // Protect question bank from candidate Network tab inspection
-      return {
-        ...interview,
-        candidateStatus: candidateInfo?.status || "Pending"
-      };
-    });
+    const InterviewRepository = (await import("../repositories/InterviewRepository.js")).default;
+    return await InterviewRepository.findCandidateAssignedInterviews(candidateEmail);
   }
 
   async joinInterview(interviewCode, candidateEmail) {

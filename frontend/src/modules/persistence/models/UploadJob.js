@@ -8,7 +8,9 @@ export class UploadJob {
         this.progress = {
             overallProgress: 0,
             currentStage: null,
-            stageProgress: 0
+            stageProgress: 0,
+            bytesLoaded: 0,
+            totalBytes: 0
         };
         this.retries = 0;
         this.payload = payload;
@@ -19,7 +21,7 @@ export class UploadJob {
         this.state = newState;
     }
 
-    updateProgress({ overallProgress, currentStage, stageProgress }) {
+    updateProgress({ overallProgress, currentStage, stageProgress, bytesLoaded, totalBytes }) {
         if (overallProgress !== undefined) {
             this.progress.overallProgress = overallProgress;
         }
@@ -28,6 +30,12 @@ export class UploadJob {
         }
         if (stageProgress !== undefined) {
             this.progress.stageProgress = stageProgress;
+        }
+        if (bytesLoaded !== undefined) {
+            this.progress.bytesLoaded = bytesLoaded;
+        }
+        if (totalBytes !== undefined) {
+            this.progress.totalBytes = totalBytes;
         }
     }
 

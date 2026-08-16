@@ -92,22 +92,66 @@ class CloudinaryService {
   }
 
   /**
-   * Deletes a recording from Cloudinary using its public ID.
+   * Extracts public ID from a full Cloudinary URL.
    *
-   * @param {string} publicId - The Cloudinary public ID of the video
+   * @param {string} url - The Cloudinary asset URL
+   * @returns {string|null} The extracted public ID
+   */
+  extractPublicIdFromUrl(url) {
+    if (!url || typeof url !== "string") return null;
+    try {
+      // Formats: https://res.cloudinary.com/<cloud_name>/video/upload/v<version>/<folder>/<public_id>.<ext>
+      const matches = url.match(/\/upload\/(?:v\d+\/)?(.+?)(?:\.[^.]+)?$/);
+      return matches ? matches[1] : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Deletes a recording from Cloudinary using its public ID or full URL.
+   * Handles folder prefixes, file extensions, and edge cache invalidation.
+   *
+   * @param {string} publicIdOrUrl - The Cloudinary public ID or URL
    * @returns {Promise<Object>} Cloudinary deletion result
    */
-  deleteRecording(publicId) {
-    return new Promise((resolve, reject) => {
+  deleteRecording(publicIdOrUrl) {
+    if (!publicIdOrUrl) return Promise.resolve({ result: "not_found" });
+
+    let publicId = publicIdOrUrl;
+    if (publicId.startsWith("http://") || publicId.startsWith("https://")) {
+      const extracted = this.extractPublicIdFromUrl(publicId);
+      if (extracted) publicId = extracted;
+    }
+
+    return new Promise((resolve) => {
       cloudinary.uploader.destroy(
         publicId,
-        { resource_type: "video" },
+        { resource_type: "video", invalidate: true },
         (error, result) => {
-          if (error) {
-            console.error("[CloudinaryService] Deletion failed:", error);
-            return reject(error);
+          if (!error && result?.result === "ok") {
+            return resolve(result);
           }
-          resolve(result);
+
+          // If publicId had an extension like .webm, try stripping it
+          const stripped = publicId.replace(/\.[^/.]+$/, "");
+          if (stripped !== publicId) {
+            cloudinary.uploader.destroy(
+              stripped,
+              { resource_type: "video", invalidate: true },
+              (err2, res2) => {
+                if (err2) {
+                  console.warn("[CloudinaryService] Deletion retry failed:", err2.message);
+                }
+                resolve(res2 || result || { result: "not_found" });
+              }
+            );
+          } else {
+            if (error) {
+              console.warn("[CloudinaryService] Deletion warning:", error.message);
+            }
+            resolve(result || { result: "not_found" });
+          }
         }
       );
     });

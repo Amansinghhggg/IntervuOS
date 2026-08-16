@@ -6,20 +6,19 @@ import {
   BrainCircuit,
   MessageSquareWarning,
   Users,
+  Briefcase,
   LogOut,
   Menu,
   X,
-  User,
   Sparkles,
-  ShieldAlert,
   PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftOpen,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "react-hot-toast";
 import ForkLogo from "../../ui/shared/ForkLogo";
 
-const SIDEBAR_STORAGE_KEY = 'forktalent_admin_sidebar_collapsed';
+const SIDEBAR_STORAGE_KEY = "forktalent_admin_sidebar_collapsed";
 
 export default function AdminLayout() {
   const { user, logout } = useAuth();
@@ -27,13 +26,16 @@ export default function AdminLayout() {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Collapsible Sidebar State (Remembers user preference, defaults to expanded on >= 1280px, collapsed on < 1280px)
+  const searchParams = new URLSearchParams(location.search);
+  const currentTab = searchParams.get("tab") || "overview";
+
+  // Collapsible Sidebar State
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem(SIDEBAR_STORAGE_KEY);
     if (saved !== null) {
-      return saved === 'true';
+      return saved === "true";
     }
-    return typeof window !== 'undefined' ? window.innerWidth < 1280 : false;
+    return typeof window !== "undefined" ? window.innerWidth < 1280 : false;
   });
 
   const [hasManualPreference, setHasManualPreference] = useState(() => {
@@ -49,8 +51,8 @@ export default function AdminLayout() {
         setIsCollapsed(false);
       }
     };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, [hasManualPreference]);
 
   const toggleSidebar = () => {
@@ -73,30 +75,34 @@ export default function AdminLayout() {
   };
 
   const navItems = [
-    { label: "Admin Console", icon: LayoutDashboard, path: "/admin" },
+    { id: "overview", label: "Overview", icon: LayoutDashboard, path: "/admin?tab=overview" },
+    { id: "employers", label: "Employer Verification", icon: ShieldCheck, path: "/admin?tab=employers" },
+    { id: "campaigns", label: "Interview Campaigns", icon: Briefcase, path: "/admin?tab=campaigns" },
+    { id: "mocks", label: "Mock Interviews", icon: BrainCircuit, path: "/admin?tab=mocks" },
+    { id: "users", label: "User Directory", icon: Users, path: "/admin?tab=users" },
+    { id: "complaints", label: "Support & Complaints", icon: MessageSquareWarning, path: "/admin?tab=complaints" },
   ];
 
   return (
-    <div className="min-h-screen bg-[var(--background)] text-[var(--text-primary)] font-['Inter'] flex flex-col md:flex-row">
-
+    <div className="min-h-screen bg-[var(--color-canvas)] text-[var(--color-text-primary)] font-['Inter'] flex flex-col md:flex-row">
       {/* Mobile Header Bar */}
-      <header className="md:hidden sticky top-0 z-50 flex items-center justify-between px-4 py-3 bg-[var(--card)]/90 backdrop-blur-xl border-b border-[var(--border)]">
+      <header className="md:hidden sticky top-0 z-50 flex items-center justify-between px-4 py-3 bg-[var(--color-surface)]/90 backdrop-blur-xl border-b border-[var(--color-border)]">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[var(--primary)] flex items-center justify-center p-2 shadow-lg shadow-[var(--primary)]/30">
+          <div className="w-9 h-9 rounded-xl bg-[var(--color-primary)] flex items-center justify-center p-2 shadow-lg shadow-[var(--color-primary)]/30">
             <ForkLogo className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-xs font-black tracking-tight text-white uppercase flex items-center gap-1.5">
-              ForkTalent <Sparkles className="w-3 h-3 text-[var(--color-text-accent)]" />
+            <h1 className="text-xs font-medium tracking-tight text-[var(--color-text-primary)] flex items-center gap-1.5">
+              ForkTalent <Sparkles className="w-3 h-3 text-[var(--color-text-accent,#C4B5FD)]" />
             </h1>
-            <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-widest font-bold">
-              Single Admin Portal
+            <p className="text-[10px] text-[var(--color-text-secondary)] font-normal">
+              Admin control console
             </p>
           </div>
         </div>
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-2 rounded-xl bg-[var(--background-secondary)] text-[var(--text-primary)] hover:border-[var(--border-active,#6338F6)] transition-colors border border-[var(--border)]"
+          className="p-2 rounded-xl bg-[var(--color-canvas)] text-[var(--color-text-primary)] hover:border-[var(--color-border-active,#6338F6)] transition-colors border border-[var(--color-border)]"
           aria-label="Toggle navigation menu"
         >
           {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -107,34 +113,34 @@ export default function AdminLayout() {
       {mobileMenuOpen && (
         <div className="md:hidden fixed inset-x-0 top-[57px] bottom-0 z-40 bg-black/80 backdrop-blur-md flex flex-col justify-between p-4 overflow-y-auto max-h-[calc(100vh-57px)] animate-in fade-in duration-200">
           <div className="space-y-4">
-            <div className="p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)] flex items-center justify-between">
+            <div className="p-4 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[var(--primary)]/20 border border-[var(--primary)]/30 text-[var(--color-text-accent)] flex items-center justify-center font-bold text-sm">
+                <div className="w-10 h-10 rounded-xl bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] border border-[var(--color-border-active,#6338F6)]/30 text-[var(--color-text-accent,#C4B5FD)] flex items-center justify-center font-medium text-sm">
                   {user?.name ? user.name.substring(0, 1) : "A"}
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-white">{user?.name || "Admin"}</p>
-                  <p className="text-xs text-[var(--text-secondary)]">{user?.email}</p>
+                  <p className="text-sm font-medium text-[var(--color-text-primary)]">{user?.name || "Admin"}</p>
+                  <p className="text-xs text-[var(--color-text-secondary)]">{user?.email}</p>
                 </div>
               </div>
-              <span className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider bg-[var(--primary)]/20 text-[var(--color-text-accent)] border border-[var(--primary)]/30 rounded-full">
-                ROOT ADMIN
+              <span className="px-2.5 py-1 text-[10px] font-medium tracking-tight bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)]/30 rounded-full">
+                Root Admin
               </span>
             </div>
 
-            <nav className="space-y-2 bg-[var(--card)] border border-[var(--border)] p-3 rounded-2xl">
+            <nav className="space-y-1.5 bg-[var(--color-surface)] border border-[var(--color-border)] p-3 rounded-2xl">
               {navItems.map((item) => {
-                const isActive = location.pathname === item.path;
+                const isActive = location.pathname === "/admin" && currentTab === item.id;
                 return (
                   <button
-                    key={item.path}
+                    key={item.id}
                     onClick={() => {
                       navigate(item.path);
                       setMobileMenuOpen(false);
                     }}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-medium rounded-xl transition-all border-l-[3px] ${isActive
-                        ? "bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-l-[var(--color-primary,#5B3AF2)] border-t-transparent border-b-transparent border-r-transparent"
-                        : "text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-white border-l-transparent"
+                      ? "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-l-[var(--color-primary,#5B3AF2)] border-t-transparent border-b-transparent border-r-transparent"
+                      : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover,#1E1E2A)] hover:text-[var(--color-text-primary)] border-l-transparent"
                       }`}
                   >
                     <item.icon className="w-4 h-4 shrink-0" />
@@ -147,32 +153,35 @@ export default function AdminLayout() {
 
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 text-xs font-medium text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-xl transition-all"
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 text-xs font-medium text-[var(--color-danger)] bg-[var(--color-danger)]/10 hover:bg-[var(--color-danger)]/20 border border-[var(--color-danger)]/20 rounded-xl transition-all"
           >
             <LogOut className="w-4 h-4" />
-            <span>Logout Admin</span>
+            <span>Logout admin</span>
           </button>
         </div>
       )}
 
       {/* Desktop Collapsible Sidebar */}
       <aside
-        className={`hidden md:flex flex-col fixed bottom-0 top-0 left-0 z-40 bg-[var(--card)] border-r border-[var(--border)] shadow-[1px_0_3px_0_rgba(0,0,0,0.15)] transition-all duration-300 ease-in-out ${isCollapsed ? 'w-20' : 'w-64'
+        className={`hidden md:flex flex-col fixed bottom-0 top-0 left-0 z-40 bg-[var(--color-surface)] border-r border-[var(--color-border)] shadow-[1px_0_3px_0_rgba(0,0,0,0.15)] transition-all duration-300 ease-in-out ${isCollapsed ? "w-20" : "w-64"
           }`}
       >
         {/* Header */}
-        <div className={`flex items-center ${isCollapsed ? 'justify-center px-2' : 'justify-between px-4'} py-5 border-b border-[var(--border)]/60 min-h-[69px]`}>
+        <div
+          className={`flex items-center ${isCollapsed ? "justify-center px-2" : "justify-between px-4"
+            } py-5 border-b border-[var(--color-border)] min-h-[69px]`}
+        >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 shrink-0 rounded-xl bg-[var(--primary)] flex items-center justify-center p-2 shadow-sm">
+            <div className="w-9 h-9 shrink-0 rounded-xl bg-[var(--color-primary)] flex items-center justify-center p-2 shadow-sm shadow-[var(--color-primary)]/30">
               <ForkLogo className="w-5 h-5 text-white" />
             </div>
             {!isCollapsed && (
               <div className="min-w-0 truncate">
-                <h1 className="text-sm font-medium tracking-tight text-white flex items-center gap-1.5 truncate">
-                  ForkTalent <Sparkles className="w-3 h-3 text-[var(--color-text-accent)]" />
+                <h1 className="text-sm font-medium tracking-tight text-[var(--color-text-primary)] flex items-center gap-1.5 truncate">
+                  ForkTalent <Sparkles className="w-3 h-3 text-[var(--color-text-accent,#C4B5FD)]" />
                 </h1>
-                <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-medium truncate">
-                  Root Control Center
+                <p className="text-[10px] text-[var(--color-text-secondary)] font-medium truncate">
+                  Root control console
                 </p>
               </div>
             )}
@@ -181,7 +190,7 @@ export default function AdminLayout() {
           {!isCollapsed && (
             <button
               onClick={toggleSidebar}
-              className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-white hover:bg-[var(--surface-hover,#1E1E2A)] transition-colors shrink-0"
+              className="p-1.5 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover,#1E1E2A)] transition-colors shrink-0"
               title="Collapse sidebar"
               aria-label="Collapse sidebar"
             >
@@ -195,7 +204,7 @@ export default function AdminLayout() {
           <div className="px-2 pt-3 flex justify-center">
             <button
               onClick={toggleSidebar}
-              className="p-2 rounded-xl text-[var(--text-secondary)] hover:text-white hover:bg-[var(--surface-hover,#1E1E2A)] transition-colors border border-[var(--border)]/50"
+              className="p-2 rounded-xl text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover,#1E1E2A)] transition-colors border border-[var(--color-border)]"
               title="Expand sidebar"
               aria-label="Expand sidebar"
             >
@@ -207,16 +216,16 @@ export default function AdminLayout() {
         {/* Sidebar Nav */}
         <nav className="flex-1 space-y-1.5 px-3 py-4 overflow-y-auto">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.path;
+            const isActive = location.pathname === "/admin" && currentTab === item.id;
             return (
               <button
-                key={item.path}
+                key={item.id}
                 onClick={() => navigate(item.path)}
                 title={isCollapsed ? item.label : undefined}
-                className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3 gap-3'
+                className={`w-full flex items-center ${isCollapsed ? "justify-center px-0" : "px-3 gap-3"
                   } py-2.5 text-xs font-medium rounded-xl transition-all border-l-[3px] ${isActive
-                    ? "bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-l-[var(--color-primary,#5B3AF2)] border-t-transparent border-b-transparent border-r-transparent"
-                    : "text-[var(--text-secondary)] hover:bg-[var(--surface-hover,#1E1E2A)] hover:text-[var(--text-primary)] border-l-transparent"
+                    ? "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-l-[var(--color-primary,#5B3AF2)] border-t-transparent border-b-transparent border-r-transparent"
+                    : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover,#1E1E2A)] hover:text-[var(--color-text-primary)] border-l-transparent"
                   }`}
               >
                 <item.icon className="w-4 h-4 shrink-0" />
@@ -227,33 +236,38 @@ export default function AdminLayout() {
         </nav>
 
         {/* Admin User Footer Card */}
-        <div className="p-3 border-t border-[var(--border)]/60 space-y-1.5">
-          <div className={`flex items-center ${isCollapsed ? 'justify-center p-1' : 'gap-3 px-3 py-2'} rounded-xl bg-[var(--background-secondary)] border border-[var(--border)]`}>
+        <div className="p-3 border-t border-[var(--color-border)] space-y-1.5">
+          <div
+            className={`flex items-center ${isCollapsed ? "justify-center p-1" : "gap-3 px-3 py-2"
+              } rounded-xl bg-[var(--color-canvas)] border border-[var(--color-border)]`}
+          >
             {user?.profilePicture ? (
               <img
                 src={user.profilePicture}
                 alt="Admin Profile"
                 referrerPolicy="no-referrer"
-                className="w-6 h-6 rounded-full object-cover shrink-0 border border-[var(--border)]"
+                className="w-6 h-6 rounded-full object-cover shrink-0 border border-[var(--color-border)]"
               />
             ) : (
-              <div className="w-6 h-6 shrink-0 rounded-full bg-[var(--primary)]/20 text-[var(--color-text-accent,#C4B5FD)] flex items-center justify-center text-[10px] font-bold uppercase border border-[var(--primary)]/30">
+              <div className="w-6 h-6 shrink-0 rounded-full bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] flex items-center justify-center text-[10px] font-medium uppercase border border-[var(--color-border-active,#6338F6)]/30">
                 {user?.name ? user.name.substring(0, 1) : "A"}
               </div>
             )}
             {!isCollapsed && (
               <div className="min-w-0 truncate">
-                <p className="text-xs font-medium text-white truncate">{user?.name || "Admin Owner"}</p>
-                <p className="text-[10px] text-[var(--text-secondary)] truncate">{user?.email}</p>
+                <p className="text-xs font-medium text-[var(--color-text-primary)] truncate">
+                  {user?.name || "Admin Owner"}
+                </p>
+                <p className="text-[10px] text-[var(--color-text-secondary)] truncate">{user?.email}</p>
               </div>
             )}
           </div>
 
           <button
             onClick={handleLogout}
-            title={isCollapsed ? 'Logout' : undefined}
-            className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3 gap-3'
-              } py-2 text-xs font-medium text-rose-400 hover:bg-rose-500/10 rounded-xl transition-all border-l-[3px] border-l-transparent`}
+            title={isCollapsed ? "Logout" : undefined}
+            className={`w-full flex items-center ${isCollapsed ? "justify-center px-0" : "px-3 gap-3"
+              } py-2 text-xs font-medium text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 rounded-xl transition-all border-l-[3px] border-l-transparent`}
           >
             <LogOut className="w-4 h-4 shrink-0" />
             {!isCollapsed && <span className="truncate">Logout</span>}
@@ -263,7 +277,7 @@ export default function AdminLayout() {
 
       {/* Main Content Area */}
       <main
-        className={`flex-1 ${isCollapsed ? 'md:ml-20' : 'md:ml-64'
+        className={`flex-1 ${isCollapsed ? "md:ml-20" : "md:ml-64"
           } transition-all duration-300 ease-in-out w-full min-w-0 overflow-x-clip p-4 md:p-8`}
       >
         <Outlet />

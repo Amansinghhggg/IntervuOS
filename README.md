@@ -1,8 +1,8 @@
-# 🚀 IntervuOS — Enterprise AI Interviewer & Candidate Evaluation Platform
+# 🚀 ForkTalent — Enterprise AI Interviewer & Candidate Evaluation Platform
 
 <div align="center">
 
-![IntervuOS Banner](https://img.shields.io/badge/IntervuOS-v2.0-6366F1?style=for-the-badge&logo=openai&logoColor=white)
+![ForkTalent Banner](https://img.shields.io/badge/ForkTalent-v2.0-6366F1?style=for-the-badge&logo=openai&logoColor=white)
 
 [![Node.js](https://img.shields.io/badge/Node.js-v18+-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![React](https://img.shields.io/badge/React-v19.0-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
@@ -42,7 +42,7 @@
 
 ## 🔍 Overview
 
-**IntervuOS** eliminates screening bottlenecks in technical hiring while empowering candidates to master technical interviews. It serves two distinct personas seamlessly:
+**ForkTalent** eliminates screening bottlenecks in technical hiring while empowering candidates to master technical interviews. It serves two distinct personas seamlessly:
 
 1. **For Candidates**: An interactive, realistic AI mock interview simulator featuring voice & text questioning, adaptive follow-ups, dynamic difficulty calibration, 3D/2D visual avatar responses, and multidimensional feedback reports.
 2. **For Employers**: An automated screening platform to create requisitions, configure custom campaign question banks, invite candidates, monitor live sessions, review AI-generated candidate rankings, inspect audio/video recordings, and detect proctoring violations automatically.
@@ -178,7 +178,7 @@ sequenceDiagram
 ## 📂 Repository Architecture
 
 ```
-IntervuOS/
+ForkTalent/
 ├── package.json                    # Root scripts & workspace orchestration
 ├── docker-compose.yml              # Redis container setup
 ├── AI_INTERVIEW_FLOW.md            # Detailed AI sequence specifications
@@ -225,7 +225,7 @@ NODE_ENV=development
 FRONTEND_URL=http://localhost:5173
 
 # Database & Cache
-MONGODB_URI=mongodb://127.0.0.1:27017/IntervuOS
+MONGODB_URI=mongodb://127.0.0.1:27017/ForkTalent
 REDIS_HOST=127.0.0.1
 REDIS_PORT=6379
 REDIS_PASSWORD=

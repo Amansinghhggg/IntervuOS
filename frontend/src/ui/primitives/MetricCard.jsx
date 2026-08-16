@@ -44,8 +44,20 @@ export const MetricCard = ({
           )}
         </div>
         {trend && (
-          <p className="text-xs font-medium text-[var(--color-text-muted,#6E7A8A)] pt-0.5 flex items-center gap-1">
-            {trend}
+          <p
+            className={`text-xs font-medium pt-0.5 flex items-center gap-1 ${
+              typeof trend === "object" && trend !== null && trend.isPositive !== undefined
+                ? trend.isPositive
+                  ? "text-[var(--color-success,#10B981)]"
+                  : "text-[var(--color-text-muted,#6E7A8A)]"
+                : "text-[var(--color-text-muted,#6E7A8A)]"
+            }`}
+          >
+            {typeof trend === "object" && trend !== null && trend.text !== undefined
+              ? trend.text
+              : typeof trend === "string" || typeof trend === "number"
+              ? trend
+              : null}
           </p>
         )}
       </div>

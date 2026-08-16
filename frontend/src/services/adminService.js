@@ -55,7 +55,13 @@ export const adminService = {
     return response.data;
   },
 
-  // Update campaign controls (isVerified and maxCandidates)
+  // Fetch full details of a specific campaign
+  getCampaignById: async (id) => {
+    const response = await api.get(`/admin/campaigns/${id}`);
+    return response.data;
+  },
+
+  // Update campaign details & controls
   updateCampaign: async (id, data) => {
     const response = await api.patch(`/admin/campaigns/${id}`, data);
     return response.data;

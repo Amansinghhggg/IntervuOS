@@ -1,6 +1,6 @@
 const fs = require('fs');
 
-const path = 'c:/PROJECTS/IntervuOS/frontend/src/features/candidate/CandidateHelpSupportPage.jsx';
+const path = 'c:/PROJECTS/ForkTalent/frontend/src/features/candidate/CandidateHelpSupportPage.jsx';
 let content = fs.readFileSync(path, 'utf8');
 
 // 1. Token Migration

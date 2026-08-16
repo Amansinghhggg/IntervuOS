@@ -6,7 +6,7 @@ import { redisClient, isRedisReady } from './src/config/redis.js';
 
 dotenv.config();
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/intervuos';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/ForkTalent';
 
 async function runMockInterviewTest() {
   console.log('\n🚀 [Mock Interview Test] Initializing End-to-End Interview Simulation...\n');
@@ -29,7 +29,7 @@ async function runMockInterviewTest() {
   console.log('\n---------------------------------------------------');
   console.log('STEP 1: Starting Mock Interview Session...');
   console.log('---------------------------------------------------');
-  
+
   const firstQuestion = {
     question: 'What are the main advantages of using Redis in Node.js applications?',
     topic: 'System Architecture',

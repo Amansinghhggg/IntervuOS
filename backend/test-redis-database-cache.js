@@ -5,7 +5,7 @@ import { redisClient, isRedisReady } from './src/config/redis.js';
 
 dotenv.config();
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/intervuos';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/ForkTalent';
 
 async function testDatabaseCaching() {
   console.log('\n🧪 [Test] Starting Redis Database Query Caching Benchmark...\n');

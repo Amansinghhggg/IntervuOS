@@ -1,13 +1,13 @@
-# IntervuOS: Candidate Result & Performance Workspace Redesign Context
+# ForkTalent: Candidate Result & Performance Workspace Redesign Context
 
 > **Comprehensive Architecture, UI/UX Blueprint & Engineering Specification**  
-> *Targeted Redesign for the Candidate View Result & Evaluation Experience in IntervuOS.*
+> *Targeted Redesign for the Candidate View Result & Evaluation Experience in ForkTalent.*
 
 ---
 
 ## 1. Executive Summary & Vision
 
-The **Candidate View Result Page** is one of the most critical touchpoints in the entire IntervuOS platform. For a candidate practicing mock interviews or reviewing performance after a company assessment, this page transforms raw interview recordings and telemetry into an **empowering, high-trust AI coaching masterclass**.
+The **Candidate View Result Page** is one of the most critical touchpoints in the entire ForkTalent platform. For a candidate practicing mock interviews or reviewing performance after a company assessment, this page transforms raw interview recordings and telemetry into an **empowering, high-trust AI coaching masterclass**.
 
 ### The Core Problem Today
 1. **Cramped Popup Modal vs. Full Dedicated Workspace**:
@@ -19,7 +19,7 @@ The **Candidate View Result Page** is one of the most critical touchpoints in th
 4. **Opaque Employer Campaigns**:
    Candidates who finish company-assigned campaigns see a generic "Evaluation Under Review" pill with zero visibility into status or released candidate feedback.
 5. **Design System Inconsistencies**:
-   Ad-hoc styling, legacy class names, and missing strict adherence to the IntervuOS Linear/Stripe aesthetic (`styling.md`).
+   Ad-hoc styling, legacy class names, and missing strict adherence to the ForkTalent Linear/Stripe aesthetic (`styling.md`).
 
 ### The Target State: A World-Class AI Performance Workspace
 We will restyle, restructure, and elevate the candidate result experience into a **full-page, responsive, data-dense, and human-crafted workspace** (`CandidateInterviewResultPage.jsx` & enhanced `MockReportsPage.jsx`) featuring:
@@ -112,7 +112,7 @@ graph TD
 
 ## 4. Design System Compliance & Styling Rules (`styling.md`)
 
-All implementation details strictly adhere to IntervuOS design tokens:
+All implementation details strictly adhere to ForkTalent design tokens:
 
 ### Centralized CSS Variables
 ```css
@@ -220,4 +220,4 @@ All implementation details strictly adhere to IntervuOS design tokens:
 
 ## 7. Next Steps & Approval
 
-Once this blueprint is reviewed, we will proceed with the phased execution to deliver a stunning, enterprise-grade candidate result workspace that elevates the entire IntervuOS user experience.
+Once this blueprint is reviewed, we will proceed with the phased execution to deliver a stunning, enterprise-grade candidate result workspace that elevates the entire ForkTalent user experience.

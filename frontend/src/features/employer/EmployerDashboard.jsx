@@ -24,6 +24,7 @@ import {
   CheckCircle2,
   X,
   Sparkles,
+  Edit,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PageHeader } from "../../ui/primitives/PageHeader";
@@ -496,15 +497,27 @@ const EmployerDashboard = () => {
 
                           {/* Actions (Tint / Outline styling) */}
                           <td className="py-4 px-6 text-right pr-8">
-                            <Link to={`/employer/interviews/${interview._id}`}>
-                              <button
-                                type="button"
-                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] text-[var(--color-text-accent,#C4B5FD)] rounded-xl text-xs font-medium transition-colors border border-[var(--color-border-active,#6338F6)]/40"
-                              >
-                                <span>View details</span>
-                                <Eye className="w-3.5 h-3.5" />
-                              </button>
-                            </Link>
+                            <div className="inline-flex items-center gap-2">
+                              <Link to={`/employer/interviews/${interview._id}/edit`}>
+                                <button
+                                  type="button"
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-surface)] hover:bg-[var(--color-surface-hover,#1E1E2A)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] rounded-xl text-xs font-medium transition-colors border border-[var(--color-border)]"
+                                  title="Edit campaign configuration & questions"
+                                >
+                                  <Edit className="w-3.5 h-3.5 text-[var(--color-text-accent,#C4B5FD)]" />
+                                  <span>Edit</span>
+                                </button>
+                              </Link>
+                              <Link to={`/employer/interviews/${interview._id}`}>
+                                <button
+                                  type="button"
+                                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] text-[var(--color-text-accent,#C4B5FD)] rounded-xl text-xs font-medium transition-colors border border-[var(--color-border-active,#6338F6)]/40"
+                                >
+                                  <span>View details</span>
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                              </Link>
+                            </div>
                           </td>
                         </tr>
                       ))}

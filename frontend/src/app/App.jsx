@@ -97,6 +97,7 @@ function App() {
         {/* Admin Routes */}
         <Route element={<ProtectedRoute role="admin"><AdminLayout /></ProtectedRoute>}>
           <Route path="/admin" element={<AdminDashboardPage />} />
+          <Route path="/admin/campaigns/:id/edit" element={<EditInterviewPage />} />
         </Route>
 
         {/* Employer Routes */}

@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import api from "../../services/api";
+import adminService from "../../services/adminService";
 import { toast } from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -18,11 +19,9 @@ import {
   Sparkles,
   Briefcase,
   ShieldAlert,
+  ShieldCheck,
   UserPlus,
-  Upload,
   FileSpreadsheet,
-  User,
-  ListFilter,
   Mail,
   Trash2,
   X,
@@ -34,10 +33,13 @@ import {
   AlertCircle,
   Save,
   Edit,
-  CheckCircle2,
   HelpCircle,
   Lightbulb,
   Check,
+  Building2,
+  ArrowUp,
+  ArrowDown,
+  Upload,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { PageHeader } from "../../ui/primitives/PageHeader";
@@ -92,9 +94,20 @@ const updateInterviewSchema = z.object({
 const EditInterviewPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
+
+  // Admin Mode Detection
+  const isAdminMode = user?.role === "admin" || location.pathname.startsWith("/admin");
+
   const [isLoading, setIsLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+
+  // Admin-Specific States
+  const [employerInfo, setEmployerInfo] = useState(null);
+  const [isVerified, setIsVerified] = useState(false);
+  const [maxCandidates, setMaxCandidates] = useState("");
+  const [campaignStatus, setCampaignStatus] = useState("active");
 
   // Form Topics
   const [topics, setTopics] = useState([]);
@@ -113,6 +126,12 @@ const EditInterviewPage = () => {
   const [newQDiff, setNewQDiff] = useState("Medium");
   const [isQuestionImportModalOpen, setIsQuestionImportModalOpen] = useState(false);
 
+  // Inline Question Editing State
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [editQText, setEditQText] = useState("");
+  const [editQTopic, setEditQTopic] = useState("");
+  const [editQDiff, setEditQDiff] = useState("Medium");
+
   const {
     register,
     handleSubmit,
@@ -128,29 +147,59 @@ const EditInterviewPage = () => {
 
   const fetchInterview = async () => {
     try {
-      const { data } = await api.get(`/interviews/${id}`);
-      if (data.success) {
-        const interview = data.interview;
-        reset({
-          title: interview.title || "",
-          jobRole: interview.jobRole || "",
-          description: interview.description || "",
-          experienceLevel: interview.experienceLevel || "Fresher",
-          duration: interview.duration || 30,
-          instructions: interview.instructions || "",
-          requireApproval:
-            interview.requireApproval !== undefined
-              ? interview.requireApproval
-              : true,
-        });
-        setTopics(interview.topics || []);
-        setQuestionMode(interview.questionMode || "AI_GENERATED");
-        setCustomQuestions(interview.customQuestions || []);
-        setExistingCandidates(interview.assignedCandidates || []);
+      if (isAdminMode) {
+        const data = await adminService.getCampaignById(id);
+        if (data.success) {
+          const campaign = data.campaign;
+          reset({
+            title: campaign.title || "",
+            jobRole: campaign.jobRole || "",
+            description: campaign.description || "",
+            experienceLevel: campaign.experienceLevel || "Fresher",
+            duration: campaign.duration || 30,
+            instructions: campaign.instructions || "",
+            requireApproval:
+              campaign.requireApproval !== undefined ? campaign.requireApproval : true,
+          });
+          setTopics(campaign.topics || []);
+          setQuestionMode(campaign.questionMode || "AI_GENERATED");
+          setCustomQuestions(campaign.customQuestions || []);
+          setExistingCandidates(campaign.assignedCandidates || []);
+          setEmployerInfo(campaign.employer || null);
+          setIsVerified(Boolean(campaign.isVerified));
+          setMaxCandidates(
+            campaign.maxCandidates !== null && campaign.maxCandidates !== undefined
+              ? String(campaign.maxCandidates)
+              : ""
+          );
+          setCampaignStatus(campaign.status || "active");
+        }
+      } else {
+        const { data } = await api.get(`/interviews/${id}`);
+        if (data.success) {
+          const interview = data.interview;
+          reset({
+            title: interview.title || "",
+            jobRole: interview.jobRole || "",
+            description: interview.description || "",
+            experienceLevel: interview.experienceLevel || "Fresher",
+            duration: interview.duration || 30,
+            instructions: interview.instructions || "",
+            requireApproval:
+              interview.requireApproval !== undefined
+                ? interview.requireApproval
+                : true,
+          });
+          setTopics(interview.topics || []);
+          setQuestionMode(interview.questionMode || "AI_GENERATED");
+          setCustomQuestions(interview.customQuestions || []);
+          setExistingCandidates(interview.assignedCandidates || []);
+          setCampaignStatus(interview.status || "active");
+        }
       }
     } catch (error) {
       toast.error("Failed to load campaign details");
-      navigate("/employer/dashboard");
+      navigate(isAdminMode ? "/admin" : "/employer/dashboard");
     } finally {
       setInitialLoading(false);
     }
@@ -158,7 +207,7 @@ const EditInterviewPage = () => {
 
   useEffect(() => {
     fetchInterview();
-  }, [id]);
+  }, [id, isAdminMode]);
 
   // Topic Handlers
   const addTopic = (topicToAdd) => {
@@ -206,6 +255,45 @@ const EditInterviewPage = () => {
 
   const removeCustomQuestion = (index) => {
     setCustomQuestions(customQuestions.filter((_, i) => i !== index));
+    if (editingIndex === index) {
+      setEditingIndex(null);
+    }
+  };
+
+  const startEditingQuestion = (index) => {
+    const q = customQuestions[index];
+    if (!q) return;
+    setEditingIndex(index);
+    setEditQText(q.question);
+    setEditQTopic(q.topic || "General");
+    setEditQDiff(q.difficulty || "Medium");
+  };
+
+  const saveEditedQuestion = () => {
+    if (!editQText.trim()) {
+      toast.error("Question text cannot be empty.");
+      return;
+    }
+    const updated = [...customQuestions];
+    updated[editingIndex] = {
+      ...updated[editingIndex],
+      question: editQText.trim(),
+      topic: editQTopic.trim() || "General",
+      difficulty: editQDiff,
+    };
+    setCustomQuestions(updated);
+    setEditingIndex(null);
+    toast.success("Question updated!");
+  };
+
+  const moveQuestion = (index, direction) => {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= customQuestions.length) return;
+    const updated = [...customQuestions];
+    const temp = updated[index];
+    updated[index] = updated[targetIndex];
+    updated[targetIndex] = temp;
+    setCustomQuestions(updated);
   };
 
   const handleQuestionCsvUpload = (e) => {
@@ -275,31 +363,40 @@ const EditInterviewPage = () => {
 
       setCustomQuestions((prev) => [...prev, ...parsedQuestions]);
       setIsQuestionImportModalOpen(false);
+      toast.success(`Imported ${parsedQuestions.length} questions successfully!`);
     };
 
     reader.readAsText(file);
     e.target.value = "";
   };
 
-  // Candidate Invitation Handlers
-  const isValidEmail = (email) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
-
+  // Candidate Handlers
   const removeNewCandidate = (emailToRemove) => {
     setNewCandidateEmails(newCandidateEmails.filter((e) => e !== emailToRemove));
   };
 
   const removeExistingCandidate = async (emailToRemove) => {
     try {
-      const { data } = await api.patch(`/interviews/${id}`, {
-        removeCandidateEmail: emailToRemove,
-      });
-      if (data.success) {
-        setExistingCandidates((prev) =>
-          prev.filter((c) => c.email.toLowerCase() !== emailToRemove.toLowerCase())
-        );
-        toast.success(`Removed ${emailToRemove} from campaign`);
+      if (isAdminMode) {
+        const res = await adminService.updateCampaign(id, {
+          removeCandidateEmail: emailToRemove,
+        });
+        if (res.success) {
+          setExistingCandidates((prev) =>
+            prev.filter((c) => c.email.toLowerCase() !== emailToRemove.toLowerCase())
+          );
+          toast.success(`Removed ${emailToRemove} from campaign`);
+        }
+      } else {
+        const { data } = await api.patch(`/interviews/${id}`, {
+          removeCandidateEmail: emailToRemove,
+        });
+        if (data.success) {
+          setExistingCandidates((prev) =>
+            prev.filter((c) => c.email.toLowerCase() !== emailToRemove.toLowerCase())
+          );
+          toast.success(`Removed ${emailToRemove} from campaign`);
+        }
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to remove candidate");
@@ -329,13 +426,24 @@ const EditInterviewPage = () => {
         topics,
         questionMode,
         customQuestions,
+        status: campaignStatus,
         candidateEmails: newCandidateEmails,
       };
 
-      const { data } = await api.patch(`/interviews/${id}`, payload);
-      if (data.success) {
-        toast.success("Campaign updated successfully!");
-        navigate("/employer/dashboard");
+      if (isAdminMode) {
+        payload.isVerified = isVerified;
+        payload.maxCandidates = maxCandidates;
+        const res = await adminService.updateCampaign(id, payload);
+        if (res.success) {
+          toast.success("Campaign updated successfully by Admin!");
+          navigate("/admin");
+        }
+      } else {
+        const { data } = await api.patch(`/interviews/${id}`, payload);
+        if (data.success) {
+          toast.success("Campaign updated successfully!");
+          navigate("/employer/dashboard");
+        }
       }
     } catch (error) {
       toast.error(
@@ -365,19 +473,23 @@ const EditInterviewPage = () => {
         <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate(isAdminMode ? "/admin" : "/employer/dashboard")}
             className="inline-flex items-center gap-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors text-xs font-medium tracking-tight"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to dashboard
+            {isAdminMode ? "Back to admin console" : "Back to dashboard"}
           </button>
         </motion.div>
 
         <PageHeader
-          badgeIcon={Edit}
-          badgeText="Campaign Editor"
-          title="Edit interview campaign"
-          description="Update campaign parameters, technical topics, question strategy, custom questions, and candidate access lists."
+          badgeIcon={isAdminMode ? ShieldCheck : Edit}
+          badgeText={isAdminMode ? "Admin Campaign Console" : "Campaign Editor"}
+          title={isAdminMode ? "Edit interview campaign (Admin mode)" : "Edit interview campaign"}
+          description={
+            isAdminMode
+              ? "Full administrative power to customize campaign parameters, questions, topics, candidate lists, and verification controls."
+              : "Update campaign parameters, technical topics, question strategy, custom questions, and candidate access lists."
+          }
         />
       </div>
 
@@ -391,6 +503,90 @@ const EditInterviewPage = () => {
         className="space-y-8"
       >
         {/* ========================================================================= */}
+        {/* ADMIN EXCLUSIVE: ADMIN CONTROL PANEL & CREATOR CONTEXT */}
+        {/* ========================================================================= */}
+        {isAdminMode && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+            <GlassCard padding="p-6 md:p-8" className="space-y-6 border border-[var(--color-border-active,#6338F6)]/40">
+              <SectionHeader
+                icon={ShieldCheck}
+                title="Admin campaign controls & ownership"
+                subtitle="Override platform verification, set maximum candidate limits, and inspect employer details."
+              />
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* Left: Employer Creator Info */}
+                <div className="lg:col-span-5 p-4 rounded-2xl bg-[var(--color-canvas)] border border-[var(--color-border)] space-y-2.5">
+                  <span className="text-xs font-medium text-[var(--color-text-accent,#C4B5FD)] flex items-center gap-1.5">
+                    <Building2 className="w-4 h-4" /> Campaign Creator Details
+                  </span>
+                  <div className="space-y-1 text-xs">
+                    <div className="text-sm font-medium text-[var(--color-text-primary)]">
+                      {employerInfo?.name || "Registered Employer"}
+                    </div>
+                    <div className="text-[var(--color-text-secondary)] font-mono text-[11px]">
+                      {employerInfo?.email || "—"}
+                    </div>
+                    {employerInfo?.companyName && (
+                      <div className="text-[var(--color-text-muted)] text-[11px]">
+                        Company: {employerInfo.companyName}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right: Verification & Limit Controls */}
+                <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Verification Status Toggle */}
+                  <div className="p-4 rounded-2xl bg-[var(--color-canvas)] border border-[var(--color-border)] space-y-2 flex flex-col justify-between">
+                    <div>
+                      <label className="text-xs font-medium text-[var(--color-text-primary)] block">
+                        Platform verification
+                      </label>
+                      <p className="text-[11px] text-[var(--color-text-secondary)] mt-0.5">
+                        {isVerified
+                          ? "Verified — Visible and open to assigned candidates."
+                          : "Unverified — Hidden from candidates until verified."}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsVerified(!isVerified)}
+                      className={`px-3 py-2 rounded-xl text-xs font-medium tracking-tight transition-all flex items-center justify-center gap-2 border ${
+                        isVerified
+                          ? "bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/30"
+                          : "bg-[var(--color-warning)]/10 text-[var(--color-warning)] border-[var(--color-warning)]/30"
+                      }`}
+                    >
+                      {isVerified ? <ShieldCheck className="w-4 h-4" /> : <ShieldAlert className="w-4 h-4" />}
+                      <span>{isVerified ? "Verified (Click to Revoke)" : "Unverified (Click to Verify)"}</span>
+                    </button>
+                  </div>
+
+                  {/* Max Candidates Limit */}
+                  <div className="p-4 rounded-2xl bg-[var(--color-canvas)] border border-[var(--color-border)] space-y-2">
+                    <label className="text-xs font-medium text-[var(--color-text-primary)] block">
+                      Max candidates limit
+                    </label>
+                    <p className="text-[11px] text-[var(--color-text-secondary)]">
+                      Set maximum enrolled candidates (empty for unlimited).
+                    </p>
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder="Unlimited (e.g. 25)"
+                      value={maxCandidates}
+                      onChange={(e) => setMaxCandidates(e.target.value)}
+                      className={inputClasses}
+                    />
+                  </div>
+                </div>
+              </div>
+            </GlassCard>
+          </motion.div>
+        )}
+
+        {/* ========================================================================= */}
         {/* SECTION 1: CAMPAIGN ESSENTIALS */}
         {/* ========================================================================= */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
@@ -398,7 +594,7 @@ const EditInterviewPage = () => {
             <SectionHeader
               icon={Briefcase}
               title="Campaign essentials"
-              subtitle="Modify target job role, campaign title, and interview parameters."
+              subtitle="Modify target job role, campaign title, status, and interview parameters."
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -480,8 +676,8 @@ const EditInterviewPage = () => {
                   )}
                 </div>
 
-                {/* Experience & Duration */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Experience, Duration, and Status */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
                       <BookOpen className="w-3.5 h-3.5 text-[var(--color-text-accent,#C4B5FD)]" />
@@ -524,6 +720,31 @@ const EditInterviewPage = () => {
                       </p>
                     )}
                   </div>
+
+                  <div>
+                    <label className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
+                      <Tag className="w-3.5 h-3.5 text-[var(--color-text-accent,#C4B5FD)]" />
+                      Campaign status
+                    </label>
+                    <select
+                      value={campaignStatus}
+                      onChange={(e) => setCampaignStatus(e.target.value)}
+                      className={`${inputClasses} cursor-pointer appearance-none`}
+                    >
+                      <option value="active" className="bg-[var(--color-surface)]">
+                        Active
+                      </option>
+                      <option value="draft" className="bg-[var(--color-surface)]">
+                        Draft
+                      </option>
+                      <option value="completed" className="bg-[var(--color-surface)]">
+                        Completed
+                      </option>
+                      <option value="archived" className="bg-[var(--color-surface)]">
+                        Archived
+                      </option>
+                    </select>
+                  </div>
                 </div>
 
                 {/* Require Approval Toggle */}
@@ -534,7 +755,7 @@ const EditInterviewPage = () => {
                       Require approval to join
                     </label>
                     <p className="text-xs text-[var(--color-text-secondary)]">
-                      If enabled, candidates joining via code must be manually approved by you before they can start.
+                      If enabled, candidates joining via code must be manually approved before starting.
                     </p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer ml-4 shrink-0">
@@ -724,7 +945,7 @@ const EditInterviewPage = () => {
                         Custom questions ({customQuestions.length} configured)
                       </h4>
                       <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
-                        Add questions manually or import a batch file.
+                        Add questions manually, edit existing prompts, reorder sequence, or import CSV/JSON.
                       </p>
                     </div>
 
@@ -743,7 +964,7 @@ const EditInterviewPage = () => {
                     {/* Add Question Form (Left) */}
                     <div className="lg:col-span-5 space-y-3">
                       <label className="text-xs font-medium text-[var(--color-text-secondary)] block">
-                        Question prompt *
+                        New question prompt *
                       </label>
                       <textarea
                         value={newQText}
@@ -786,12 +1007,6 @@ const EditInterviewPage = () => {
                           <select
                             value={newQDiff}
                             onChange={(e) => setNewQDiff(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                addCustomQuestion();
-                              }
-                            }}
                             className={`${inputClasses} cursor-pointer appearance-none`}
                           >
                             <option value="Easy" className="bg-[var(--color-surface)]">
@@ -823,35 +1038,138 @@ const EditInterviewPage = () => {
                       </label>
 
                       {customQuestions.length > 0 ? (
-                        <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+                        <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
                           {customQuestions.map((q, idx) => (
                             <div
                               key={idx}
-                              className="p-3.5 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] flex items-start justify-between gap-3 text-xs"
+                              className={`p-3.5 rounded-2xl bg-[var(--color-surface)] border transition-all ${
+                                editingIndex === idx
+                                  ? "border-[var(--color-border-active,#6338F6)] ring-1 ring-[var(--color-border-active,#6338F6)]"
+                                  : "border-[var(--color-border)]"
+                              }`}
                             >
-                              <div className="space-y-1.5 flex-1">
-                                <div className="flex items-center gap-2">
-                                  <span className="px-2 py-0.5 rounded-md bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] font-medium text-[10px]">
-                                    Q{idx + 1}
-                                  </span>
-                                  <span className="px-2 py-0.5 rounded-md bg-[var(--color-canvas)] text-[var(--color-text-secondary)] border border-[var(--color-border)] text-[10px]">
-                                    {q.topic}
-                                  </span>
-                                  <span className="px-2 py-0.5 rounded-md bg-[var(--color-warning)]/10 text-[var(--color-warning)] text-[10px] font-medium">
-                                    {q.difficulty}
-                                  </span>
+                              {editingIndex === idx ? (
+                                /* Inline Question Editor */
+                                <div className="space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs font-medium text-[var(--color-text-accent,#C4B5FD)]">
+                                      Editing Question {idx + 1}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => setEditingIndex(null)}
+                                      className="text-xs text-[var(--color-text-secondary)] hover:text-white"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+
+                                  <textarea
+                                    value={editQText}
+                                    onChange={(e) => setEditQText(e.target.value)}
+                                    rows={2}
+                                    className={`${inputClasses} resize-none`}
+                                  />
+
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <input
+                                      type="text"
+                                      value={editQTopic}
+                                      onChange={(e) => setEditQTopic(e.target.value)}
+                                      placeholder="Topic"
+                                      className={inputClasses}
+                                    />
+                                    <select
+                                      value={editQDiff}
+                                      onChange={(e) => setEditQDiff(e.target.value)}
+                                      className={`${inputClasses} cursor-pointer appearance-none`}
+                                    >
+                                      <option value="Easy" className="bg-[var(--color-surface)]">Easy</option>
+                                      <option value="Medium" className="bg-[var(--color-surface)]">Medium</option>
+                                      <option value="Hard" className="bg-[var(--color-surface)]">Hard</option>
+                                    </select>
+                                  </div>
+
+                                  <div className="flex justify-end gap-2 pt-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => setEditingIndex(null)}
+                                      className="px-3 py-1.5 rounded-xl border border-[var(--color-border)] text-xs text-[var(--color-text-secondary)]"
+                                    >
+                                      Cancel
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={saveEditedQuestion}
+                                      className="px-3.5 py-1.5 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-medium"
+                                    >
+                                      Save question
+                                    </button>
+                                  </div>
                                 </div>
-                                <p className="text-sm font-medium text-[var(--color-text-primary)]">
-                                  {q.question}
-                                </p>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => removeCustomQuestion(idx)}
-                                className="p-1.5 text-[var(--color-text-secondary)] hover:text-[var(--color-danger)] transition-colors"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
+                              ) : (
+                                /* Normal View with Reorder & Edit Buttons */
+                                <div className="flex items-start justify-between gap-3 text-xs">
+                                  <div className="space-y-1.5 flex-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="px-2 py-0.5 rounded-md bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] font-medium text-[10px]">
+                                        Q{idx + 1}
+                                      </span>
+                                      <span className="px-2 py-0.5 rounded-md bg-[var(--color-canvas)] text-[var(--color-text-secondary)] border border-[var(--color-border)] text-[10px]">
+                                        {q.topic || "General"}
+                                      </span>
+                                      <span className="px-2 py-0.5 rounded-md bg-[var(--color-warning)]/10 text-[var(--color-warning)] text-[10px] font-medium">
+                                        {q.difficulty || "Medium"}
+                                      </span>
+                                    </div>
+                                    <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                                      {q.question}
+                                    </p>
+                                  </div>
+
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    {/* Reorder Buttons */}
+                                    <button
+                                      type="button"
+                                      onClick={() => moveQuestion(idx, -1)}
+                                      disabled={idx === 0}
+                                      className="p-1 rounded-lg hover:bg-[var(--color-canvas)] text-[var(--color-text-secondary)] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                                      title="Move Up"
+                                    >
+                                      <ArrowUp className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => moveQuestion(idx, 1)}
+                                      disabled={idx === customQuestions.length - 1}
+                                      className="p-1 rounded-lg hover:bg-[var(--color-canvas)] text-[var(--color-text-secondary)] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                                      title="Move Down"
+                                    >
+                                      <ArrowDown className="w-3.5 h-3.5" />
+                                    </button>
+
+                                    {/* Edit Button */}
+                                    <button
+                                      type="button"
+                                      onClick={() => startEditingQuestion(idx)}
+                                      className="p-1.5 rounded-lg hover:bg-[var(--color-canvas)] text-[var(--color-text-accent,#C4B5FD)] transition-colors"
+                                      title="Edit question text / topic"
+                                    >
+                                      <Edit className="w-3.5 h-3.5" />
+                                    </button>
+
+                                    {/* Delete Button */}
+                                    <button
+                                      type="button"
+                                      onClick={() => removeCustomQuestion(idx)}
+                                      className="p-1.5 rounded-lg hover:bg-[var(--color-canvas)] text-[var(--color-text-secondary)] hover:text-[var(--color-danger)] transition-colors"
+                                      title="Delete question"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -909,7 +1227,8 @@ const EditInterviewPage = () => {
                         >
                           {cand.status}
                         </span>
-                        {cand.status !== "Completed" && cand.status !== "In Progress" && (
+                        {/* Admin or Employer can remove pending candidate */}
+                        {(isAdminMode || (cand.status !== "Completed" && cand.status !== "In Progress")) && (
                           <button
                             type="button"
                             onClick={() => removeExistingCandidate(cand.email)}
@@ -966,14 +1285,14 @@ const EditInterviewPage = () => {
                             key={email}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-xs font-medium text-[var(--color-text-primary)]"
                           >
-                            <Mail className="w-3 h-3 text-[var(--color-text-accent,#C4B5FD)] shrink-0" />
+                            <Mail className="w-3.5 h-3.5 text-[var(--color-text-accent,#C4B5FD)] shrink-0" />
                             <span className="font-mono text-xs">{email}</span>
                             <button
                               type="button"
                               onClick={() => removeNewCandidate(email)}
                               className="hover:text-[var(--color-danger)] transition-colors ml-1"
                             >
-                              <X className="w-3 h-3" />
+                              <X className="w-3.5 h-3.5" />
                             </button>
                           </span>
                         ))}
@@ -990,7 +1309,7 @@ const EditInterviewPage = () => {
 
                   <div className="p-3 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-xs text-[var(--color-text-secondary)] flex items-center gap-2">
                     <Lightbulb className="w-4 h-4 text-[var(--color-text-accent,#C4B5FD)] shrink-0" />
-                    <span>Newly added candidates will be notified once campaign changes are saved.</span>
+                    <span>Newly added candidates will be assigned once campaign changes are saved.</span>
                   </div>
                 </div>
               </div>
@@ -1046,7 +1365,7 @@ const EditInterviewPage = () => {
                   </li>
                   <li className="flex items-start gap-2">
                     <Check className="w-3.5 h-3.5 text-[var(--color-success)] mt-0.5 shrink-0" />
-                    <span><strong>Default fallback:</strong> If left empty, the engine uses our standard battle-tested hiring rubrics.</span>
+                    <span><strong>Default fallback:</strong> If left empty, the engine uses standard battle-tested hiring rubrics.</span>
                   </li>
                 </ul>
               </div>
@@ -1061,7 +1380,7 @@ const EditInterviewPage = () => {
           <div className="flex items-center justify-between gap-4 p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]">
             <button
               type="button"
-              onClick={() => navigate(-1)}
+              onClick={() => navigate(isAdminMode ? "/admin" : "/employer/dashboard")}
               className="px-5 py-2.5 rounded-xl text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors flex items-center gap-1.5"
             >
               <ArrowLeft className="w-3.5 h-3.5" /> Cancel & return
@@ -1080,7 +1399,7 @@ const EditInterviewPage = () => {
               ) : (
                 <>
                   <Save className="w-4 h-4 mr-2" />
-                  Save campaign changes
+                  {isAdminMode ? "Save campaign (Admin override)" : "Save campaign changes"}
                 </>
               )}
             </button>

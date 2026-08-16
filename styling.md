@@ -1,4 +1,4 @@
-# IntervuOS Design System & Styling Architecture Guide (`styling.md`)
+# ForkTalent Design System & Styling Architecture Guide (`styling.md`)
 > **Standard Operating Procedure for UI/UX & Frontend Engineers**  
 > *Crafted for high-trust Enterprise ATS & Candidate Practice Portals (Linear / Stripe / Vercel Aesthetic).*
 
@@ -9,7 +9,7 @@
 ### The Golden Rule: Human Design vs. "AI-Generated" Clichés
 Most AI-generated web apps look unmistakably generic: they overuse giant glowing radial blur gradients, heavy `rounded-3xl` bubble cards, hyper-saturated rainbow borders, uppercase bold fonts everywhere, and 5 different bright purple buttons competing on a single screen.
 
-**IntervuOS adheres to a disciplined, human-crafted design language:**
+**ForkTalent adheres to a disciplined, human-crafted design language:**
 1. **Restraint Over Decoration**: Depth is created with quiet, intentional surface hierarchy—not floating glow blobs or heavy dropshadows.
 2. **Single Primary CTA per View**: Every screen has exactly **one** primary intention. Only this button receives solid purple fill (`#5B3AF2`). Secondary and tertiary actions use quiet tints or outlines.
 3. **Enterprise Trust & Data Density**: Employers must feel they are using a serious, production-grade hiring platform (like Stripe Radar or Linear Insights). Candidates must feel empowered by clean, transparent, stress-free tooling.

@@ -27,7 +27,7 @@ class StorageService {
    * @returns {Promise<Object>} Cloudinary upload result
    */
   uploadResume(fileBuffer, options = {}) {
-    const folder = options.folder || "intervuos/resumes";
+    const folder = options.folder || "ForkTalent/resumes";
     const timeout = parseInt(process.env.CLOUDINARY_UPLOAD_TIMEOUT, 10) || options.timeout || 60000;
 
     return new Promise((resolve, reject) => {

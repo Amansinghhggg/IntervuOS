@@ -10,6 +10,7 @@ import {
   getUsers,
   grantBonusCredits,
   getCampaigns,
+  getCampaignById,
   updateCampaignControls,
 } from "./admin.controller.js";
 
@@ -27,7 +28,7 @@ router.patch("/complaints/:id", updateComplaint);
 router.get("/users", getUsers);
 router.post("/users/:id/credits", grantBonusCredits);
 router.get("/campaigns", getCampaigns);
+router.get("/campaigns/:id", getCampaignById);
 router.patch("/campaigns/:id", updateCampaignControls);
-
 
 export default router;

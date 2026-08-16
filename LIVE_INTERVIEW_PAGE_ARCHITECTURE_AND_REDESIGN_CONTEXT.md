@@ -1,13 +1,13 @@
-# IntervuOS Live Interview Page — Architecture, UI Components & Redesign Blueprint
+# ForkTalent Live Interview Page — Architecture, UI Components & Redesign Blueprint
 
 > **Reference Specification for AI Agents & Engineers**  
-> This document details the complete end-to-end architecture, UI components, state machines, audio/video pipelines, and redesign guidelines for the IntervuOS **Main Live Interview Page** (`LiveInterviewPage.jsx`).
+> This document details the complete end-to-end architecture, UI components, state machines, audio/video pipelines, and redesign guidelines for the ForkTalent **Main Live Interview Page** (`LiveInterviewPage.jsx`).
 
 ---
 
 ## 1. Executive Summary & Page Purpose
 
-The **Live Interview Page** is the core real-time assessment environment for IntervuOS. It hosts both:
+The **Live Interview Page** is the core real-time assessment environment for ForkTalent. It hosts both:
 1. **AI Mock Practice Interviews** (`mode: "MOCK"`) — Private candidate self-practice with instant STAR evaluations.
 2. **Employer Campaign Assessments** (`mode: "CAMPAIGN"` / `"ASSIGNED"`) — Official candidate assessments recorded, transcribed, and scored for hiring teams.
 
@@ -129,7 +129,7 @@ The current UI follows a 3-tier desktop/mobile layout:
 
 ## 5. Design System Rules & Redesign Guidelines
 
-When redesigning or restructuring this screen, strictly adhere to the established **Exponent Design System** in [styling.md](file:///c:/PROJECTS/IntervuOS/styling.md) and [AGENTS.md](file:///c:/PROJECTS/IntervuOS/AGENTS.md):
+When redesigning or restructuring this screen, strictly adhere to the established **Exponent Design System** in [styling.md](file:///c:/PROJECTS/ForkTalent/styling.md) and [AGENTS.md](file:///c:/PROJECTS/ForkTalent/AGENTS.md):
 
 ### 1. Color Tokens (Never use ad-hoc hexes or legacy Tailwind classes)
 ```css
@@ -181,7 +181,7 @@ If you are planning to restructure or upgrade the Live Interview Page, prioritiz
 ## 7. Verification Checklist
 
 Before finalizing any changes to the Live Interview Page:
-- [ ] Build compiles with 0 errors: `cmd /c "cd /d c:\PROJECTS\IntervuOS\frontend && npm run build"`
+- [ ] Build compiles with 0 errors: `cmd /c "cd /d c:\PROJECTS\ForkTalent\frontend && npm run build"`
 - [ ] Camera and mic streams bind without memory leaks.
 - [ ] Voice TTS plays audio prompts automatically when question changes.
 - [ ] STT transcription accurately submits candidate responses to backend.

@@ -633,18 +633,33 @@ export default function LandingPage() {
 
           {/* Right Action */}
           <div className="flex items-center gap-3">
-            <Link
-              to="/login"
-              className="text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] px-3 py-1.5 rounded-xl transition-colors"
-            >
-              Sign In
-            </Link>
-            <button
-              onClick={() => scrollToSection("hero-auth")}
-              className="px-4 py-2 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-medium transition-all shadow-xs"
-            >
-              Get Started
-            </button>
+            {user ? (
+              <Link
+                to={user.role === "employer" ? "/employer/dashboard" : user.role === "admin" ? "/admin" : "/candidate/mock-interview"}
+                className="px-4 py-2 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-medium transition-all shadow-xs"
+              >
+                Go to Dashboard
+              </Link>
+            ) : (
+              <>
+                <div className="flex items-center">
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={() => toast.error("Google authentication encountered an issue.")}
+                    theme="filled_blue"
+                    size="medium"
+                    shape="pill"
+                    text="signin"
+                  />
+                </div>
+                <button
+                  onClick={() => scrollToSection("hero-auth")}
+                  className="hidden sm:inline-flex px-4 py-2 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-medium transition-all shadow-xs"
+                >
+                  Get Started
+                </button>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -728,17 +743,7 @@ export default function LandingPage() {
                   {/* Primary CTA Box & Google 1-Click Auth */}
                   <div id="hero-auth" className="pt-2 space-y-4 max-w-md">
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                      <div className="scale-100 flex justify-center sm:justify-start">
-                        <GoogleLogin
-                          onSuccess={handleGoogleSuccess}
-                          onError={() => toast.error("Google authentication encountered an issue.")}
-                          theme="filled_blue"
-                          size="large"
-                          shape="pill"
-                          text="continue_with"
-                          width="240"
-                        />
-                      </div>
+
                       <button
                         onClick={() => scrollToSection("workflow-section")}
                         className="px-4 py-2.5 rounded-xl bg-[var(--color-surface)] hover:bg-[var(--color-surface-hover)] border border-[var(--color-border)] text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-all flex items-center justify-center gap-1.5"
@@ -787,25 +792,6 @@ export default function LandingPage() {
                   </p>
                 </div>
 
-                {/* Step Selector Pills (1-2-3-4) */}
-                <div className="flex items-center justify-center gap-2 flex-wrap">
-                  {candidateSteps.map((s, idx) => (
-                    <button
-                      key={s.step}
-                      onClick={() => setActiveCandidateStep(idx)}
-                      className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all flex items-center gap-2 ${activeCandidateStep === idx
-                        ? "bg-[var(--color-primary)] text-white shadow-xs"
-                        : "bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]"
-                        }`}
-                    >
-                      <span className="w-5 h-5 rounded-lg bg-black/20 flex items-center justify-center text-[11px] font-mono">
-                        {s.step}
-                      </span>
-                      <span>{s.title}</span>
-                    </button>
-                  ))}
-                </div>
-
                 {/* Active Step Card */}
                 <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl p-6 sm:p-10 space-y-8 shadow-xs relative overflow-hidden">
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
@@ -838,9 +824,19 @@ export default function LandingPage() {
                         <Sparkles className="w-4 h-4 shrink-0 mt-0.5" />
                         <span><strong>Key advantage:</strong> {candidateSteps[activeCandidateStep].highlight}</span>
                       </div>
+                    </div>
+
+                    {/* Right: Step UI Screenshot Placeholder & Controls */}
+                    <div className="lg:col-span-6 space-y-4">
+                      <ScreenshotPlaceholder
+                        stepNumber={candidateSteps[activeCandidateStep].step}
+                        caption={candidateSteps[activeCandidateStep].placeholderTag}
+                        alt={candidateSteps[activeCandidateStep].altText}
+                        height="h-64 sm:h-80"
+                      />
 
                       {/* Previous / Next Controls */}
-                      <div className="flex items-center gap-3 pt-2">
+                      <div className="flex items-center gap-3 pt-1">
                         <button
                           disabled={activeCandidateStep === 0}
                           onClick={() => setActiveCandidateStep((prev) => Math.max(0, prev - 1))}
@@ -861,24 +857,16 @@ export default function LandingPage() {
 
                         <div className="flex items-center gap-1.5 ml-auto">
                           {candidateSteps.map((_, dotIdx) => (
-                            <span
+                            <button
                               key={dotIdx}
-                              className={`w-2 h-2 rounded-full transition-all ${activeCandidateStep === dotIdx ? "w-6 bg-[var(--color-text-accent)]" : "bg-[var(--color-border)]"
+                              onClick={() => setActiveCandidateStep(dotIdx)}
+                              className={`h-2 rounded-full transition-all ${activeCandidateStep === dotIdx ? "w-6 bg-[var(--color-text-accent)]" : "w-2 bg-[var(--color-border)] hover:bg-[var(--color-text-muted)]"
                                 }`}
+                              aria-label={`Go to candidate step ${dotIdx + 1}`}
                             />
                           ))}
                         </div>
                       </div>
-                    </div>
-
-                    {/* Right: Step UI Screenshot Placeholder */}
-                    <div className="lg:col-span-6">
-                      <ScreenshotPlaceholder
-                        stepNumber={candidateSteps[activeCandidateStep].step}
-                        caption={candidateSteps[activeCandidateStep].placeholderTag}
-                        alt={candidateSteps[activeCandidateStep].altText}
-                        height="h-64 sm:h-80"
-                      />
                     </div>
 
                   </div>
@@ -1028,25 +1016,6 @@ export default function LandingPage() {
                   </p>
                 </div>
 
-                {/* Step Selector Pills (1-2-3-4) */}
-                <div className="flex items-center justify-center gap-2 flex-wrap">
-                  {businessSteps.map((s, idx) => (
-                    <button
-                      key={s.step}
-                      onClick={() => setActiveBusinessStep(idx)}
-                      className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all flex items-center gap-2 ${activeBusinessStep === idx
-                        ? "bg-[var(--color-primary)] text-white shadow-xs"
-                        : "bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]"
-                        }`}
-                    >
-                      <span className="w-5 h-5 rounded-lg bg-black/20 flex items-center justify-center text-[11px] font-mono">
-                        {s.step}
-                      </span>
-                      <span>{s.title}</span>
-                    </button>
-                  ))}
-                </div>
-
                 {/* Active Step Card */}
                 <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl p-6 sm:p-10 space-y-8 shadow-xs relative overflow-hidden">
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
@@ -1069,9 +1038,19 @@ export default function LandingPage() {
                         <Sparkles className="w-4 h-4 shrink-0 mt-0.5" />
                         <span><strong>Key capability:</strong> {businessSteps[activeBusinessStep].highlight}</span>
                       </div>
+                    </div>
+
+                    {/* Right: Step UI Screenshot Placeholder & Controls */}
+                    <div className="lg:col-span-6 space-y-4">
+                      <ScreenshotPlaceholder
+                        stepNumber={businessSteps[activeBusinessStep].step}
+                        caption={businessSteps[activeBusinessStep].placeholderTag}
+                        alt={`Recruiter workflow step ${businessSteps[activeBusinessStep].step} preview`}
+                        height="h-64 sm:h-80"
+                      />
 
                       {/* Previous / Next Controls */}
-                      <div className="flex items-center gap-3 pt-2">
+                      <div className="flex items-center gap-3 pt-1">
                         <button
                           disabled={activeBusinessStep === 0}
                           onClick={() => setActiveBusinessStep((prev) => Math.max(0, prev - 1))}
@@ -1092,24 +1071,16 @@ export default function LandingPage() {
 
                         <div className="flex items-center gap-1.5 ml-auto">
                           {businessSteps.map((_, dotIdx) => (
-                            <span
+                            <button
                               key={dotIdx}
-                              className={`w-2 h-2 rounded-full transition-all ${activeBusinessStep === dotIdx ? "w-6 bg-[var(--color-text-accent)]" : "bg-[var(--color-border)]"
+                              onClick={() => setActiveBusinessStep(dotIdx)}
+                              className={`h-2 rounded-full transition-all ${activeBusinessStep === dotIdx ? "w-6 bg-[var(--color-text-accent)]" : "w-2 bg-[var(--color-border)] hover:bg-[var(--color-text-muted)]"
                                 }`}
+                              aria-label={`Go to employer step ${dotIdx + 1}`}
                             />
                           ))}
                         </div>
                       </div>
-                    </div>
-
-                    {/* Right: Step UI Screenshot Placeholder */}
-                    <div className="lg:col-span-6">
-                      <ScreenshotPlaceholder
-                        stepNumber={businessSteps[activeBusinessStep].step}
-                        caption={businessSteps[activeBusinessStep].placeholderTag}
-                        alt={`Recruiter workflow step ${businessSteps[activeBusinessStep].step} preview`}
-                        height="h-64 sm:h-80"
-                      />
                     </div>
 
                   </div>

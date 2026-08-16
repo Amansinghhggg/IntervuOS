@@ -1,7 +1,7 @@
-# IntervuOS Agent Coding Guidelines & Design System Rules
+# ForkTalent Agent Coding Guidelines & Design System Rules
 
-> **MANDATORY INSTRUCTIONS FOR ALL AI CODING AGENTS WORKING ON INTERVUOS**  
-> Every agent working on the frontend must strictly adhere to the guidelines below and the comprehensive specifications in [styling.md](file:///c:/PROJECTS/IntervuOS/styling.md).
+> **MANDATORY INSTRUCTIONS FOR ALL AI CODING AGENTS WORKING ON ForkTalent**  
+> Every agent working on the frontend must strictly adhere to the guidelines below and the comprehensive specifications in [styling.md](file:///c:/PROJECTS/ForkTalent/styling.md).
 
 ---
 
@@ -55,6 +55,6 @@ Always use centralized design tokens defined in `frontend/src/index.css`:
 
 Always run and verify the frontend production build before finishing any task:
 ```bash
-cmd /c "cd /d c:\PROJECTS\IntervuOS\frontend && npm run build"
+cmd /c "cd /d c:\PROJECTS\ForkTalent\frontend && npm run build"
 ```
 Ensure **0 errors** and **0 syntax issues**.

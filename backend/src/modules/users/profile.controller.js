@@ -28,7 +28,7 @@ const replaceResume = async (req, res, next) => {
 
     // Upload new resume
     const result = await StorageService.uploadResume(req.file.buffer, {
-      folder: `intervuos/resumes/${user._id}`,
+      folder: `ForkTalent/resumes/${user._id}`,
     });
 
     user.resume = {

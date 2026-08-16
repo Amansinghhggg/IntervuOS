@@ -84,6 +84,137 @@ export const getAdminDashboardStats = async (req, res, next) => {
       }
     });
 
+    // Calculate daily, weekly, and monthly user growth
+    const monthShorts = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+    // 1. Daily Growth (Last 14 Days)
+    const fourteenDaysAgo = new Date();
+    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 13);
+    fourteenDaysAgo.setHours(0, 0, 0, 0);
+
+    const dailyRaw = await User.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: fourteenDaysAgo },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+            day: { $dayOfMonth: "$createdAt" },
+            role: "$role",
+          },
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const dailyGrowth = [];
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const y = d.getFullYear();
+      const m = d.getMonth() + 1;
+      const day = d.getDate();
+      const label = `${dayNames[d.getDay()]}, ${day} ${monthShorts[d.getMonth()]}`;
+
+      const cand = dailyRaw
+        .filter((g) => g._id.year === y && g._id.month === m && g._id.day === day && g._id.role === "candidate")
+        .reduce((sum, g) => sum + g.count, 0);
+
+      const emp = dailyRaw
+        .filter((g) => g._id.year === y && g._id.month === m && g._id.day === day && g._id.role === "employer")
+        .reduce((sum, g) => sum + g.count, 0);
+
+      dailyGrowth.push({
+        period: label,
+        candidates: cand,
+        employers: emp,
+        users: cand + emp,
+      });
+    }
+
+    // 2. Weekly Growth (Last 8 Weeks)
+    const weeklyGrowth = [];
+    for (let i = 7; i >= 0; i--) {
+      const startD = new Date();
+      startD.setDate(startD.getDate() - (i + 1) * 7);
+      const endD = new Date();
+      endD.setDate(endD.getDate() - i * 7);
+
+      const label = `Wk ${8 - i}`;
+
+      const cand = await User.countDocuments({
+        role: "candidate",
+        createdAt: { $gte: startD, $lt: endD },
+      });
+
+      const emp = await User.countDocuments({
+        role: "employer",
+        createdAt: { $gte: startD, $lt: endD },
+      });
+
+      weeklyGrowth.push({
+        period: label,
+        candidates: cand,
+        employers: emp,
+        users: cand + emp,
+      });
+    }
+
+    // 3. Monthly Growth (Last 6 Months)
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+    sixMonthsAgo.setDate(1);
+    sixMonthsAgo.setHours(0, 0, 0, 0);
+
+    const monthlyRaw = await User.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: sixMonthsAgo },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+            role: "$role",
+          },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
+    ]);
+
+    const monthlyGrowth = [];
+    const now = new Date();
+
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const y = d.getFullYear();
+      const m = d.getMonth() + 1;
+      const periodLabel = `${monthShorts[d.getMonth()]} ${y}`;
+
+      const cand = monthlyRaw
+        .filter((g) => g._id.year === y && g._id.month === m && g._id.role === "candidate")
+        .reduce((sum, g) => sum + g.count, 0);
+
+      const emp = monthlyRaw
+        .filter((g) => g._id.year === y && g._id.month === m && g._id.role === "employer")
+        .reduce((sum, g) => sum + g.count, 0);
+
+      monthlyGrowth.push({
+        period: periodLabel,
+        candidates: cand,
+        employers: emp,
+        users: cand + emp,
+      });
+    }
+
     res.status(200).json({
       success: true,
       data: {
@@ -92,6 +223,11 @@ export const getAdminDashboardStats = async (req, res, next) => {
           candidates: totalCandidates,
           employers: totalEmployers,
           admins: totalAdmins,
+        },
+        userGrowth: {
+          daily: dailyGrowth,
+          weekly: weeklyGrowth,
+          monthly: monthlyGrowth,
         },
         interviews: {
           totalMockInterviews,
@@ -489,32 +625,13 @@ export const getCampaigns = async (req, res, next) => {
   }
 };
 
-// @desc    Admin update interview verification (isVerified) and max candidates limit (maxCandidates)
-// @route   PATCH /api/admin/campaigns/:id
+// @desc    Admin get full interview campaign by ID
+// @route   GET /api/admin/campaigns/:id
 // @access  Private (Admin)
-export const updateCampaignControls = async (req, res, next) => {
+export const getCampaignById = async (req, res, next) => {
   try {
-    const { isVerified, maxCandidates } = req.body;
-    const updates = {};
-
-    if (typeof isVerified === "boolean") {
-      updates.isVerified = isVerified;
-    }
-
-    if (maxCandidates !== undefined) {
-      if (maxCandidates === null || maxCandidates === "" || maxCandidates === "unlimited") {
-        updates.maxCandidates = null;
-      } else {
-        const parsed = parseInt(maxCandidates, 10);
-        updates.maxCandidates = isNaN(parsed) || parsed <= 0 ? null : parsed;
-      }
-    }
-
-    const campaign = await Interview.findByIdAndUpdate(
-      req.params.id,
-      { $set: updates },
-      { new: true, runValidators: true }
-    ).populate("employer", "name email profilePicture isVerified");
+    const campaign = await Interview.findById(req.params.id)
+      .populate("employer", "name email companyName profilePicture isVerified");
 
     if (!campaign) {
       return res.status(404).json({
@@ -525,7 +642,104 @@ export const updateCampaignControls = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: "Campaign admin controls updated successfully",
+      campaign,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Admin update interview campaign details (controls, questions, candidates, settings)
+// @route   PATCH /api/admin/campaigns/:id
+// @access  Private (Admin)
+export const updateCampaignControls = async (req, res, next) => {
+  try {
+    const campaign = await Interview.findById(req.params.id);
+
+    if (!campaign) {
+      return res.status(404).json({
+        success: false,
+        message: "Interview campaign not found",
+      });
+    }
+
+    const {
+      title,
+      jobRole,
+      description,
+      topics,
+      experienceLevel,
+      duration,
+      instructions,
+      requireApproval,
+      status,
+      questionMode,
+      customQuestions,
+      isVerified,
+      maxCandidates,
+      candidateEmails,
+      removeCandidateEmail,
+      addCandidateEmail,
+    } = req.body;
+
+    if (title !== undefined) campaign.title = title;
+    if (jobRole !== undefined) campaign.jobRole = jobRole;
+    if (description !== undefined) campaign.description = description;
+    if (topics !== undefined && Array.isArray(topics)) campaign.topics = topics;
+    if (experienceLevel !== undefined) campaign.experienceLevel = experienceLevel;
+    if (duration !== undefined) campaign.duration = Number(duration);
+    if (instructions !== undefined) campaign.instructions = instructions;
+    if (requireApproval !== undefined) campaign.requireApproval = Boolean(requireApproval);
+    if (status !== undefined) campaign.status = status;
+    if (questionMode !== undefined) campaign.questionMode = questionMode;
+    if (customQuestions !== undefined && Array.isArray(customQuestions)) campaign.customQuestions = customQuestions;
+
+    if (typeof isVerified === "boolean") {
+      campaign.isVerified = isVerified;
+    }
+
+    if (maxCandidates !== undefined) {
+      if (maxCandidates === null || maxCandidates === "" || maxCandidates === "unlimited") {
+        campaign.maxCandidates = null;
+      } else {
+        const parsed = parseInt(maxCandidates, 10);
+        campaign.maxCandidates = isNaN(parsed) || parsed <= 0 ? null : parsed;
+      }
+    }
+
+    // Merge new candidates if provided
+    if (candidateEmails && Array.isArray(candidateEmails)) {
+      const existingEmails = (campaign.assignedCandidates || []).map((c) => c.email.toLowerCase());
+      const uniqueNewEmails = [...new Set(candidateEmails.map((e) => e.toLowerCase()))];
+      const newCandidates = uniqueNewEmails
+        .filter((email) => !existingEmails.includes(email))
+        .map((email) => ({ email, status: "Pending" }));
+      campaign.assignedCandidates.push(...newCandidates);
+    }
+
+    // Remove candidate if provided
+    if (removeCandidateEmail) {
+      const emailToRemove = removeCandidateEmail.toLowerCase();
+      campaign.assignedCandidates = (campaign.assignedCandidates || []).filter(
+        (c) => c.email && c.email.toLowerCase() !== emailToRemove
+      );
+    }
+
+    // Add single candidate if provided
+    if (addCandidateEmail) {
+      const emailToAdd = addCandidateEmail.toLowerCase();
+      const existingEmails = (campaign.assignedCandidates || []).map((c) => c.email.toLowerCase());
+      if (!existingEmails.includes(emailToAdd)) {
+        campaign.assignedCandidates.push({ email: emailToAdd, status: "Pending" });
+      }
+    }
+
+    await campaign.save();
+    await campaign.populate("employer", "name email companyName profilePicture isVerified");
+
+    res.status(200).json({
+      success: true,
+      message: "Campaign updated successfully by admin",
       campaign,
     });
   } catch (error) {

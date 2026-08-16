@@ -6,7 +6,7 @@ import { redisClient, isRedisReady } from './src/config/redis.js';
 
 dotenv.config();
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/intervuos';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/ForkTalent';
 
 async function testBullMQEvaluationQueue() {
   console.log('\n🧪 [Test] Starting BullMQ Heavy AI Evaluation Queue Benchmark...\n');
@@ -51,7 +51,7 @@ async function testBullMQEvaluationQueue() {
   console.log('\n---------------------------------------------------');
   console.log('STEP 1: Initializing Background Worker...');
   console.log('---------------------------------------------------');
-  
+
   const worker = startEvaluationWorker();
   console.log(`✅ BullMQ Worker initialized and listening on Redis queue!`);
 

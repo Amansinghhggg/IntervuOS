@@ -1,1 +1,1 @@
-// branding.js has been deprecated. All branding is strictly set to IntervuOS.
+// branding.js has been deprecated. All branding is strictly set to ForkTalent.

@@ -227,13 +227,13 @@ const joinInterview = async (req, res, next) => {
 const handleJoinRequest = async (req, res, next) => {
   try {
     const { email, action } = req.body;
-    
+
     if (!email || !action) {
       return res.status(400).json({ success: false, message: "Email and action are required." });
     }
 
     const interview = await interviewService.handleJoinRequest(req.params.id, req.user._id, email, action);
-    
+
     res.status(200).json({
       success: true,
       message: `Candidate request ${action}d successfully.`,
@@ -247,7 +247,7 @@ const handleJoinRequest = async (req, res, next) => {
   }
 };
 
-// @desc    Candidate gets the current active interview session (IntervuOS)
+// @desc    Candidate gets the current active interview session (ForkTalent)
 // @route   GET /api/interviews/:id/session
 // @access  Candidate only
 const getInterviewSession = async (req, res, next) => {
@@ -313,7 +313,7 @@ const startInterview = async (req, res, next) => {
 
       return res.status(200).json({
         success: true,
-        message: "IntervuOS started.",
+        message: "ForkTalent started.",
         session,
         currentQuestion: firstQuestion
       });

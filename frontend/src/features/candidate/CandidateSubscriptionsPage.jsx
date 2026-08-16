@@ -11,6 +11,8 @@ import {
   ArrowUpRight,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
   AlertCircle,
   Loader2,
   Coins,
@@ -38,6 +40,8 @@ export default function CandidateSubscriptionsPage() {
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [historyError, setHistoryError] = useState(false);
   const [historyFilter, setHistoryFilter] = useState('ALL'); // ALL | PURCHASE | USAGE | BONUS | REFUND
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
   const [openFaq, setOpenFaq] = useState(null);
 
   // Custom Credit Slider State (20 to 500 Credits)
@@ -287,11 +291,19 @@ export default function CandidateSubscriptionsPage() {
     }
   ];
 
-  // Filtered Transaction History
+  // Filtered Transaction History & Pagination
   const filteredHistory = useMemo(() => {
     if (historyFilter === 'ALL') return history;
     return history.filter((item) => item.type?.toUpperCase() === historyFilter);
   }, [history, historyFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredHistory.length / itemsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  const paginatedHistory = useMemo(() => {
+    const startIndex = (safeCurrentPage - 1) * itemsPerPage;
+    return filteredHistory.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredHistory, safeCurrentPage, itemsPerPage]);
 
   // FAQs
   const faqs = [
@@ -374,12 +386,10 @@ export default function CandidateSubscriptionsPage() {
           )}
         </AnimatePresence>
 
-        {/* Section 1: WALLET HERO (Flat Surface + Accent Border) */}
+        {/* Section 1: WALLET HERO (Credit Balance Only) */}
         <div className="bg-[var(--card)] border border-[var(--color-border-active,#6338F6)]/40 rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-sm">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-
-            {/* Left Col: Main Available Balance */}
-            <div className="md:col-span-5 space-y-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+            <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <span className="text-xs text-[var(--text-secondary)] font-normal">Current Wallet Balance</span>
                 {totalBonusCredits > 0 && (
@@ -388,144 +398,34 @@ export default function CandidateSubscriptionsPage() {
                   </span>
                 )}
               </div>
-              <div className="flex items-baseline gap-2">
+              <div className="flex items-baseline gap-2.5">
                 <span className="text-4xl sm:text-5xl font-medium tracking-tight text-[var(--text-primary)]">
                   {availableCredits}
                 </span>
-                <span className="text-sm font-normal text-[var(--color-text-accent,#C4B5FD)]">
+                <span className="text-base font-normal text-[var(--color-text-accent,#C4B5FD)]">
                   Credits Available
                 </span>
               </div>
-              <p className="text-xs text-[var(--text-secondary)] leading-relaxed font-normal">
-                1 Credit = 1 Minute of AI technical questioning, real-time voice feedback, and STAR scoring.
+              <p className="text-xs text-[var(--text-secondary)] leading-relaxed font-normal max-w-xl">
+                1 Credit = 1 Minute of AI technical questioning, real-time voice feedback, and STAR scoring. Credits never expire.
               </p>
             </div>
 
-            {/* Middle Col: Derived Interview Metric */}
-            <div className="md:col-span-4 p-4 rounded-2xl bg-[var(--background)] border border-[var(--border)] space-y-1.5">
-              <div className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
-                <Clock className="w-3.5 h-3.5 text-[var(--color-text-accent,#C4B5FD)]" />
-                <span>Estimated Interview Runway</span>
-              </div>
-              <div className="text-xl font-medium text-[var(--text-primary)]">
-                ≈ {interviewsRemainingEstimate} Mock {interviewsRemainingEstimate === 1 ? 'Interview' : 'Interviews'}
-              </div>
-              <p className="text-[11px] text-[var(--text-muted)]">
-                Based on standard 15-minute diagnostic & technical interviews.
-              </p>
-            </div>
-
-            {/* Right Col: Lifetime Usage Summary */}
-            <div className="md:col-span-3 p-4 rounded-2xl bg-[var(--background)] border border-[var(--border)] space-y-1.5">
-              <div className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
-                <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Total Practice Used</span>
-              </div>
-              <div className="text-xl font-medium text-[var(--text-primary)]">
-                {totalUsedCredits} <span className="text-xs font-normal text-[var(--text-secondary)]">Credits ({totalUsedCredits} mins)</span>
-              </div>
-              <p className="text-[11px] text-[var(--text-muted)]">
-                Purchased: {totalPurchasedCredits} cr
-              </p>
-            </div>
-
-          </div>
-        </div>
-
-        {/* Section 2: BUNDLE CARDS (Unified Surface, Single Elevation on Recommended) */}
-        <div className="space-y-4">
-          <div>
-            <h2 className="text-base sm:text-lg font-medium text-[var(--text-primary)]">
-              Curated Practice Packs
-            </h2>
-            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-              Select a pre-configured credit pack for structured company and role preparation.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {bundles.map((bundle) => {
-              const isRecommended = bundle.recommended;
-              const isLoading = loadingPlan === bundle.id;
-
-              return (
-                <div
-                  key={bundle.id}
-                  className={`bg-[var(--card)] rounded-3xl p-6 flex flex-col justify-between space-y-6 transition-all duration-150 relative ${isRecommended
-                      ? "border border-[var(--color-border-active,#6338F6)] shadow-md"
-                      : "border border-[var(--border)]"
-                    }`}
-                >
-                  {/* Card Header & Badge */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
-                        {bundle.title}
-                      </span>
-                      {isRecommended && (
-                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)]/40">
-                          Recommended
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Price and Price-Per-Credit */}
-                    <div className="space-y-1">
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-3xl sm:text-4xl font-medium text-[var(--text-primary)]">
-                          ₹{bundle.price}
-                        </span>
-                        <span className="text-xs text-[var(--text-secondary)] font-normal">
-                          for {bundle.credits} Credits
-                        </span>
-                      </div>
-                      <div className="inline-block text-[11px] font-medium text-[var(--color-text-accent,#C4B5FD)]">
-                        Effective rate: {bundle.ratePerCredit}
-                      </div>
-                    </div>
-
-                    <p className="text-xs text-[var(--text-secondary)] font-normal leading-relaxed pt-1">
-                      {bundle.description}
-                    </p>
-                  </div>
-
-                  {/* Features List */}
-                  <div className="space-y-2.5 pt-2 border-t border-[var(--border)]">
-                    {bundle.features.map((feat, idx) => (
-                      <div key={idx} className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                        <span className="leading-tight">{feat}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Buy Action Button (Tint Fill per Single Primary CTA rule) */}
-                  <div className="pt-2">
-                    <button
-                      onClick={() => handlePurchase(bundle)}
-                      disabled={Boolean(loadingPlan)}
-                      className="w-full py-2.5 px-4 rounded-xl bg-[var(--primary-tint,rgba(99,56,246,0.15))] hover:bg-[var(--primary-tint)]/80 text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)]/40 text-xs font-medium transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-[var(--color-border-active,#6338F6)] focus-visible:outline-none"
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          <span>Connecting Gateway...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>Buy {bundle.credits} Credits</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </>
-                      )}
-                    </button>
-                  </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="px-4 py-3 rounded-2xl bg-[var(--background)] border border-[var(--border)] flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)]">
+                  <Coins className="w-5 h-5" />
                 </div>
-              );
-            })}
+                <div>
+                  <div className="text-xs font-medium text-[var(--text-primary)]">Ready for Interviews</div>
+                  <div className="text-[11px] text-[var(--text-muted)]">Instant AI Access</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Section 3: CUSTOM SLIDER & Single Primary High-Intent Checkout */}
+        {/* Section 2: CUSTOM SLIDER & Single Primary High-Intent Checkout (Placed Above Packs) */}
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-3xl p-6 sm:p-8 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
@@ -622,6 +522,99 @@ export default function CandidateSubscriptionsPage() {
           </div>
         </div>
 
+        {/* Section 3: BUNDLE CARDS (Curated Practice Packs) */}
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-base sm:text-lg font-medium text-[var(--text-primary)]">
+              Curated Practice Packs
+            </h2>
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+              Select a pre-configured credit pack for structured company and role preparation.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {bundles.map((bundle) => {
+              const isRecommended = bundle.recommended;
+              const isLoading = loadingPlan === bundle.id;
+
+              return (
+                <div
+                  key={bundle.id}
+                  className={`bg-[var(--card)] rounded-3xl p-6 flex flex-col justify-between space-y-6 transition-all duration-150 relative ${isRecommended
+                    ? "border border-[var(--color-border-active,#6338F6)] shadow-md"
+                    : "border border-[var(--border)]"
+                    }`}
+                >
+                  {/* Card Header & Badge */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                        {bundle.title}
+                      </span>
+                      {isRecommended && (
+                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)]/40">
+                          Recommended
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Price and Price-Per-Credit */}
+                    <div className="space-y-1">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-3xl sm:text-4xl font-medium text-[var(--text-primary)]">
+                          ₹{bundle.price}
+                        </span>
+                        <span className="text-xs text-[var(--text-secondary)] font-normal">
+                          for {bundle.credits} Credits
+                        </span>
+                      </div>
+                      <div className="inline-block text-[11px] font-medium text-[var(--color-text-accent,#C4B5FD)]">
+                        Effective rate: {bundle.ratePerCredit}
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-[var(--text-secondary)] font-normal leading-relaxed pt-1">
+                      {bundle.description}
+                    </p>
+                  </div>
+
+                  {/* Features List */}
+                  <div className="space-y-2.5 pt-2 border-t border-[var(--border)]">
+                    {bundle.features.map((feat, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <span className="leading-tight">{feat}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Buy Action Button (Tint Fill per Single Primary CTA rule) */}
+                  <div className="pt-2">
+                    <button
+                      onClick={() => handlePurchase(bundle)}
+                      disabled={Boolean(loadingPlan)}
+                      className="w-full py-2.5 px-4 rounded-xl bg-[var(--primary-tint,rgba(99,56,246,0.15))] hover:bg-[var(--primary-tint)]/80 text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)]/40 text-xs font-medium transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-[var(--color-border-active,#6338F6)] focus-visible:outline-none"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Connecting Gateway...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Buy {bundle.credits} Credits</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Section 4: TRANSACTION HISTORY (Filterable & Semantic Badges) */}
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -647,16 +640,39 @@ export default function CandidateSubscriptionsPage() {
               ].map((tab) => (
                 <button
                   key={tab.key}
-                  onClick={() => setHistoryFilter(tab.key)}
+                  onClick={() => {
+                    setHistoryFilter(tab.key);
+                    setCurrentPage(1);
+                  }}
                   className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors border whitespace-nowrap focus-visible:ring-2 focus-visible:ring-[var(--color-border-active,#6338F6)] focus-visible:outline-none ${historyFilter === tab.key
-                      ? "bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-[var(--color-border-active,#6338F6)]"
-                      : "bg-[var(--card)] text-[var(--text-secondary)] border-[var(--border)] hover:text-[var(--text-primary)]"
+                    ? "bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-[var(--color-border-active,#6338F6)]"
+                    : "bg-[var(--card)] text-[var(--text-secondary)] border-[var(--border)] hover:text-[var(--text-primary)]"
                     }`}
                 >
                   {tab.label}
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Usage & Purchased Summary Bar */}
+          <div className="p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 shrink-0">
+                <TrendingUp className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs text-[var(--text-secondary)] font-normal">Total Lifetime Practice Used</div>
+                <div className="text-sm sm:text-base font-medium text-[var(--text-primary)]">
+                  {totalUsedCredits}
+                </div>
+              </div>
+            </div>
+            {totalPurchasedCredits > 0 && (
+              <div className="text-xs text-[var(--text-muted)] sm:border-l sm:border-[var(--border)] sm:pl-4">
+                Total Purchased: <span className="font-medium text-[var(--text-secondary)]">{totalPurchasedCredits} Credits</span>
+              </div>
+            )}
           </div>
 
           {/* History Content */}
@@ -701,62 +717,110 @@ export default function CandidateSubscriptionsPage() {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
-                  <thead>
-                    <tr className="border-b border-[var(--border)] bg-[var(--background)] text-[10px] uppercase tracking-wider text-[var(--text-secondary)]">
-                      <th className="py-3.5 px-6 font-medium">Type / Description</th>
-                      <th className="py-3.5 px-6 font-medium">Status</th>
-                      <th className="py-3.5 px-6 font-medium">Date</th>
-                      <th className="py-3.5 px-6 font-medium text-right">Credits Delta</th>
-                      <th className="py-3.5 px-6 font-medium text-right">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[var(--border)]">
-                    {filteredHistory.map((item) => {
-                      const isAddition = item.type === 'PURCHASE' || item.type === 'BONUS';
-                      const statusColor =
-                        item.status === 'completed'
-                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                          : item.status === 'failed'
-                            ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                            : 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+              <div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-[var(--border)] bg-[var(--background)] text-[10px] uppercase tracking-wider text-[var(--text-secondary)]">
+                        <th className="py-3.5 px-6 font-medium">Type / Description</th>
+                        <th className="py-3.5 px-6 font-medium">Status</th>
+                        <th className="py-3.5 px-6 font-medium">Date</th>
+                        <th className="py-3.5 px-6 font-medium text-right">Credits Delta</th>
+                        <th className="py-3.5 px-6 font-medium text-right">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[var(--border)]">
+                      {paginatedHistory.map((item) => {
+                        const isAddition = item.type === 'PURCHASE' || item.type === 'BONUS';
+                        const statusColor =
+                          item.status === 'completed'
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            : item.status === 'failed'
+                              ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                              : 'bg-amber-500/10 text-amber-400 border-amber-500/20';
 
-                      return (
-                        <tr key={item._id} className="hover:bg-[var(--surface-hover,#1E1E2A)] transition-colors">
-                          <td className="py-3.5 px-6">
-                            <div className="font-medium text-[var(--text-primary)]">
-                              {item.description || item.type}
-                            </div>
-                            {item.razorpayPaymentId && (
-                              <span className="text-[10px] text-[var(--text-muted)] font-mono">
-                                ID: {item.razorpayPaymentId}
+                        return (
+                          <tr key={item._id} className="hover:bg-[var(--surface-hover,#1E1E2A)] transition-colors">
+                            <td className="py-3.5 px-6">
+                              <div className="font-medium text-[var(--text-primary)]">
+                                {item.description || item.type}
+                              </div>
+                              {item.razorpayPaymentId && (
+                                <span className="text-[10px] text-[var(--text-muted)] font-mono">
+                                  ID: {item.razorpayPaymentId}
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3.5 px-6">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border uppercase tracking-wider ${statusColor}`}>
+                                {item.status || 'completed'}
                               </span>
-                            )}
-                          </td>
-                          <td className="py-3.5 px-6">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border uppercase tracking-wider ${statusColor}`}>
-                              {item.status || 'completed'}
-                            </span>
-                          </td>
-                          <td className="py-3.5 px-6 text-[var(--text-secondary)]">
-                            {new Date(item.createdAt).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric'
-                            })}
-                          </td>
-                          <td className={`py-3.5 px-6 text-right font-medium ${isAddition ? 'text-emerald-400' : 'text-[var(--text-secondary)]'}`}>
-                            {isAddition ? `+${item.credits}` : `-${item.credits}`} cr
-                          </td>
-                          <td className="py-3.5 px-6 text-right font-medium text-[var(--text-primary)]">
-                            {item.amount > 0 ? `₹${item.amount}` : '—'}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                            </td>
+                            <td className="py-3.5 px-6 text-[var(--text-secondary)]">
+                              {new Date(item.createdAt).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric'
+                              })}
+                            </td>
+                            <td className={`py-3.5 px-6 text-right font-medium ${isAddition ? 'text-emerald-400' : 'text-[var(--text-secondary)]'}`}>
+                              {isAddition ? `+${item.credits}` : `-${item.credits}`} cr
+                            </td>
+                            <td className="py-3.5 px-6 text-right font-medium text-[var(--text-primary)]">
+                              {item.amount > 0 ? `₹${item.amount}` : '—'}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination Controls Footer */}
+                {filteredHistory.length > itemsPerPage && (
+                  <div className="px-6 py-3.5 border-t border-[var(--border)] bg-[var(--background)]/60 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div className="text-xs text-[var(--text-secondary)] font-normal">
+                      Showing <span className="font-medium text-[var(--text-primary)]">{(safeCurrentPage - 1) * itemsPerPage + 1}</span> to{' '}
+                      <span className="font-medium text-[var(--text-primary)]">{Math.min(safeCurrentPage * itemsPerPage, filteredHistory.length)}</span> of{' '}
+                      <span className="font-medium text-[var(--text-primary)]">{filteredHistory.length}</span> transactions
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                        disabled={safeCurrentPage <= 1}
+                        className="px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--card)] text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--color-border-active,#6338F6)]/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-1 focus-visible:ring-2 focus-visible:ring-[var(--color-border-active,#6338F6)] focus-visible:outline-none"
+                      >
+                        <ChevronLeft className="w-3.5 h-3.5" />
+                        <span>Previous</span>
+                      </button>
+
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                          <button
+                            key={pageNum}
+                            onClick={() => setCurrentPage(pageNum)}
+                            className={`w-7 h-7 rounded-lg text-xs font-medium transition-colors border flex items-center justify-center focus-visible:ring-2 focus-visible:ring-[var(--color-border-active,#6338F6)] focus-visible:outline-none ${safeCurrentPage === pageNum
+                                ? 'bg-[var(--primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-[var(--color-border-active,#6338F6)] font-medium'
+                                : 'bg-[var(--card)] text-[var(--text-secondary)] border-[var(--border)] hover:text-[var(--text-primary)]'
+                              }`}
+                          >
+                            {pageNum}
+                          </button>
+                        ))}
+                      </div>
+
+                      <button
+                        onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                        disabled={safeCurrentPage >= totalPages}
+                        className="px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--card)] text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--color-border-active,#6338F6)]/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-1 focus-visible:ring-2 focus-visible:ring-[var(--color-border-active,#6338F6)] focus-visible:outline-none"
+                      >
+                        <span>Next</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

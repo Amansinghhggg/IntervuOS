@@ -19,7 +19,7 @@ async function testResumableUpload() {
 
   const uploadId = `test_upload_${Date.now()}`;
   const totalChunks = 10;
-  const dummyBuffer = Buffer.from('INTERVUOS_MOCK_VIDEO_CHUNK_DATA_STREAM_PAYLOAD');
+  const dummyBuffer = Buffer.from('ForkTalent_MOCK_VIDEO_CHUNK_DATA_STREAM_PAYLOAD');
 
   console.log('\n---------------------------------------------------');
   console.log('STEP 1: Initializing Background Cloudinary Worker...');

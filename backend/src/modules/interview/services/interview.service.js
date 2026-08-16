@@ -268,18 +268,36 @@ class InterviewService {
   }
 
   async startInterview(interviewId, candidateEmail) {
+    const Interview = (await import("../models/interview.model.js")).default;
+    const MockInterview = (await import("../models/MockInterview.js")).default;
     const InterviewRepository = (await import("../repositories/InterviewRepository.js")).default;
-    const interview = await InterviewRepository.findById(interviewId);
+
+    let interview = await Interview.findById(interviewId);
+    let isMock = false;
+    if (!interview) {
+      interview = await MockInterview.findById(interviewId);
+      isMock = true;
+    }
 
     if (!interview) {
       throw new Error("not_found");
     }
 
-    if (interview.mode !== "MOCK" && !interview.isVerified) {
+    if (!isMock && !interview.isVerified) {
       throw new Error("interview_unverified");
     }
 
     const emailLower = (candidateEmail || "").toLowerCase();
+
+    // Assigned (non-mock) interviews require candidate to have uploaded a resume
+    if (!isMock && interview.mode !== "MOCK") {
+      const User = (await import("../../users/user.model.js")).default;
+      const userDoc = await User.findOne({ email: emailLower }).select("resume");
+      if (!userDoc?.resume?.url) {
+        throw new Error("resume_required");
+      }
+    }
+
     interview.assignedCandidates = interview.assignedCandidates || [];
     const candidateIndex = interview.assignedCandidates.findIndex(
       (c) => c.email && c.email.toLowerCase() === emailLower
@@ -294,6 +312,7 @@ class InterviewService {
       if (emailLower) {
         interview.assignedCandidates.push({ email: emailLower, status: "In Progress", joinedAt: new Date() });
         await interview.save();
+        await InterviewRepository.invalidateInterview(interview._id, interview.interviewCode, interview.employer);
       }
       return true;
     }
@@ -305,13 +324,20 @@ class InterviewService {
     interview.assignedCandidates[candidateIndex].status = "In Progress";
     interview.assignedCandidates[candidateIndex].joinedAt = interview.assignedCandidates[candidateIndex].joinedAt || new Date();
     await interview.save();
+    await InterviewRepository.invalidateInterview(interview._id, interview.interviewCode, interview.employer);
 
     return true;
   }
 
   async submitInterview(interviewId, candidateEmail) {
+    const Interview = (await import("../models/interview.model.js")).default;
+    const MockInterview = (await import("../models/MockInterview.js")).default;
     const InterviewRepository = (await import("../repositories/InterviewRepository.js")).default;
-    const interview = await InterviewRepository.findById(interviewId);
+
+    let interview = await Interview.findById(interviewId);
+    if (!interview) {
+      interview = await MockInterview.findById(interviewId);
+    }
 
     if (!interview) {
       throw new Error("not_found");
@@ -327,8 +353,16 @@ class InterviewService {
       interview.assignedCandidates[candidateIndex].status = "Completed";
       interview.assignedCandidates[candidateIndex].submittedAt = new Date();
       await interview.save();
+    } else if (emailLower) {
+      interview.assignedCandidates.push({
+        email: emailLower,
+        status: "Completed",
+        submittedAt: new Date(),
+      });
+      await interview.save();
     }
 
+    await InterviewRepository.invalidateInterview(interview._id, interview.interviewCode, interview.employer);
     return true;
   }
 

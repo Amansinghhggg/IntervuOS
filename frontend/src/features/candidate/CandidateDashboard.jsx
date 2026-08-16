@@ -19,9 +19,11 @@ import {
   ChevronRight,
   Sparkles,
   Layers,
-  FileText
+  FileText,
+  Upload,
 } from "lucide-react";
 import { JoinCampaignModal } from "./components/JoinCampaignModal";
+import ResumeUploadModal from "./components/ResumeUploadModal";
 
 export default function CandidateDashboard() {
   const { user } = useAuth();
@@ -32,6 +34,8 @@ export default function CandidateDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL"); // ALL | READY | IN_PROGRESS | REQUESTED
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+  const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
+  const [pendingInterviewId, setPendingInterviewId] = useState(null);
 
   const fetchAssignedInterviews = async () => {
     setLoading(true);
@@ -128,6 +132,11 @@ export default function CandidateDashboard() {
       toast.error("You must complete your in-progress interview before starting a new one.");
       return;
     }
+    if (!user?.resume?.url) {
+      setPendingInterviewId(interviewId);
+      setIsResumeModalOpen(true);
+      return;
+    }
     navigate(`/candidate/interviews/${interviewId}`);
   };
 
@@ -198,6 +207,33 @@ export default function CandidateDashboard() {
             <p className="text-[11px] text-[var(--text-muted)]">Pending employer review</p>
           </div>
         </div>
+
+        {/* Resume Missing Alert Banner */}
+        {!user?.resume?.url && activeInterviews.length > 0 && (
+          <div className="p-4 sm:p-5 rounded-2xl bg-[var(--primary-tint,rgba(99,56,246,0.1))] border border-[var(--color-border-active,#6338F6)]/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-[var(--primary-tint,rgba(99,56,246,0.2))] text-[var(--color-text-accent,#C4B5FD)] flex items-center justify-center shrink-0 mt-0.5">
+                <FileText className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-[var(--text-primary)]">
+                  Resume required for assigned interviews
+                </h3>
+                <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+                  A PDF resume is required before taking employer assessments. AI practice mocks do not require a resume.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setIsResumeModalOpen(true)}
+              className="px-4 py-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white font-medium text-xs rounded-xl flex items-center gap-1.5 transition-all duration-150 shrink-0 shadow-sm"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              <span>Upload resume</span>
+            </button>
+          </div>
+        )}
 
         {/* Critical In-Progress Alert Banner */}
         {inProgressList.length > 0 && (
@@ -418,6 +454,23 @@ export default function CandidateDashboard() {
         isOpen={isJoinModalOpen}
         onClose={() => setIsJoinModalOpen(false)}
         onSuccess={fetchAssignedInterviews}
+      />
+
+      {/* Resume Upload Modal */}
+      <ResumeUploadModal
+        isOpen={isResumeModalOpen}
+        onClose={() => {
+          setIsResumeModalOpen(false);
+          setPendingInterviewId(null);
+        }}
+        onSuccess={() => {
+          setIsResumeModalOpen(false);
+          if (pendingInterviewId) {
+            const targetId = pendingInterviewId;
+            setPendingInterviewId(null);
+            navigate(`/candidate/interviews/${targetId}`);
+          }
+        }}
       />
     </div>
   );

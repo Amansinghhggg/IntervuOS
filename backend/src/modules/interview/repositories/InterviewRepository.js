@@ -143,24 +143,34 @@ class InterviewRepository {
     }
     if (!interview) return null;
 
-    const emailLower = candidateEmail.toLowerCase();
-    const candidate = interview.assignedCandidates.find(c => c.email.toLowerCase() === emailLower);
+    const emailLower = (candidateEmail || "").toLowerCase();
+    interview.assignedCandidates = interview.assignedCandidates || [];
+    let candidate = interview.assignedCandidates.find(c => c.email && c.email.toLowerCase() === emailLower);
+
     if (candidate) {
       candidate.status = status;
       if (status === "In Progress" || status === "IN_PROGRESS") candidate.joinedAt = candidate.joinedAt || new Date();
       if (status === "Completed" || status === "COMPLETED") candidate.submittedAt = new Date();
       if (resultId) candidate.resultId = resultId;
-
-      await interview.save();
-
-      // Invalidate relevant caches
-      await Promise.all([
-        cacheService.invalidateCache(`interview:id:${interviewId}`),
-        cacheService.invalidateCache(`interview:code:${interview.interviewCode}`),
-        cacheService.invalidateCache(`candidate:assigned:${emailLower}`),
-        interview.employer ? cacheService.invalidateCache(`employer:interviews:${interview.employer}`) : Promise.resolve(),
-      ]);
+    } else if (emailLower) {
+      interview.assignedCandidates.push({
+        email: emailLower,
+        status,
+        joinedAt: (status === "In Progress" || status === "IN_PROGRESS") ? new Date() : null,
+        submittedAt: (status === "Completed" || status === "COMPLETED") ? new Date() : null,
+        resultId: resultId || null
+      });
     }
+
+    await interview.save();
+
+    // Invalidate relevant caches
+    await Promise.all([
+      cacheService.invalidateCache(`interview:id:${interviewId}`),
+      cacheService.invalidateCache(`interview:code:${interview.interviewCode}`),
+      cacheService.invalidateCache(`candidate:assigned:${emailLower}`),
+      interview.employer ? cacheService.invalidateCache(`employer:interviews:${interview.employer}`) : Promise.resolve(),
+    ]);
 
     return interview;
   }

@@ -82,10 +82,6 @@ const SignupPage = () => {
   };
 
   const onSubmit = async (formData) => {
-    if (selectedRole === "candidate" && !resumeFile) {
-      return toast.error("Resume is required for candidates");
-    }
-
     setIsLoading(true);
     setUploadProgress(0);
 
@@ -381,19 +377,25 @@ const SignupPage = () => {
             {/* Resume Upload (Candidate Only) */}
             {selectedRole === "candidate" && (
               <div>
-                <label className="block text-[11px] font-black uppercase tracking-widest mb-3 text-[var(--color-on-surface-variant)]">
-                  Resume (PDF, Max 5MB)
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-[11px] font-medium text-[var(--text-secondary)]">
+                    Resume (PDF, Optional)
+                  </label>
+                  <span className="text-[10px] text-[var(--text-muted)]">Required only for employer assessments</span>
+                </div>
                 <div className="relative group">
-                  <FileText className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-on-surface-variant)] group-focus-within:text-[var(--color-primary-md3)] transition-colors" />
+                  <FileText className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)] group-focus-within:text-[var(--primary)] transition-colors" />
                   <input
                     type="file"
                     accept=".pdf"
                     onChange={handleFileChange}
-                    className={`${inputClasses} pl-12 file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-[10px] file:font-bold file:uppercase file:tracking-wider file:bg-[var(--color-primary-md3)]/10 file:text-[var(--color-primary-md3)] hover:file:bg-[var(--color-primary-md3)]/20 cursor-pointer`}
+                    className={`${inputClasses} pl-12 file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-[10px] file:font-medium file:bg-[var(--primary-tint,rgba(99,56,246,0.15))] file:text-[var(--color-text-accent,#C4B5FD)] hover:file:bg-[var(--primary-tint,rgba(99,56,246,0.25))] cursor-pointer`}
                     disabled={isLoading}
                   />
                 </div>
+                <p className="text-[11px] text-[var(--text-muted)] mt-1.5 font-normal">
+                  You can upload now or skip if you are only practicing AI mock interviews.
+                </p>
               </div>
             )}
 

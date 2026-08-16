@@ -30,6 +30,7 @@ import {
   HelpCircle,
   Check,
   Filter,
+  Loader2,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -123,6 +124,8 @@ export default function AdminDashboardPage() {
   const [loadingComplaints, setLoadingComplaints] = useState(false);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [adminNotesState, setAdminNotesState] = useState({});
+  const [complaintStatusDraftState, setComplaintStatusDraftState] = useState({});
+  const [savingComplaintId, setSavingComplaintId] = useState(null);
 
   // Tab 6: Users Directory Data
   const [usersList, setUsersList] = useState([]);
@@ -210,10 +213,13 @@ export default function AdminDashboardPage() {
         const list = res.complaints || [];
         setComplaints(list);
         const notesObj = {};
+        const statusObj = {};
         list.forEach((item) => {
           notesObj[item._id] = item.adminNote || item.adminNotes || "";
+          statusObj[item._id] = item.status || "PENDING";
         });
         setAdminNotesState(notesObj);
+        setComplaintStatusDraftState(statusObj);
         loadedTabsRef.current.complaints = true;
       }
     } catch {
@@ -331,35 +337,45 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const handleUpdateComplaintStatus = async (id, status) => {
+  const handleSaveComplaint = async (id, overrideStatus = null) => {
     try {
-      const res = await adminService.updateComplaint(id, { status });
+      setSavingComplaintId(id);
+      const note = adminNotesState[id] !== undefined ? adminNotesState[id] : "";
+      const statusToSave = overrideStatus || complaintStatusDraftState[id] || "PENDING";
+
+      const res = await adminService.updateComplaint(id, {
+        status: statusToSave,
+        adminNotes: note,
+      });
+
       if (res.success) {
-        toast.success("Complaint status updated");
-        setComplaints((prev) =>
-          prev.map((c) => (c._id === id ? { ...c, status } : c))
+        toast.success(
+          statusToSave === "RESOLVED"
+            ? "Ticket marked as resolved & saved"
+            : "Ticket status and notes updated"
         );
+        setComplaints((prev) =>
+          prev.map((c) =>
+            c._id === id
+              ? { ...c, status: statusToSave, adminNotes: note, adminNote: note }
+              : c
+          )
+        );
+        setComplaintStatusDraftState((prev) => ({ ...prev, [id]: statusToSave }));
+        setAdminNotesState((prev) => ({ ...prev, [id]: note }));
         if (selectedComplaint && selectedComplaint._id === id) {
-          setSelectedComplaint((prev) => ({ ...prev, status }));
+          setSelectedComplaint((prev) => ({
+            ...prev,
+            status: statusToSave,
+            adminNotes: note,
+            adminNote: note,
+          }));
         }
       }
     } catch {
-      toast.error("Failed to update status");
-    }
-  };
-
-  const handleSaveAdminNote = async (id) => {
-    try {
-      const note = adminNotesState[id] || "";
-      const res = await adminService.updateComplaint(id, { adminNotes: note });
-      if (res.success) {
-        toast.success("Admin note saved");
-        setComplaints((prev) =>
-          prev.map((c) => (c._id === id ? { ...c, adminNotes: note } : c))
-        );
-      }
-    } catch {
-      toast.error("Failed to save note");
+      toast.error("Failed to update support ticket");
+    } finally {
+      setSavingComplaintId(null);
     }
   };
 
@@ -436,7 +452,10 @@ export default function AdminDashboardPage() {
         c.ticketId?.toLowerCase().includes(q) ||
         c.name?.toLowerCase().includes(q) ||
         c.email?.toLowerCase().includes(q) ||
-        c.category?.toLowerCase().includes(q);
+        c.category?.toLowerCase().includes(q) ||
+        c.subject?.toLowerCase().includes(q) ||
+        c.message?.toLowerCase().includes(q) ||
+        c.description?.toLowerCase().includes(q);
       return matchesFilter && matchesSearch;
     });
   }, [complaints, complaintStatusFilter, complaintSearch]);
@@ -1617,64 +1636,113 @@ export default function AdminDashboardPage() {
                 No complaints found matching filter.
               </div>
             ) : (
-              filteredComplaints.map((c) => (
-                <div
-                  key={c._id}
-                  className="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] space-y-4 text-xs"
-                >
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[var(--color-border)] pb-3">
-                    <div className="flex items-center gap-3">
-                      <span className="font-mono font-medium text-[var(--color-text-accent,#C4B5FD)] bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] px-2.5 py-0.5 rounded-lg border border-[var(--color-border-active,#6338F6)]/30">
-                        {c.ticketId}
-                      </span>
-                      <div>
-                        <p className="font-medium text-[var(--color-text-primary)]">{c.name}</p>
-                        <p className="text-[11px] text-[var(--color-text-secondary)] font-mono">{c.email}</p>
+              filteredComplaints.map((c) => {
+                const draftStatus = complaintStatusDraftState[c._id] || c.status || "PENDING";
+                const draftNote = adminNotesState[c._id] !== undefined ? adminNotesState[c._id] : (c.adminNote || c.adminNotes || "");
+                const isDirty = draftStatus !== c.status || draftNote !== (c.adminNote || c.adminNotes || "");
+                const isSaving = savingComplaintId === c._id;
+
+                return (
+                  <div
+                    key={c._id}
+                    className="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] space-y-4 text-xs shadow-sm transition-all"
+                  >
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[var(--color-border)] pb-3">
+                      <div className="flex items-center gap-3">
+                        <span className="font-mono font-medium text-[var(--color-text-accent,#C4B5FD)] bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] px-2.5 py-0.5 rounded-lg border border-[var(--color-border-active,#6338F6)]/30">
+                          {c.ticketId}
+                        </span>
+                        <div>
+                          <p className="font-medium text-[var(--color-text-primary)]">{c.name}</p>
+                          <p className="text-[11px] text-[var(--color-text-secondary)] font-mono">{c.email}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {c.interviewCode && (
+                          <span className="px-2.5 py-1 rounded-lg bg-[var(--color-canvas)] border border-[var(--color-border)] text-[var(--color-text-accent,#C4B5FD)] font-mono text-[11px]">
+                            Code: {c.interviewCode}
+                          </span>
+                        )}
+                        <span className="px-2.5 py-1 rounded-lg bg-[var(--color-canvas)] border border-[var(--color-border)] text-[var(--color-text-secondary)] font-medium">
+                          {c.category}
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[11px] text-[var(--color-text-secondary)] font-medium">Status:</span>
+                          <select
+                            value={draftStatus}
+                            onChange={(e) =>
+                              setComplaintStatusDraftState((prev) => ({
+                                ...prev,
+                                [c._id]: e.target.value,
+                              }))
+                            }
+                            className="px-3 py-1.5 rounded-xl bg-[var(--color-canvas)] border border-[var(--color-border)] text-xs text-[var(--color-text-primary)] font-medium focus:outline-none focus:border-[var(--color-border-active,#6338F6)] cursor-pointer"
+                          >
+                            <option value="PENDING">Pending</option>
+                            <option value="IN_PROGRESS">In Progress</option>
+                            <option value="RESOLVED">Resolved</option>
+                          </select>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-1 rounded-lg bg-[var(--color-canvas)] border border-[var(--color-border)] text-[var(--color-text-secondary)] font-medium">
-                        {c.category}
-                      </span>
-                      <select
-                        value={c.status}
-                        onChange={(e) => handleUpdateComplaintStatus(c._id, e.target.value)}
-                        className="px-3 py-1 rounded-xl bg-[var(--color-canvas)] border border-[var(--color-border)] text-xs text-[var(--color-text-primary)] focus:outline-none cursor-pointer"
-                      >
-                        <option value="PENDING">Pending</option>
-                        <option value="IN_PROGRESS">In Progress</option>
-                        <option value="RESOLVED">Resolved</option>
-                      </select>
+                    <div className="p-3.5 rounded-xl bg-[var(--color-canvas)] border border-[var(--color-border)] space-y-1.5">
+                      {c.subject && c.subject !== "Support Ticket" && (
+                        <span className="text-xs font-semibold text-[var(--color-text-primary)] block">
+                          {c.subject}
+                        </span>
+                      )}
+                      <span className="text-[11px] font-medium text-[var(--color-text-primary)]">User Message:</span>
+                      <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed whitespace-pre-wrap">
+                        {c.message || c.description || "(No message provided)"}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                      <input
+                        type="text"
+                        placeholder="Add admin internal note or resolution comment..."
+                        value={draftNote}
+                        onChange={(e) =>
+                          setAdminNotesState((prev) => ({ ...prev, [c._id]: e.target.value }))
+                        }
+                        className={inputClasses}
+                      />
+                      <div className="flex items-center gap-2 shrink-0">
+                        {c.status !== "RESOLVED" && draftStatus !== "RESOLVED" && (
+                          <button
+                            type="button"
+                            disabled={isSaving}
+                            onClick={() => handleSaveComplaint(c._id, "RESOLVED")}
+                            className="px-3.5 py-2 rounded-xl bg-[var(--color-success)]/10 hover:bg-[var(--color-success)]/20 text-[var(--color-success)] border border-[var(--color-success)]/30 text-xs font-medium shrink-0 flex items-center gap-1.5 transition-all disabled:opacity-50"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Resolve & save</span>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          disabled={isSaving || !isDirty}
+                          onClick={() => handleSaveComplaint(c._id)}
+                          className={`px-4 py-2 rounded-xl text-xs font-medium shrink-0 flex items-center gap-1.5 transition-all ${
+                            isDirty
+                              ? "bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white shadow-md shadow-[var(--color-primary)]/20 cursor-pointer"
+                              : "bg-[var(--color-canvas)] text-[var(--color-text-muted)] border border-[var(--color-border)] cursor-not-allowed opacity-60"
+                          }`}
+                        >
+                          {isSaving ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Save className="w-3.5 h-3.5" />
+                          )}
+                          <span>{isSaving ? "Saving..." : isDirty ? "Save changes" : "Saved"}</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
-
-                  <div className="p-3.5 rounded-xl bg-[var(--color-canvas)] border border-[var(--color-border)] space-y-1">
-                    <span className="text-[11px] font-medium text-[var(--color-text-primary)]">User Message:</span>
-                    <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">{c.description}</p>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                    <input
-                      type="text"
-                      placeholder="Add admin internal note or resolution comment..."
-                      value={adminNotesState[c._id] || ""}
-                      onChange={(e) =>
-                        setAdminNotesState((prev) => ({ ...prev, [c._id]: e.target.value }))
-                      }
-                      className={inputClasses}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleSaveAdminNote(c._id)}
-                      className="px-4 py-2 rounded-xl bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] hover:bg-[var(--color-primary-tint,rgba(99,56,246,0.25))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)] text-xs font-medium shrink-0 flex items-center gap-1.5"
-                    >
-                      <Save className="w-3.5 h-3.5" />
-                      <span>Save note</span>
-                    </button>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>

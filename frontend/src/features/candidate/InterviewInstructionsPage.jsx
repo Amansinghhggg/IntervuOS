@@ -13,10 +13,12 @@ import {
   Building2,
   AlertCircle,
   FileText,
-  ShieldCheck
+  ShieldCheck,
+  Upload
 } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { PreSessionCheckModal } from "../../ui/shared/PreSessionCheckModal";
+import ResumeUploadModal from "./components/ResumeUploadModal";
 
 const InterviewInstructionsPage = () => {
   const { id } = useParams();
@@ -27,6 +29,7 @@ const InterviewInstructionsPage = () => {
   const [interview, setInterview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showCheckModal, setShowCheckModal] = useState(false);
+  const [showResumeModal, setShowResumeModal] = useState(false);
   const [isLaunching, setIsLaunching] = useState(false);
 
   const fetchInterview = async () => {
@@ -223,13 +226,46 @@ const InterviewInstructionsPage = () => {
                   </div>
                 ) : null}
 
+                {/* Resume Missing Card */}
+                {!user?.resume?.url && (
+                  <div className="p-4 rounded-2xl bg-[var(--primary-tint,rgba(99,56,246,0.1))] border border-[var(--color-border-active,#6338F6)]/30 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <FileText className="w-5 h-5 text-[var(--color-text-accent,#C4B5FD)] shrink-0" />
+                      <div>
+                        <h3 className="text-xs font-medium text-[var(--text-primary)]">
+                          Resume upload required
+                        </h3>
+                        <p className="text-[11px] text-[var(--text-secondary)]">
+                          A PDF resume must be uploaded before starting this employer assessment.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowResumeModal(true)}
+                      className="px-3.5 py-1.5 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white text-xs font-medium rounded-xl shrink-0 transition-all shadow-sm flex items-center gap-1.5"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Upload resume</span>
+                    </button>
+                  </div>
+                )}
+
                 <button
-                  onClick={() => setShowCheckModal(true)}
+                  onClick={() => {
+                    if (!user?.resume?.url) {
+                      setShowResumeModal(true);
+                      return;
+                    }
+                    setShowCheckModal(true);
+                  }}
                   disabled={isInactive || hasAttempted}
                   className="w-full py-3 px-6 bg-[var(--primary,#5B3AF2)] hover:bg-[var(--primary-hover,#472CD7)] text-white rounded-xl text-xs font-medium transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-[var(--color-border-active,#6338F6)] focus-visible:outline-none"
                 >
                   <Play className="w-3.5 h-3.5 fill-current" />
-                  <span>Continue to System Checks</span>
+                  <span>
+                    {!user?.resume?.url ? "Upload Resume to Continue" : "Continue to System Checks"}
+                  </span>
                 </button>
               </div>
 
@@ -250,6 +286,16 @@ const InterviewInstructionsPage = () => {
         duration={interview.duration || 15}
         creditCost={0}
         topics={interview.topics || []}
+      />
+
+      {/* Resume Upload Modal */}
+      <ResumeUploadModal
+        isOpen={showResumeModal}
+        onClose={() => setShowResumeModal(false)}
+        onSuccess={() => {
+          setShowResumeModal(false);
+          setShowCheckModal(true);
+        }}
       />
     </div>
   );

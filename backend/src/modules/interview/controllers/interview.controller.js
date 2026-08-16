@@ -279,6 +279,20 @@ const startInterview = async (req, res, next) => {
     const interviewData = await interviewService.getInterviewById(req.params.id, "candidate", req.user.email, req.user._id);
     if (!interviewData) throw new Error("not_found");
 
+    // If not a mock interview, candidate must have uploaded a resume
+    const isMock = interviewData.isMock || interviewData.mode === "MOCK" || interviewData.interview?.mode === "MOCK";
+    if (!isMock) {
+      const User = (await import("../../users/user.model.js")).default;
+      const userDoc = await User.findById(req.user._id).select("resume");
+      if (!userDoc?.resume?.url) {
+        return res.status(400).json({
+          success: false,
+          code: "RESUME_REQUIRED",
+          message: "A resume is required to participate in employer assigned interviews. Please upload your resume first.",
+        });
+      }
+    }
+
     // Check if it's an AI or Session interview
     const provider = process.env.QUESTION_PROVIDER || "gemini";
     const qMode = interviewData.questionMode || interviewData.interview?.questionMode;
@@ -326,6 +340,13 @@ const startInterview = async (req, res, next) => {
       message: "Interview started successfully.",
     });
   } catch (error) {
+    if (error.message === "resume_required") {
+      return res.status(400).json({
+        success: false,
+        code: "RESUME_REQUIRED",
+        message: "A resume is required to participate in employer assigned interviews. Please upload your resume first.",
+      });
+    }
     if (error.message === "interview_unverified") {
       return res.status(403).json({
         success: false,

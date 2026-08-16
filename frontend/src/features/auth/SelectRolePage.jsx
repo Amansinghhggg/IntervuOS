@@ -13,27 +13,28 @@ import {
   ShieldCheck
 } from "lucide-react";
 import ForkLogo from "../../ui/shared/ForkLogo";
-import { motion } from "framer-motion";
+import ResumeUploadModal from "../candidate/components/ResumeUploadModal";
 
 const SelectRolePage = () => {
   const { user, selectRole, logout } = useAuth();
   const navigate = useNavigate();
   const [loadingRole, setLoadingRole] = useState(null); // 'employer' | 'candidate' | null
   const [loggingOut, setLoggingOut] = useState(false);
+  const [showResumeModal, setShowResumeModal] = useState(false);
 
   // If user is not logged in, send to landing home
   if (!user) {
     return <Navigate to="/" replace />;
   }
 
-  // If user already has a role assigned, redirect to their home page
+  // If user already has a role assigned, redirect to their home page (unless currently completing resume onboarding)
   const getRoleRoute = (role) => {
     if (role === "admin") return "/admin";
     if (role === "employer") return "/employer/dashboard";
     return "/candidate/mock-interview";
   };
 
-  if (user.role) {
+  if (user.role && !showResumeModal) {
     return <Navigate to={getRoleRoute(user.role)} replace />;
   }
 
@@ -42,7 +43,11 @@ const SelectRolePage = () => {
     try {
       await selectRole(chosenRole);
       toast.success(`Welcome! Account configured as ${chosenRole === "employer" ? "Employer" : "Candidate"}.`);
-      navigate(getRoleRoute(chosenRole));
+      if (chosenRole === "candidate" && !user.resume?.url) {
+        setShowResumeModal(true);
+      } else {
+        navigate(getRoleRoute(chosenRole));
+      }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to set role. Please try again.");
     } finally {
@@ -243,6 +248,26 @@ const SelectRolePage = () => {
         ForkTalent AI Interviewing Platform
       </div>
 
+      {/* Candidate Resume Onboarding Modal with Skip option */}
+      <ResumeUploadModal
+        isOpen={showResumeModal}
+        showSkip={true}
+        skipText="Skip for now (I'm only here for AI practice mocks)"
+        title="Upload your resume (optional)"
+        description="A resume is required if you participate in employer assigned interviews. If you are here only for AI practice mocks, you can skip this step and start practicing right away."
+        onSuccess={() => {
+          setShowResumeModal(false);
+          navigate(getRoleRoute("candidate"));
+        }}
+        onSkip={() => {
+          setShowResumeModal(false);
+          navigate(getRoleRoute("candidate"));
+        }}
+        onClose={() => {
+          setShowResumeModal(false);
+          navigate(getRoleRoute("candidate"));
+        }}
+      />
     </div>
   );
 };

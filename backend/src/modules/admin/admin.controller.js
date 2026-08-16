@@ -5,219 +5,219 @@ import InterviewResult from "../interview/models/InterviewResult.js";
 import Interview from "../interview/models/interview.model.js";
 import InterviewSession from "../interview/models/InterviewSession.js";
 import Transaction from "../payments/models/Transaction.js";
+import { cacheService } from "../../shared/services/cacheService.js";
 
 // @desc    Get aggregate high-level metrics & graphical chart data for admin
 // @route   GET /api/admin/stats
 // @access  Private (Admin)
 export const getAdminDashboardStats = async (req, res, next) => {
   try {
-    const [
-      totalUsers,
-      totalCandidates,
-      totalEmployers,
-      totalAdmins,
-      totalMockInterviews,
-      totalEmployerCampaigns,
-      totalSessions,
-      totalResults,
-      recommendationStats,
-      totalComplaints,
-      pendingComplaints,
-      inProgressComplaints,
-      resolvedComplaints,
-      categoryComplaints,
-      recentUsers,
-      recentComplaints,
-    ] = await Promise.all([
-      User.countDocuments(),
-      User.countDocuments({ role: "candidate" }),
-      User.countDocuments({ role: "employer" }),
-      User.countDocuments({ role: "admin" }),
-      MockInterview.countDocuments(),
-      Interview.countDocuments({ mode: "REGULAR" }),
-      InterviewSession.countDocuments(),
-      InterviewResult.countDocuments(),
-      InterviewResult.aggregate([
+    const data = await cacheService.getOrSetCache("admin:dashboard:stats", 60, async () => {
+      const [
+        totalUsers,
+        totalCandidates,
+        totalEmployers,
+        totalAdmins,
+        totalMockInterviews,
+        totalEmployerCampaigns,
+        totalSessions,
+        totalResults,
+        recommendationStats,
+        totalComplaints,
+        pendingComplaints,
+        inProgressComplaints,
+        resolvedComplaints,
+        categoryComplaints,
+        recentUsers,
+        recentComplaints,
+      ] = await Promise.all([
+        User.countDocuments(),
+        User.countDocuments({ role: "candidate" }),
+        User.countDocuments({ role: "employer" }),
+        User.countDocuments({ role: "admin" }),
+        MockInterview.countDocuments(),
+        Interview.countDocuments({ mode: "REGULAR" }),
+        InterviewSession.countDocuments(),
+        InterviewResult.countDocuments(),
+        InterviewResult.aggregate([
+          {
+            $group: {
+              _id: "$recommendation",
+              count: { $sum: 1 },
+            },
+          },
+        ]),
+        Complaint.countDocuments(),
+        Complaint.countDocuments({ status: "PENDING" }),
+        Complaint.countDocuments({ status: "IN_PROGRESS" }),
+        Complaint.countDocuments({ status: "RESOLVED" }),
+        Complaint.aggregate([
+          {
+            $group: {
+              _id: "$category",
+              count: { $sum: 1 },
+            },
+          },
+        ]),
+        User.find().sort({ createdAt: -1 }).limit(5).select("name email role createdAt profilePicture"),
+        Complaint.find().sort({ createdAt: -1 }).limit(5).select("ticketId name email category status createdAt"),
+      ]);
+
+      // Format recommendation stats map
+      const recommendations = {
+        STRONG_HIRE: 0,
+        HIRE: 0,
+        BORDERLINE: 0,
+        NEEDS_IMPROVEMENT: 0,
+        REJECT: 0,
+        NOT_EVALUATED: 0,
+      };
+      recommendationStats.forEach((item) => {
+        if (item._id && recommendations[item._id] !== undefined) {
+          recommendations[item._id] = item.count;
+        }
+      });
+
+      // Format category complaints map
+      const complaintCategories = {};
+      categoryComplaints.forEach((item) => {
+        if (item._id) {
+          complaintCategories[item._id] = item.count;
+        }
+      });
+
+      // Calculate daily, weekly, and monthly user growth
+      const monthShorts = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+      // 1. Daily Growth (Last 14 Days)
+      const fourteenDaysAgo = new Date();
+      fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 13);
+      fourteenDaysAgo.setHours(0, 0, 0, 0);
+
+      const dailyRaw = await User.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: fourteenDaysAgo },
+          },
+        },
         {
           $group: {
-            _id: "$recommendation",
+            _id: {
+              year: { $year: "$createdAt" },
+              month: { $month: "$createdAt" },
+              day: { $dayOfMonth: "$createdAt" },
+              role: "$role",
+            },
             count: { $sum: 1 },
           },
         },
-      ]),
-      Complaint.countDocuments(),
-      Complaint.countDocuments({ status: "PENDING" }),
-      Complaint.countDocuments({ status: "IN_PROGRESS" }),
-      Complaint.countDocuments({ status: "RESOLVED" }),
-      Complaint.aggregate([
+      ]);
+
+      const dailyGrowth = [];
+      for (let i = 13; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const y = d.getFullYear();
+        const m = d.getMonth() + 1;
+        const day = d.getDate();
+        const label = `${dayNames[d.getDay()]}, ${day} ${monthShorts[d.getMonth()]}`;
+
+        const cand = dailyRaw
+          .filter((g) => g._id.year === y && g._id.month === m && g._id.day === day && g._id.role === "candidate")
+          .reduce((sum, g) => sum + g.count, 0);
+
+        const emp = dailyRaw
+          .filter((g) => g._id.year === y && g._id.month === m && g._id.day === day && g._id.role === "employer")
+          .reduce((sum, g) => sum + g.count, 0);
+
+        dailyGrowth.push({
+          period: label,
+          candidates: cand,
+          employers: emp,
+          users: cand + emp,
+        });
+      }
+
+      // 2. Weekly Growth (Last 8 Weeks)
+      const weeklyGrowth = [];
+      for (let i = 7; i >= 0; i--) {
+        const startD = new Date();
+        startD.setDate(startD.getDate() - (i + 1) * 7);
+        const endD = new Date();
+        endD.setDate(endD.getDate() - i * 7);
+
+        const label = `Wk ${8 - i}`;
+
+        const cand = await User.countDocuments({
+          role: "candidate",
+          createdAt: { $gte: startD, $lt: endD },
+        });
+
+        const emp = await User.countDocuments({
+          role: "employer",
+          createdAt: { $gte: startD, $lt: endD },
+        });
+
+        weeklyGrowth.push({
+          period: label,
+          candidates: cand,
+          employers: emp,
+          users: cand + emp,
+        });
+      }
+
+      // 3. Monthly Growth (Last 6 Months)
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+      sixMonthsAgo.setDate(1);
+      sixMonthsAgo.setHours(0, 0, 0, 0);
+
+      const monthlyRaw = await User.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: sixMonthsAgo },
+          },
+        },
         {
           $group: {
-            _id: "$category",
+            _id: {
+              year: { $year: "$createdAt" },
+              month: { $month: "$createdAt" },
+              role: "$role",
+            },
             count: { $sum: 1 },
           },
         },
-      ]),
-      User.find().sort({ createdAt: -1 }).limit(5).select("name email role createdAt profilePicture"),
-      Complaint.find().sort({ createdAt: -1 }).limit(5).select("ticketId name email category status createdAt"),
-    ]);
+        { $sort: { "_id.year": 1, "_id.month": 1 } },
+      ]);
 
-    // Format recommendation stats map
-    const recommendations = {
-      STRONG_HIRE: 0,
-      HIRE: 0,
-      BORDERLINE: 0,
-      NEEDS_IMPROVEMENT: 0,
-      REJECT: 0,
-      NOT_EVALUATED: 0,
-    };
-    recommendationStats.forEach((item) => {
-      if (item._id && recommendations[item._id] !== undefined) {
-        recommendations[item._id] = item.count;
+      const monthlyGrowth = [];
+      const now = new Date();
+
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const y = d.getFullYear();
+        const m = d.getMonth() + 1;
+        const periodLabel = `${monthShorts[d.getMonth()]} ${y}`;
+
+        const cand = monthlyRaw
+          .filter((g) => g._id.year === y && g._id.month === m && g._id.role === "candidate")
+          .reduce((sum, g) => sum + g.count, 0);
+
+        const emp = monthlyRaw
+          .filter((g) => g._id.year === y && g._id.month === m && g._id.role === "employer")
+          .reduce((sum, g) => sum + g.count, 0);
+
+        monthlyGrowth.push({
+          period: periodLabel,
+          candidates: cand,
+          employers: emp,
+          users: cand + emp,
+        });
       }
-    });
 
-    // Format category complaints map
-    const complaintCategories = {};
-    categoryComplaints.forEach((item) => {
-      if (item._id) {
-        complaintCategories[item._id] = item.count;
-      }
-    });
-
-    // Calculate daily, weekly, and monthly user growth
-    const monthShorts = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-    // 1. Daily Growth (Last 14 Days)
-    const fourteenDaysAgo = new Date();
-    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 13);
-    fourteenDaysAgo.setHours(0, 0, 0, 0);
-
-    const dailyRaw = await User.aggregate([
-      {
-        $match: {
-          createdAt: { $gte: fourteenDaysAgo },
-        },
-      },
-      {
-        $group: {
-          _id: {
-            year: { $year: "$createdAt" },
-            month: { $month: "$createdAt" },
-            day: { $dayOfMonth: "$createdAt" },
-            role: "$role",
-          },
-          count: { $sum: 1 },
-        },
-      },
-    ]);
-
-    const dailyGrowth = [];
-    for (let i = 13; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const y = d.getFullYear();
-      const m = d.getMonth() + 1;
-      const day = d.getDate();
-      const label = `${dayNames[d.getDay()]}, ${day} ${monthShorts[d.getMonth()]}`;
-
-      const cand = dailyRaw
-        .filter((g) => g._id.year === y && g._id.month === m && g._id.day === day && g._id.role === "candidate")
-        .reduce((sum, g) => sum + g.count, 0);
-
-      const emp = dailyRaw
-        .filter((g) => g._id.year === y && g._id.month === m && g._id.day === day && g._id.role === "employer")
-        .reduce((sum, g) => sum + g.count, 0);
-
-      dailyGrowth.push({
-        period: label,
-        candidates: cand,
-        employers: emp,
-        users: cand + emp,
-      });
-    }
-
-    // 2. Weekly Growth (Last 8 Weeks)
-    const weeklyGrowth = [];
-    for (let i = 7; i >= 0; i--) {
-      const startD = new Date();
-      startD.setDate(startD.getDate() - (i + 1) * 7);
-      const endD = new Date();
-      endD.setDate(endD.getDate() - i * 7);
-
-      const label = `Wk ${8 - i}`;
-
-      const cand = await User.countDocuments({
-        role: "candidate",
-        createdAt: { $gte: startD, $lt: endD },
-      });
-
-      const emp = await User.countDocuments({
-        role: "employer",
-        createdAt: { $gte: startD, $lt: endD },
-      });
-
-      weeklyGrowth.push({
-        period: label,
-        candidates: cand,
-        employers: emp,
-        users: cand + emp,
-      });
-    }
-
-    // 3. Monthly Growth (Last 6 Months)
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
-    sixMonthsAgo.setDate(1);
-    sixMonthsAgo.setHours(0, 0, 0, 0);
-
-    const monthlyRaw = await User.aggregate([
-      {
-        $match: {
-          createdAt: { $gte: sixMonthsAgo },
-        },
-      },
-      {
-        $group: {
-          _id: {
-            year: { $year: "$createdAt" },
-            month: { $month: "$createdAt" },
-            role: "$role",
-          },
-          count: { $sum: 1 },
-        },
-      },
-      { $sort: { "_id.year": 1, "_id.month": 1 } },
-    ]);
-
-    const monthlyGrowth = [];
-    const now = new Date();
-
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const y = d.getFullYear();
-      const m = d.getMonth() + 1;
-      const periodLabel = `${monthShorts[d.getMonth()]} ${y}`;
-
-      const cand = monthlyRaw
-        .filter((g) => g._id.year === y && g._id.month === m && g._id.role === "candidate")
-        .reduce((sum, g) => sum + g.count, 0);
-
-      const emp = monthlyRaw
-        .filter((g) => g._id.year === y && g._id.month === m && g._id.role === "employer")
-        .reduce((sum, g) => sum + g.count, 0);
-
-      monthlyGrowth.push({
-        period: periodLabel,
-        candidates: cand,
-        employers: emp,
-        users: cand + emp,
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      data: {
+      return {
         users: {
           total: totalUsers,
           candidates: totalCandidates,
@@ -245,7 +245,12 @@ export const getAdminDashboardStats = async (req, res, next) => {
         },
         recentUsers,
         recentComplaints,
-      },
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      data,
     });
   } catch (error) {
     next(error);
@@ -258,54 +263,61 @@ export const getAdminDashboardStats = async (req, res, next) => {
 export const getEmployers = async (req, res, next) => {
   try {
     const { search, status, page = 1, limit = 20 } = req.query;
+    const cacheKey = `admin:employers:${search || ""}:${status || ""}:${page}:${limit}`;
 
-    const query = { role: "employer" };
+    const cached = await cacheService.getOrSetCache(cacheKey, 60, async () => {
+      const query = { role: "employer" };
 
-    if (status === "verified") query.isVerified = true;
-    if (status === "pending") query.isVerified = false;
+      if (status === "verified") query.isVerified = true;
+      if (status === "pending") query.isVerified = false;
 
-    if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-      ];
-    }
+      if (search) {
+        query.$or = [
+          { name: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+        ];
+      }
 
-    const skip = (Number(page) - 1) * Number(limit);
+      const skip = (Number(page) - 1) * Number(limit);
 
-    const [employers, total] = await Promise.all([
-      User.find(query)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(Number(limit))
-        .lean(),
-      User.countDocuments(query),
-    ]);
+      const [employers, total] = await Promise.all([
+        User.find(query)
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(Number(limit))
+          .lean(),
+        User.countDocuments(query),
+      ]);
 
-    // Attach campaign count for each employer
-    const employerIds = employers.map((emp) => emp._id);
-    const campaignCounts = await Interview.aggregate([
-      { $match: { employer: { $in: employerIds } } },
-      { $group: { _id: "$employer", count: { $sum: 1 } } },
-    ]);
+      // Attach campaign count for each employer
+      const employerIds = employers.map((emp) => emp._id);
+      const campaignCounts = await Interview.aggregate([
+        { $match: { employer: { $in: employerIds } } },
+        { $group: { _id: "$employer", count: { $sum: 1 } } },
+      ]);
 
-    const campaignMap = {};
-    campaignCounts.forEach((c) => {
-      campaignMap[c._id.toString()] = c.count;
+      const campaignMap = {};
+      campaignCounts.forEach((c) => {
+        campaignMap[c._id.toString()] = c.count;
+      });
+
+      const formattedEmployers = employers.map((emp) => ({
+        ...emp,
+        campaignsCount: campaignMap[emp._id.toString()] || 0,
+      }));
+
+      return {
+        count: formattedEmployers.length,
+        total,
+        page: Number(page),
+        pages: Math.ceil(total / Number(limit)),
+        employers: formattedEmployers,
+      };
     });
-
-    const formattedEmployers = employers.map((emp) => ({
-      ...emp,
-      campaignsCount: campaignMap[emp._id.toString()] || 0,
-    }));
 
     res.status(200).json({
       success: true,
-      count: formattedEmployers.length,
-      total,
-      page: Number(page),
-      pages: Math.ceil(total / Number(limit)),
-      employers: formattedEmployers,
+      ...cached,
     });
   } catch (error) {
     next(error);
@@ -332,6 +344,9 @@ export const toggleEmployerVerification = async (req, res, next) => {
     employer.isVerified = typeof isVerified === "boolean" ? isVerified : !employer.isVerified;
     await employer.save();
 
+    // Invalidate admin caches
+    await cacheService.invalidateCachePattern("admin:*");
+
     res.status(200).json({
       success: true,
       message: `Employer ${employer.name} verification status updated to ${employer.isVerified ? "Verified" : "Pending/Unverified"}.`,
@@ -353,42 +368,49 @@ export const toggleEmployerVerification = async (req, res, next) => {
 export const getMockAttempts = async (req, res, next) => {
   try {
     const { search, recommendation, page = 1, limit = 20 } = req.query;
+    const cacheKey = `admin:mocks:${search || ""}:${recommendation || ""}:${page}:${limit}`;
 
-    const query = { mode: "MOCK" };
+    const cached = await cacheService.getOrSetCache(cacheKey, 60, async () => {
+      const query = { mode: "MOCK" };
 
-    if (recommendation) {
-      query.recommendation = recommendation;
-    }
+      if (recommendation) {
+        query.recommendation = recommendation;
+      }
 
-    const skip = (Number(page) - 1) * Number(limit);
+      const skip = (Number(page) - 1) * Number(limit);
 
-    let results = await InterviewResult.find(query)
-      .populate("candidateId", "name email profilePicture credits")
-      .populate("sessionId", "status startedAt createdAt recording")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(Number(limit))
-      .lean();
+      let results = await InterviewResult.find(query)
+        .populate("candidateId", "name email profilePicture credits")
+        .populate("sessionId", "status startedAt createdAt recording")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(limit))
+        .lean();
 
-    if (search) {
-      const searchRegex = new RegExp(search, "i");
-      results = results.filter(
-        (r) =>
-          searchRegex.test(r.candidateId?.name || "") ||
-          searchRegex.test(r.candidateId?.email || "") ||
-          searchRegex.test(r.interviewSnapshot?.jobRole || "")
-      );
-    }
+      if (search) {
+        const searchRegex = new RegExp(search, "i");
+        results = results.filter(
+          (r) =>
+            searchRegex.test(r.candidateId?.name || "") ||
+            searchRegex.test(r.candidateId?.email || "") ||
+            searchRegex.test(r.interviewSnapshot?.jobRole || "")
+        );
+      }
 
-    const total = await InterviewResult.countDocuments(query);
+      const total = await InterviewResult.countDocuments(query);
+
+      return {
+        count: results.length,
+        total,
+        page: Number(page),
+        pages: Math.ceil(total / Number(limit)),
+        attempts: results,
+      };
+    });
 
     res.status(200).json({
       success: true,
-      count: results.length,
-      total,
-      page: Number(page),
-      pages: Math.ceil(total / Number(limit)),
-      attempts: results,
+      ...cached,
     });
   } catch (error) {
     next(error);
@@ -401,41 +423,48 @@ export const getMockAttempts = async (req, res, next) => {
 export const getComplaints = async (req, res, next) => {
   try {
     const { status, category, search, page = 1, limit = 20 } = req.query;
+    const cacheKey = `admin:complaints:${status || ""}:${category || ""}:${search || ""}:${page}:${limit}`;
 
-    const query = {};
+    const cached = await cacheService.getOrSetCache(cacheKey, 60, async () => {
+      const query = {};
 
-    if (status) query.status = status;
-    if (category) query.category = category;
+      if (status) query.status = status;
+      if (category) query.category = category;
 
-    if (search) {
-      query.$or = [
-        { ticketId: { $regex: search, $options: "i" } },
-        { name: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-        { subject: { $regex: search, $options: "i" } },
-        { message: { $regex: search, $options: "i" } },
-      ];
-    }
+      if (search) {
+        query.$or = [
+          { ticketId: { $regex: search, $options: "i" } },
+          { name: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+          { subject: { $regex: search, $options: "i" } },
+          { message: { $regex: search, $options: "i" } },
+        ];
+      }
 
-    const skip = (Number(page) - 1) * Number(limit);
+      const skip = (Number(page) - 1) * Number(limit);
 
-    const [tickets, total] = await Promise.all([
-      Complaint.find(query)
-        .populate("userId", "name email role profilePicture")
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(Number(limit))
-        .lean(),
-      Complaint.countDocuments(query),
-    ]);
+      const [tickets, total] = await Promise.all([
+        Complaint.find(query)
+          .populate("userId", "name email role profilePicture")
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(Number(limit))
+          .lean(),
+        Complaint.countDocuments(query),
+      ]);
+
+      return {
+        count: tickets.length,
+        total,
+        page: Number(page),
+        pages: Math.ceil(total / Number(limit)),
+        complaints: tickets,
+      };
+    });
 
     res.status(200).json({
       success: true,
-      count: tickets.length,
-      total,
-      page: Number(page),
-      pages: Math.ceil(total / Number(limit)),
-      complaints: tickets,
+      ...cached,
     });
   } catch (error) {
     next(error);
@@ -469,6 +498,9 @@ export const updateComplaint = async (req, res, next) => {
 
     await complaint.save();
 
+    // Invalidate admin caches
+    await cacheService.invalidateCachePattern("admin:*");
+
     res.status(200).json({
       success: true,
       message: `Complaint ${complaint.ticketId} updated successfully.`,
@@ -485,37 +517,44 @@ export const updateComplaint = async (req, res, next) => {
 export const getUsers = async (req, res, next) => {
   try {
     const { role, search, page = 1, limit = 20 } = req.query;
+    const cacheKey = `admin:users:${role || ""}:${search || ""}:${page}:${limit}`;
 
-    const query = {};
+    const cached = await cacheService.getOrSetCache(cacheKey, 60, async () => {
+      const query = {};
 
-    if (role) query.role = role;
+      if (role) query.role = role;
 
-    if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-      ];
-    }
+      if (search) {
+        query.$or = [
+          { name: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+        ];
+      }
 
-    const skip = (Number(page) - 1) * Number(limit);
+      const skip = (Number(page) - 1) * Number(limit);
 
-    const [users, total] = await Promise.all([
-      User.find(query)
-        .select("-password")
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(Number(limit))
-        .lean(),
-      User.countDocuments(query),
-    ]);
+      const [users, total] = await Promise.all([
+        User.find(query)
+          .select("-password")
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(Number(limit))
+          .lean(),
+        User.countDocuments(query),
+      ]);
+
+      return {
+        count: users.length,
+        total,
+        page: Number(page),
+        pages: Math.ceil(total / Number(limit)),
+        users,
+      };
+    });
 
     res.status(200).json({
       success: true,
-      count: users.length,
-      total,
-      page: Number(page),
-      pages: Math.ceil(total / Number(limit)),
-      users,
+      ...cached,
     });
   } catch (error) {
     next(error);
@@ -566,6 +605,12 @@ export const grantBonusCredits = async (req, res, next) => {
       description: `Admin Granted Bonus Credits (+${amount} Credits)`,
     });
 
+    // Invalidate caches
+    await Promise.all([
+      cacheService.invalidateCachePattern("admin:*"),
+      cacheService.invalidateCache(`user:profile:${user._id}`),
+    ]);
+
     res.status(200).json({
       success: true,
       message: `Granted ${amount} bonus credits to ${user.name}. New balance: ${user.credits.availableCredits}`,
@@ -587,38 +632,45 @@ export const grantBonusCredits = async (req, res, next) => {
 export const getCampaigns = async (req, res, next) => {
   try {
     const { status, search, page = 1, limit = 20 } = req.query;
+    const cacheKey = `admin:campaigns:${status || ""}:${search || ""}:${page}:${limit}`;
 
-    const query = { mode: "REGULAR" };
+    const cached = await cacheService.getOrSetCache(cacheKey, 60, async () => {
+      const query = { mode: "REGULAR" };
 
-    if (status) query.status = status;
+      if (status) query.status = status;
 
-    if (search) {
-      query.$or = [
-        { title: { $regex: search, $options: "i" } },
-        { jobRole: { $regex: search, $options: "i" } },
-        { interviewCode: { $regex: search, $options: "i" } },
-      ];
-    }
+      if (search) {
+        query.$or = [
+          { title: { $regex: search, $options: "i" } },
+          { jobRole: { $regex: search, $options: "i" } },
+          { interviewCode: { $regex: search, $options: "i" } },
+        ];
+      }
 
-    const skip = (Number(page) - 1) * Number(limit);
+      const skip = (Number(page) - 1) * Number(limit);
 
-    const [campaigns, total] = await Promise.all([
-      Interview.find(query)
-        .populate("employer", "name email profilePicture isVerified")
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(Number(limit))
-        .lean(),
-      Interview.countDocuments(query),
-    ]);
+      const [campaigns, total] = await Promise.all([
+        Interview.find(query)
+          .populate("employer", "name email profilePicture isVerified")
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(Number(limit))
+          .lean(),
+        Interview.countDocuments(query),
+      ]);
+
+      return {
+        count: campaigns.length,
+        total,
+        page: Number(page),
+        pages: Math.ceil(total / Number(limit)),
+        campaigns,
+      };
+    });
 
     res.status(200).json({
       success: true,
-      count: campaigns.length,
-      total,
-      page: Number(page),
-      pages: Math.ceil(total / Number(limit)),
-      campaigns,
+      ...cached,
     });
   } catch (error) {
     next(error);
@@ -737,6 +789,13 @@ export const updateCampaignControls = async (req, res, next) => {
     await campaign.save();
     await campaign.populate("employer", "name email companyName profilePicture isVerified");
 
+    // Invalidate caches
+    await Promise.all([
+      cacheService.invalidateCachePattern("admin:*"),
+      cacheService.invalidateCachePattern(`interview:*`),
+      cacheService.invalidateCache(`employer:interviews:${campaign.employer?._id || campaign.employer}`),
+    ]);
+
     res.status(200).json({
       success: true,
       message: "Campaign updated successfully by admin",
@@ -746,5 +805,3 @@ export const updateCampaignControls = async (req, res, next) => {
     next(error);
   }
 };
-
-

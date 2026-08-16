@@ -3,6 +3,7 @@ import InterviewSession from "../models/InterviewSession.js";
 import Interview from "../models/interview.model.js";
 import User from "../../users/user.model.js";
 import { getScoreInterpretation } from "../utils/scoreInterpretation.js";
+import { cacheService } from "../../../shared/services/cacheService.js";
 
 /**
  * InterviewResultService
@@ -14,6 +15,7 @@ class InterviewResultService {
   /**
    * Fetches an interview result and returns a structured DTO.
    * Allows authorized employers or the evaluated candidate to view the result.
+   * Employs Redis caching for high performance on scorecard queries.
    * 
    * @param {string} interviewId
    * @param {string} resultId
@@ -28,8 +30,10 @@ class InterviewResultService {
       throw new Error("not_found");
     }
 
-    // 2. Fetch InterviewResult
-    const result = await InterviewResult.findOne({ _id: resultId, interviewId }).populate("sessionId");
+    // 2. Fetch InterviewResult (Cached in Redis RAM for 3600s)
+    const result = await cacheService.getOrSetCache(`interview:result:${resultId}`, 3600, async () => {
+      return await InterviewResult.findOne({ _id: resultId, interviewId }).populate("sessionId").lean();
+    });
     if (!result) {
       throw new Error("result_not_found");
     }

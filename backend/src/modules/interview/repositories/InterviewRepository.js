@@ -1,11 +1,13 @@
 import Interview from "../models/interview.model.js";
 import MockInterview from "../models/MockInterview.js";
 import InterviewResult from "../models/InterviewResult.js";
+import { cacheService } from "../../../shared/services/cacheService.js";
 
 /**
  * InterviewRepository Abstraction
  * Unified data access repository encapsulating queries for both Employer and Mock Interviews.
  * Prevents upper service layers from containing database location or collection-specific logic.
+ * Employs Redis query caching for ultra-low database load during peak interview traffic.
  */
 class InterviewRepository {
   /**
@@ -15,26 +17,31 @@ class InterviewRepository {
    */
   async findById(id) {
     if (!id) return null;
-    let interview = await Interview.findById(id);
-    if (!interview) {
-      interview = await MockInterview.findById(id);
-    }
-    return interview;
+    return await cacheService.getOrSetCache(`interview:id:${id}`, 120, async () => {
+      let interview = await Interview.findById(id);
+      if (!interview) {
+        interview = await MockInterview.findById(id);
+      }
+      return interview;
+    });
   }
 
   /**
    * Find an interview document by code across both collections.
+   * Cached in Redis for 300s to handle high-frequency link clicks.
    * @param {string} code 
    * @returns {Promise<Object|null>}
    */
   async findByCode(code) {
     if (!code) return null;
     const formattedCode = code.toUpperCase();
-    let interview = await Interview.findOne({ interviewCode: formattedCode });
-    if (!interview) {
-      interview = await MockInterview.findOne({ interviewCode: formattedCode });
-    }
-    return interview;
+    return await cacheService.getOrSetCache(`interview:code:${formattedCode}`, 300, async () => {
+      let interview = await Interview.findOne({ interviewCode: formattedCode });
+      if (!interview) {
+        interview = await MockInterview.findOne({ interviewCode: formattedCode });
+      }
+      return interview;
+    });
   }
 
   /**
@@ -43,7 +50,10 @@ class InterviewRepository {
    * @returns {Promise<Array>}
    */
   async findEmployerInterviews(employerId) {
-    return await Interview.find({ employer: employerId }).sort({ createdAt: -1 });
+    if (!employerId) return [];
+    return await cacheService.getOrSetCache(`employer:interviews:${employerId}`, 60, async () => {
+      return await Interview.find({ employer: employerId }).sort({ createdAt: -1 });
+    });
   }
 
   /**
@@ -52,24 +62,28 @@ class InterviewRepository {
    * @returns {Promise<Array>}
    */
   async findCandidateAssignedInterviews(candidateEmail) {
+    if (!candidateEmail) return [];
     const emailLower = candidateEmail.toLowerCase();
-    const interviews = await Interview.find({
-      "assignedCandidates.email": emailLower,
-      status: { $in: ["active", "completed", "CREATED", "IN_PROGRESS", "COMPLETED"] },
-      isVerified: true,
-    })
-      .populate("employer", "name")
-      .sort({ createdAt: -1 })
-      .lean();
 
-    return interviews.map((interview) => {
-      const candidateInfo = interview.assignedCandidates?.find(c => c.email === emailLower);
-      delete interview.assignedCandidates;
-      delete interview.customQuestions; // Protect question bank from candidate Network tab inspection
-      return {
-        ...interview,
-        candidateStatus: candidateInfo?.status || "Pending",
-      };
+    return await cacheService.getOrSetCache(`candidate:assigned:${emailLower}`, 60, async () => {
+      const interviews = await Interview.find({
+        "assignedCandidates.email": emailLower,
+        status: { $in: ["active", "completed", "CREATED", "IN_PROGRESS", "COMPLETED"] },
+        isVerified: true,
+      })
+        .populate("employer", "name")
+        .sort({ createdAt: -1 })
+        .lean();
+
+      return interviews.map((interview) => {
+        const candidateInfo = interview.assignedCandidates?.find(c => c.email === emailLower);
+        delete interview.assignedCandidates;
+        delete interview.customQuestions; // Protect question bank from candidate Network tab inspection
+        return {
+          ...interview,
+          candidateStatus: candidateInfo?.status || "Pending",
+        };
+      });
     });
   }
 
@@ -110,7 +124,9 @@ class InterviewRepository {
    * @returns {Promise<Object>} Created MockInterview document
    */
   async saveMock(data) {
-    return await MockInterview.create(data);
+    const mock = await MockInterview.create(data);
+    await cacheService.invalidateCachePattern("admin:mocks:*");
+    return mock;
   }
 
   /**
@@ -121,7 +137,10 @@ class InterviewRepository {
    * @param {string} [resultId] 
    */
   async updateCandidateStatus(interviewId, candidateEmail, status, resultId = null) {
-    const interview = await this.findById(interviewId);
+    let interview = await Interview.findById(interviewId);
+    if (!interview) {
+      interview = await MockInterview.findById(interviewId);
+    }
     if (!interview) return null;
 
     const emailLower = candidateEmail.toLowerCase();
@@ -133,9 +152,29 @@ class InterviewRepository {
       if (resultId) candidate.resultId = resultId;
 
       await interview.save();
+
+      // Invalidate relevant caches
+      await Promise.all([
+        cacheService.invalidateCache(`interview:id:${interviewId}`),
+        cacheService.invalidateCache(`interview:code:${interview.interviewCode}`),
+        cacheService.invalidateCache(`candidate:assigned:${emailLower}`),
+        interview.employer ? cacheService.invalidateCache(`employer:interviews:${interview.employer}`) : Promise.resolve(),
+      ]);
     }
 
     return interview;
+  }
+
+  /**
+   * Invalidate cached interview entries
+   */
+  async invalidateInterview(interviewId, interviewCode, employerId) {
+    const promises = [];
+    if (interviewId) promises.push(cacheService.invalidateCache(`interview:id:${interviewId}`));
+    if (interviewCode) promises.push(cacheService.invalidateCache(`interview:code:${interviewCode.toUpperCase()}`));
+    if (employerId) promises.push(cacheService.invalidateCache(`employer:interviews:${employerId}`));
+    promises.push(cacheService.invalidateCachePattern("admin:campaigns:*"));
+    await Promise.all(promises);
   }
 
   /**

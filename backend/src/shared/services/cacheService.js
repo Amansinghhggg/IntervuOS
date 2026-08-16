@@ -47,6 +47,40 @@ class CacheService {
   }
 
   /**
+   * Directly get a cached value
+   * @param {string} key
+   * @returns {Promise<any|null>}
+   */
+  async get(key) {
+    if (!isRedisReady()) return null;
+    try {
+      const data = await redisClient.get(key);
+      return data ? JSON.parse(data) : null;
+    } catch (err) {
+      console.warn(`⚠️ [CacheService] Redis get error for key '${key}':`, err.message);
+      return null;
+    }
+  }
+
+  /**
+   * Directly set a cached value with TTL
+   * @param {string} key
+   * @param {any} value
+   * @param {number} ttlSeconds
+   * @returns {Promise<boolean>}
+   */
+  async set(key, value, ttlSeconds = 300) {
+    if (!isRedisReady() || value === undefined) return false;
+    try {
+      await redisClient.set(key, JSON.stringify(value), 'EX', ttlSeconds);
+      return true;
+    } catch (err) {
+      console.warn(`⚠️ [CacheService] Redis set error for key '${key}':`, err.message);
+      return false;
+    }
+  }
+
+  /**
    * Invalidates a specific Redis cache key
    * 
    * @param {string} key 

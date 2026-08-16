@@ -23,7 +23,7 @@ class InterviewService {
       if (!existing) isUnique = true;
     }
 
-    return await Interview.create({
+    const created = await Interview.create({
       title: validatedData.title,
       jobRole: validatedData.jobRole,
       description: validatedData.description,
@@ -39,6 +39,11 @@ class InterviewService {
       employer: employerId,
       assignedCandidates,
     });
+
+    const InterviewRepository = (await import("../repositories/InterviewRepository.js")).default;
+    await InterviewRepository.invalidateInterview(created._id, created.interviewCode, employerId);
+
+    return created;
   }
 
   async getEmployerInterviews(employerId) {
@@ -131,14 +136,24 @@ class InterviewService {
     Object.assign(interview, validatedData);
     await interview.save();
 
+    const InterviewRepository = (await import("../repositories/InterviewRepository.js")).default;
+    await InterviewRepository.invalidateInterview(interview._id, interview.interviewCode, employerId);
+
     return interview;
   }
 
   async deleteInterview(interviewId, employerId) {
-    return await Interview.findOneAndDelete({
+    const deleted = await Interview.findOneAndDelete({
       _id: interviewId,
       employer: employerId,
     });
+
+    if (deleted) {
+      const InterviewRepository = (await import("../repositories/InterviewRepository.js")).default;
+      await InterviewRepository.invalidateInterview(deleted._id, deleted.interviewCode, employerId);
+    }
+
+    return deleted;
   }
 
   async getAssignedInterviews(candidateEmail) {

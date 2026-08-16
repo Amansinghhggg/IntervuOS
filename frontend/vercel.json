@@ -5,7 +5,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://ForkTalent.onrender.com/api/:path*"
+      "destination": "https://intervuos.onrender.com/api/:path*"
     },
     {
       "source": "/(.*)",

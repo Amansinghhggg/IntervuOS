@@ -20,7 +20,7 @@ const sendTokenResponse = (user, statusCode, res) => {
   const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   };
 
@@ -269,11 +269,14 @@ const googleAuth = async (req, res, next) => {
 
     let payload;
     try {
-      const ticket = await googleClient.verifyIdToken({
-        idToken: token,
-      });
+      const verifyOptions = { idToken: token };
+      if (process.env.GOOGLE_CLIENT_ID) {
+        verifyOptions.audience = process.env.GOOGLE_CLIENT_ID;
+      }
+      const ticket = await googleClient.verifyIdToken(verifyOptions);
       payload = ticket.getPayload();
     } catch (err) {
+      console.error("❌ Google OAuth verification error:", err.message);
       return res.status(400).json({ success: false, message: "Invalid Google token: " + err.message });
     }
 

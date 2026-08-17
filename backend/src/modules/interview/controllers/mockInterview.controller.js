@@ -2,6 +2,7 @@ import MockInterviewService from "../services/MockInterviewService.js";
 import InterviewRepository from "../repositories/InterviewRepository.js";
 import User from "../../users/user.model.js";
 import Transaction from "../../payments/models/Transaction.js";
+import { cacheService } from "../../../shared/services/cacheService.js";
 
 /**
  * @desc    Create a candidate mock interview
@@ -145,6 +146,12 @@ export const deleteMockInterview = async (req, res, next) => {
 
     const MockInterview = (await import("../models/MockInterview.js")).default;
     await MockInterview.deleteOne({ _id: req.params.id, candidate: req.user._id });
+
+    // Invalidate caches
+    await Promise.all([
+      InterviewRepository.invalidateInterview(req.params.id, mockDoc.interviewCode, null),
+      cacheService.invalidateCachePattern("admin:mocks:*"),
+    ]);
 
     res.status(200).json({
       success: true,

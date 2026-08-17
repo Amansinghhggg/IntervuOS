@@ -169,9 +169,11 @@ class InterviewRepository {
     // Invalidate relevant caches
     await Promise.all([
       cacheService.invalidateCache(`interview:id:${interviewId}`),
-      cacheService.invalidateCache(`interview:code:${interview.interviewCode}`),
-      cacheService.invalidateCache(`candidate:assigned:${emailLower}`),
+      interview.interviewCode ? cacheService.invalidateCache(`interview:code:${interview.interviewCode.toUpperCase()}`) : Promise.resolve(),
+      emailLower ? cacheService.invalidateCache(`candidate:assigned:${emailLower}`) : Promise.resolve(),
+      cacheService.invalidateCachePattern("candidate:assigned:*"),
       interview.employer ? cacheService.invalidateCache(`employer:interviews:${interview.employer}`) : Promise.resolve(),
+      cacheService.invalidateCachePattern("admin:campaigns:*"),
     ]);
 
     return interview;
@@ -186,6 +188,7 @@ class InterviewRepository {
     if (interviewCode) promises.push(cacheService.invalidateCache(`interview:code:${interviewCode.toUpperCase()}`));
     if (employerId) promises.push(cacheService.invalidateCache(`employer:interviews:${employerId}`));
     promises.push(cacheService.invalidateCachePattern("admin:campaigns:*"));
+    promises.push(cacheService.invalidateCachePattern("candidate:assigned:*"));
     await Promise.all(promises);
   }
 

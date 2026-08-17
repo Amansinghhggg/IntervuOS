@@ -196,6 +196,9 @@ class InterviewService {
         status: candidateStatus,
       });
       await interview.save();
+
+      const InterviewRepository = (await import("../repositories/InterviewRepository.js")).default;
+      await InterviewRepository.invalidateInterview(interview._id, interview.interviewCode, interview.employer);
     } else {
       candidateStatus = interview.assignedCandidates[candidateIndex].status;
     }
@@ -248,6 +251,10 @@ class InterviewService {
     }
 
     await interview.save();
+
+    const InterviewRepository = (await import("../repositories/InterviewRepository.js")).default;
+    await InterviewRepository.invalidateInterview(interview._id, interview.interviewCode, employerId);
+
     return interview;
   }
 

@@ -8,6 +8,7 @@ import { InterviewConfig } from "./InterviewConfig.js";
 import { createInterviewEngine } from "./interviewEngine.js";
 import { AIConfig } from "../providers/AIProvider/config/ai.config.js";
 import { voiceSessionCache } from "./voiceSessionCache.service.js";
+import { cacheService } from "../../../shared/services/cacheService.js";
 
 const sessionLocks = new Map();
 
@@ -486,6 +487,9 @@ class InterviewSessionService {
       interviewResult.aiMetadata.evaluatedAt = new Date();
       await interviewResult.save();
 
+      // Invalidate result cache so fresh evaluation is immediately visible
+      await cacheService.invalidateCache(`interview:result:${interviewResult._id}`).catch(() => null);
+
       console.log(`[Evaluation] InterviewResult completed: ${interviewResult._id}`);
       return { success: true, result: interviewResult };
 
@@ -499,6 +503,7 @@ class InterviewSessionService {
           interviewResult.recommendation = "NOT_EVALUATED";
           interviewResult.reasoning = "Unable to generate an evaluation due to insufficient interview responses.";
           await interviewResult.save();
+          await cacheService.invalidateCache(`interview:result:${interviewResult._id}`).catch(() => null);
         } catch (saveError) {
           console.error("[Evaluation] Could not update to FAILED state", saveError);
         }

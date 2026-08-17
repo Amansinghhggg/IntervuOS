@@ -136,3 +136,4 @@ class ResumableUploadService {
 }
 
 export const resumableUploadService = new ResumableUploadService();
+export default resumableUploadService;

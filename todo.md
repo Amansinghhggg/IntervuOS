@@ -1,10 +1,4 @@
----------employer side---------
-candidate eval and session page 
-help and suport
-manage subscription ----> shcedule a campaing page ?
-
-
-both sides
- interview page 
- landing page 
- 
+loading and uplaoding seesion pages 
+interview page 
+adimn side ui ux and edit camping backedn and frontend impmteation 
+check responisveness

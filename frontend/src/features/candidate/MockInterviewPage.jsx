@@ -195,9 +195,9 @@ export default function MockInterviewPage() {
         setShowDisclosureModal(false);
         const elem = document.documentElement;
         if (elem.requestFullscreen && !document.fullscreenElement) {
-          elem.requestFullscreen().catch(() => {});
+          elem.requestFullscreen().catch(() => { });
         }
-        toast.success(`Deducted ${duration} Credits! Starting session...`, { id: toastId });
+        toast.success(`Starting session...`, { id: toastId });
         navigate(`/candidate/mock-interview/${data.interview._id}/live`);
       } else {
         toast.error("Failed to create mock interview", { id: toastId });
@@ -313,7 +313,7 @@ export default function MockInterviewPage() {
                       onClick={() => {
                         const elem = document.documentElement;
                         if (elem.requestFullscreen && !document.fullscreenElement) {
-                          elem.requestFullscreen().catch(() => {});
+                          elem.requestFullscreen().catch(() => { });
                         }
                         navigate(`/candidate/interviews/${item.id}/live`);
                       }}

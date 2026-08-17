@@ -15,6 +15,16 @@ class CacheService {
    * @returns {Promise<Object|Array|null>}
    */
   async getOrSetCache(key, ttlSeconds, fetchFunction) {
+    if (!fetchFunction || typeof fetchFunction !== 'function') {
+      return null;
+    }
+
+    if (!key || typeof key !== 'string') {
+      return await fetchFunction();
+    }
+
+    const ttl = (typeof ttlSeconds === 'number' && ttlSeconds > 0) ? ttlSeconds : 300;
+
     // 1. Try reading from Redis RAM if connected
     if (isRedisReady()) {
       try {
@@ -37,7 +47,7 @@ class CacheService {
     // 3. Store fresh data in Redis RAM with TTL
     if (isRedisReady() && freshData !== undefined && freshData !== null) {
       try {
-        await redisClient.set(key, JSON.stringify(freshData), 'EX', ttlSeconds);
+        await redisClient.set(key, JSON.stringify(freshData), 'EX', ttl);
       } catch (err) {
         console.warn(`⚠️ [CacheService] Redis write error for key '${key}':`, err.message);
       }
@@ -52,7 +62,7 @@ class CacheService {
    * @returns {Promise<any|null>}
    */
   async get(key) {
-    if (!isRedisReady()) return null;
+    if (!key || typeof key !== 'string' || !isRedisReady()) return null;
     try {
       const data = await redisClient.get(key);
       return data ? JSON.parse(data) : null;
@@ -70,9 +80,10 @@ class CacheService {
    * @returns {Promise<boolean>}
    */
   async set(key, value, ttlSeconds = 300) {
-    if (!isRedisReady() || value === undefined) return false;
+    if (!key || typeof key !== 'string' || value === undefined || !isRedisReady()) return false;
     try {
-      await redisClient.set(key, JSON.stringify(value), 'EX', ttlSeconds);
+      const ttl = (typeof ttlSeconds === 'number' && ttlSeconds > 0) ? ttlSeconds : 300;
+      await redisClient.set(key, JSON.stringify(value), 'EX', ttl);
       return true;
     } catch (err) {
       console.warn(`⚠️ [CacheService] Redis set error for key '${key}':`, err.message);
@@ -87,7 +98,7 @@ class CacheService {
    * @returns {Promise<boolean>}
    */
   async invalidateCache(key) {
-    if (!isRedisReady()) return false;
+    if (!key || typeof key !== 'string' || !isRedisReady()) return false;
     try {
       await redisClient.del(key);
       console.log(`🧹 [CacheService] Invalidated key: ${key}`);
@@ -105,10 +116,10 @@ class CacheService {
    * @returns {Promise<number>} Number of keys deleted
    */
   async invalidateCachePattern(pattern) {
-    if (!isRedisReady()) return 0;
+    if (!pattern || typeof pattern !== 'string' || !isRedisReady()) return 0;
     try {
       const keys = await redisClient.keys(pattern);
-      if (keys.length > 0) {
+      if (keys && keys.length > 0) {
         const deleted = await redisClient.del(...keys);
         console.log(`🧹 [CacheService] Invalidated ${deleted} key(s) matching pattern '${pattern}'`);
         return deleted;
@@ -122,3 +133,4 @@ class CacheService {
 }
 
 export const cacheService = new CacheService();
+export default cacheService;

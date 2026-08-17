@@ -11,7 +11,7 @@ class VoiceSessionCacheService {
    * Generates a standard Redis HASH key for active interview session state
    */
   getCacheKey(interviewId, candidateId) {
-    return `voice:session:${interviewId}:${candidateId}`;
+    return `voice:session:${String(interviewId || '')}:${String(candidateId || '')}`;
   }
 
   /**
@@ -24,7 +24,7 @@ class VoiceSessionCacheService {
    * @returns {Promise<boolean>}
    */
   async setSession(interviewId, candidateId, sessionData, ttlSeconds = 7200) {
-    if (!isRedisReady()) return false;
+    if (!interviewId || !candidateId || !sessionData || !isRedisReady()) return false;
 
     try {
       const key = this.getCacheKey(interviewId, candidateId);
@@ -61,7 +61,7 @@ class VoiceSessionCacheService {
    * @returns {Promise<Object|null>}
    */
   async getSession(interviewId, candidateId) {
-    if (!isRedisReady()) return null;
+    if (!interviewId || !candidateId || !isRedisReady()) return null;
 
     try {
       const key = this.getCacheKey(interviewId, candidateId);
@@ -69,6 +69,15 @@ class VoiceSessionCacheService {
 
       if (!data || Object.keys(data).length === 0) {
         return null; // Cache miss
+      }
+
+      let parsedQuestions = [];
+      if (data.questionsJson) {
+        try {
+          parsedQuestions = JSON.parse(data.questionsJson);
+        } catch {
+          parsedQuestions = [];
+        }
       }
 
       return {
@@ -82,7 +91,7 @@ class VoiceSessionCacheService {
         expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
         lastTranscriptSnippet: data.lastTranscriptSnippet || '',
         avatarExpression: data.avatarExpression || 'neutral',
-        questions: data.questionsJson ? JSON.parse(data.questionsJson) : [],
+        questions: parsedQuestions,
         updatedAt: Number(data.updatedAt || Date.now()),
         _fromCache: true,
       };
@@ -101,7 +110,7 @@ class VoiceSessionCacheService {
    * @returns {Promise<boolean>}
    */
   async updateSessionFields(interviewId, candidateId, updateFields) {
-    if (!isRedisReady()) return false;
+    if (!interviewId || !candidateId || !updateFields || !isRedisReady()) return false;
 
     try {
       const key = this.getCacheKey(interviewId, candidateId);
@@ -131,7 +140,7 @@ class VoiceSessionCacheService {
    * @returns {Promise<boolean>}
    */
   async clearSession(interviewId, candidateId) {
-    if (!isRedisReady()) return false;
+    if (!interviewId || !candidateId || !isRedisReady()) return false;
 
     try {
       const key = this.getCacheKey(interviewId, candidateId);
@@ -145,3 +154,4 @@ class VoiceSessionCacheService {
 }
 
 export const voiceSessionCache = new VoiceSessionCacheService();
+export default voiceSessionCache;

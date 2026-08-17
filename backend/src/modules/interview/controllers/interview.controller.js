@@ -8,6 +8,7 @@ import {
   updateInterviewSchema,
   joinInterviewSchema,
 } from "../validation/interview.validation.js";
+import { cacheService } from "../../../shared/services/cacheService.js";
 
 // @desc    Create a new interview
 // @route   POST /api/interviews
@@ -592,7 +593,6 @@ const performCandidateReEnrollment = async (interview, targetCandidateId, target
   const InterviewResult = (await import("../models/InterviewResult.js")).default;
   const CloudinaryService = (await import("../services/CloudinaryService.js")).default;
   const User = (await import("../../users/user.model.js")).default;
-  const cacheService = (await import("../../../shared/services/cacheService.js")).default;
 
   let candidateEmail = null;
   let candidateUser = null;

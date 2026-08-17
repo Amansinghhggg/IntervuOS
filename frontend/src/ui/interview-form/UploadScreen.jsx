@@ -49,44 +49,68 @@ const UploadScreen = ({
   }, [uploadState]);
 
   // Calculate percentage and stage details
-  const { displayPercent, stageName, bytesString, currentStage } = useMemo(() => {
+  const { displayPercent, stageName, bytesString, currentStage, stageProgressVal } = useMemo(() => {
     if (uploadState === UPLOAD_STATES.COMPLETED) {
-      return { displayPercent: 100, stageName: "Upload complete", bytesString: null, currentStage: UPLOAD_STAGES.FINALIZE };
+      return { 
+        displayPercent: 100, 
+        stageName: "Upload complete", 
+        bytesString: null, 
+        currentStage: UPLOAD_STAGES.FINALIZE,
+        stageProgressVal: 100
+      };
     }
 
     if (!progress) {
-      const defaultPercent = uploadState === UPLOAD_STATES.QUEUED ? 5 : 15;
+      const defaultPercent = uploadState === UPLOAD_STATES.QUEUED ? 4 : 10;
       return { 
         displayPercent: defaultPercent, 
         stageName: "Preparing upload...", 
         bytesString: null, 
-        currentStage: UPLOAD_STAGES.RECORDING_UPLOAD 
+        currentStage: UPLOAD_STAGES.RECORDING_UPLOAD,
+        stageProgressVal: 0
       };
     }
 
     const overall = typeof progress.overallProgress === "number" ? progress.overallProgress : 0;
     const stage = progress.currentStage || UPLOAD_STAGES.RECORDING_UPLOAD;
     const stageProg = typeof progress.stageProgress === "number" ? progress.stageProgress : 0;
+    const isNetworkDone = progress.isNetworkComplete;
+    const isServerDone = progress.isServerComplete;
 
     let name = "Uploading recording...";
     if (stage === UPLOAD_STAGES.RECORDING_UPLOAD) {
-      name = stageProg > 0 ? `Uploading video & audio (${stageProg}%)` : "Connecting to video storage...";
+      if (isServerDone) {
+        name = "Video archived to cloud storage";
+      } else if (isNetworkDone || stageProg >= 100) {
+        name = "Archiving & securing video in cloud storage...";
+      } else if (stageProg > 0) {
+        name = `Uploading video & audio (${stageProg}%)`;
+      } else {
+        name = "Connecting to video storage...";
+      }
     } else if (stage === UPLOAD_STAGES.SESSION_UPLOAD) {
-      name = "Saving interview session & answers...";
+      name = "Saving interview responses & telemetry...";
     } else if (stage === UPLOAD_STAGES.FINALIZE) {
       name = "Verifying session integrity...";
     }
 
     let bStr = null;
-    if (progress.bytesLoaded && progress.totalBytes) {
-      bStr = `${formatBytes(progress.bytesLoaded)} / ${formatBytes(progress.totalBytes)}`;
+    if (progress.bytesLoaded !== undefined && progress.totalBytes > 0) {
+      const loadedFmt = formatBytes(progress.bytesLoaded);
+      const totalFmt = formatBytes(progress.totalBytes);
+      if (isNetworkDone && !isServerDone) {
+        bStr = `${totalFmt} / ${totalFmt} • Encrypting`;
+      } else {
+        bStr = `${loadedFmt} / ${totalFmt}`;
+      }
     }
 
     return {
       displayPercent: Math.max(0, Math.min(100, overall)),
       stageName: name,
       bytesString: bStr,
-      currentStage: stage
+      currentStage: stage,
+      stageProgressVal: stageProg
     };
   }, [uploadState, progress]);
 
@@ -267,7 +291,11 @@ const UploadScreen = ({
                 </div>
                 
                 <span className="font-mono text-[11px] text-[var(--color-text-muted,#6E7A8A)]">
-                  {stage1Status === "done" ? "Uploaded" : stage1Status === "active" ? `${progress?.stageProgress || displayPercent}%` : "Pending"}
+                  {stage1Status === "done" 
+                    ? "Uploaded" 
+                    : stage1Status === "active" 
+                      ? (progress?.isNetworkComplete && !progress?.isServerComplete ? "Archiving..." : `${stageProgressVal || 0}%`) 
+                      : "Pending"}
                 </span>
               </div>
 

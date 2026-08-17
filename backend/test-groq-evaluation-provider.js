@@ -16,7 +16,7 @@ dotenv.config();
 
 // Force Groq as the AI provider
 process.env.AI_PROVIDER = "groq";
-process.env.GROQ_MODEL = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+process.env.GROQ_MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
 
 import { AIConfig } from "./src/modules/interview/providers/AIProvider/config/ai.config.js";
 AIConfig.provider = "groq";

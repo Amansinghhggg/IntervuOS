@@ -14,7 +14,7 @@ export const AIConfig = {
   apiKey: process.env.GEMINI_API_KEY,
   model: process.env.GEMINI_MODEL || "gemini-1.5-flash",
   groqApiKey: process.env.GROQ_API_KEY,
-  groqModel: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+  groqModel: process.env.GROQ_MODEL || "openai/gpt-oss-120b",
   temperature: parseFloat(process.env.TEMPERATURE) || 0.7,
   maxOutputTokens: parseInt(process.env.MAX_OUTPUT_TOKENS, 10) || 2048,
   timeout: parseInt(process.env.REQUEST_TIMEOUT, 10) || 30000,

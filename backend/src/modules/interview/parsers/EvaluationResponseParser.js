@@ -24,27 +24,39 @@ export class EvaluationResponseParser {
 
     let text = response.text.trim();
 
-    // Strip out markdown formatting (e.g. ```json ... ``` or ``` ... ```)
-    if (text.startsWith("```")) {
-      // Find the end of the first line (e.g. ```json)
-      const firstNewline = text.indexOf("\n");
-      if (firstNewline !== -1) {
-        text = text.substring(firstNewline).trim();
-      }
+    // 1. Remove reasoning / thinking tags (e.g. <think>...</think>)
+    text = text.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
 
-      // Remove trailing ```
-      if (text.endsWith("```")) {
-        text = text.substring(0, text.length - 3).trim();
+    // 2. Extract JSON from markdown code block if present
+    const markdownMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+    if (markdownMatch && markdownMatch[1]) {
+      text = markdownMatch[1].trim();
+    } else {
+      // 3. Extract the outermost JSON object if raw text wraps it
+      const firstBrace = text.indexOf("{");
+      const lastBrace = text.lastIndexOf("}");
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        text = text.substring(firstBrace, lastBrace + 1).trim();
       }
     }
 
+    // 4. Try standard JSON parse
     try {
       return JSON.parse(text);
-    } catch (error) {
-      throw new ParsingError(
-        `Failed to parse AI evaluation response as JSON: ${error.message}`,
-        response.text
-      );
+    } catch (firstError) {
+      // 5. Attempt cleanup of common LLM formatting issues (trailing commas, control chars)
+      try {
+        const cleaned = text
+          .replace(/,\s*([}\]])/g, "$1") // Remove trailing commas
+          .replace(/[\u0000-\u001F\u007F-\u009F]/g, " "); // Replace unescaped control chars
+
+        return JSON.parse(cleaned);
+      } catch (secondError) {
+        throw new ParsingError(
+          `Failed to parse AI evaluation response as JSON: ${firstError.message}`,
+          response.text
+        );
+      }
     }
   }
 }

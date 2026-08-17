@@ -28,6 +28,22 @@ export class InterviewSessionBuilder {
     return this;
   }
 
+  attachBackendSession(backendSession) {
+    this._ensureNotFinalized();
+    if (backendSession) {
+      if (backendSession._id) {
+        this.sessionData._id = backendSession._id;
+      }
+      if (backendSession.interviewId) {
+        this.sessionData.interviewId = backendSession.interviewId;
+      }
+      if (backendSession.candidateId) {
+        this.sessionData.candidateId = backendSession.candidateId;
+      }
+    }
+    return this;
+  }
+
   attachRecording(recordingSession) {
     this._ensureNotFinalized();
     this.sessionData.recording = recordingSession;

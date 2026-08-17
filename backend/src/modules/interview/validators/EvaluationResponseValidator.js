@@ -85,6 +85,77 @@ const EvaluationResponseSchema = z
  */
 export class EvaluationResponseValidator {
   /**
+   * Normalizes parsed data before schema validation to guard against
+   * minor LLM formatting differences (e.g. recommendation case, score clamps).
+   */
+  static #normalize(data) {
+    if (!data || typeof data !== "object") return {};
+
+    const normalized = { ...data };
+
+    // 1. Normalize recommendation
+    if (typeof normalized.recommendation === "string") {
+      let rec = normalized.recommendation.trim().toUpperCase().replace(/[\s-]+/g, "_");
+      
+      if (rec === "NO_HIRE" || rec === "STRONG_NO_HIRE" || rec === "NOT_RECOMMENDED") {
+        rec = "REJECT";
+      } else if (rec === "RECOMMENDED" || rec === "PASS") {
+        rec = "HIRE";
+      } else if (rec === "STRONG_PASS") {
+        rec = "STRONG_HIRE";
+      }
+
+      if (["STRONG_HIRE", "HIRE", "BORDERLINE", "NEEDS_IMPROVEMENT", "REJECT", "NOT_EVALUATED"].includes(rec)) {
+        normalized.recommendation = rec;
+      } else {
+        // Fallback based on overall score
+        const overall = Number(normalized.scores?.overall) || 0;
+        if (overall >= 8.5) normalized.recommendation = "STRONG_HIRE";
+        else if (overall >= 7.0) normalized.recommendation = "HIRE";
+        else if (overall >= 5.5) normalized.recommendation = "BORDERLINE";
+        else if (overall >= 4.0) normalized.recommendation = "NEEDS_IMPROVEMENT";
+        else normalized.recommendation = "REJECT";
+      }
+    }
+
+    // 2. Clamp scores to 0-10
+    if (normalized.scores && typeof normalized.scores === "object") {
+      const clampedScores = {};
+      for (const [key, val] of Object.entries(normalized.scores)) {
+        const num = Number(val);
+        clampedScores[key] = isNaN(num) ? 0 : Math.min(10, Math.max(0, Math.round(num * 10) / 10));
+      }
+      normalized.scores = clampedScores;
+    }
+
+    // 3. Normalize question evaluations
+    if (Array.isArray(normalized.questionEvaluations)) {
+      normalized.questionEvaluations = normalized.questionEvaluations.map((qe, idx) => {
+        if (!qe || typeof qe !== "object") return { questionId: `q${idx + 1}` };
+        const qScores = {};
+        if (qe.scores && typeof qe.scores === "object") {
+          for (const [k, v] of Object.entries(qe.scores)) {
+            const n = Number(v);
+            qScores[k] = isNaN(n) ? 0 : Math.min(10, Math.max(0, Math.round(n * 10) / 10));
+          }
+        }
+        return {
+          ...qe,
+          questionId: qe.questionId !== undefined ? qe.questionId : `q${idx + 1}`,
+          scores: {
+            technical: qScores.technical ?? 0,
+            communication: qScores.communication ?? 0,
+          },
+          feedback: typeof qe.feedback === "string" ? qe.feedback : "Evaluated answer.",
+          keyTakeaways: Array.isArray(qe.keyTakeaways) ? qe.keyTakeaways.filter(t => typeof t === "string") : []
+        };
+      });
+    }
+
+    return normalized;
+  }
+
+  /**
    * Validates a parsed evaluation object against the schema.
    *
    * @param {Object} parsedData - The parsed JSON object from EvaluationResponseParser.
@@ -93,7 +164,8 @@ export class EvaluationResponseValidator {
    */
   static validate(parsedData) {
     try {
-      return EvaluationResponseSchema.parse(parsedData);
+      const normalizedData = EvaluationResponseValidator.#normalize(parsedData);
+      return EvaluationResponseSchema.parse(normalizedData);
     } catch (error) {
       console.error("[EvaluationValidator] Validation failed for data:", JSON.stringify(parsedData, null, 2));
       if (error instanceof z.ZodError) {

@@ -36,6 +36,9 @@ export const InterviewRuntimeProvider = ({ children, sessionId, candidateId }) =
 
   // Provide a specialized action to attach monitoring facts and finalize
   const finalizeInterviewSession = (conversation, finalizedRecordingSession, backendSession) => {
+    if (backendSession) {
+      sessionBuilder.attachBackendSession(backendSession);
+    }
     sessionBuilder.attachRecording(finalizedRecordingSession || recordingRuntime.session);
 
     // Prefer the backend session's questions but normalize their timestamps to the frontend timeline

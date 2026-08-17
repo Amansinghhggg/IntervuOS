@@ -88,6 +88,8 @@ export class UploadQueue {
     }
 
     getJobs() {
-        return [...this.jobs];
+        return this.jobs.map(job => Object.assign(Object.create(Object.getPrototypeOf(job)), job, {
+            progress: { ...job.progress }
+        }));
     }
 }

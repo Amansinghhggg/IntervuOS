@@ -4,13 +4,13 @@ dotenv.config();
 // We override some config manually if we want to ensure it tries Groq
 process.env.AI_PROVIDER = 'groq';
 // Using the specified model
-process.env.GROQ_MODEL = 'llama-3.3-70b-versatile';
+process.env.GROQ_MODEL = 'openai/gpt-oss-120b';
 
 // Dynamically import to ensure process.env changes take effect if config is lazy,
 // but ai.config is evaluated immediately. Let's just override AIConfig directly.
 import { AIConfig } from "./src/modules/interview/providers/AIProvider/config/ai.config.js";
 AIConfig.provider = 'groq';
-AIConfig.groqModel = 'llama-3.3-70b-versatile';
+AIConfig.groqModel = 'openai/gpt-oss-120b';
 
 import { createAIProvider } from "./src/modules/interview/providers/AIProvider/index.js";
 

@@ -54,9 +54,9 @@ export function usePersistence() {
         }
     }, [activeJobId]);
 
-    const activeJob = jobs.find(j => j.id === activeJobId) || 
+    const activeJob = (activeJobId ? jobs.find(j => j.id === activeJobId) : null) || 
                       jobs.find(j => ['QUEUED', 'UPLOADING', 'PROCESSING', 'RETRYING'].includes(j.state)) || 
-                      null;
+                      (jobs.length > 0 ? jobs[jobs.length - 1] : null);
 
     const clear = useCallback(() => {
         setActiveJobId(null);

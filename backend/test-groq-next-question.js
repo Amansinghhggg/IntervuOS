@@ -3,11 +3,11 @@ dotenv.config();
 
 process.env.QUESTION_PROVIDER = 'groq';
 process.env.AI_PROVIDER = 'groq';
-process.env.GROQ_MODEL = 'llama-3.3-70b-versatile';
+process.env.GROQ_MODEL = 'openai/gpt-oss-120b';
 
 import { AIConfig } from "./src/modules/interview/providers/AIProvider/config/ai.config.js";
 AIConfig.provider = 'groq';
-AIConfig.groqModel = 'llama-3.3-70b-versatile';
+AIConfig.groqModel = 'openai/gpt-oss-120b';
 
 import { InterviewConfig } from "./src/modules/interview/services/InterviewConfig.js";
 import { createInterviewEngine } from "./src/modules/interview/services/interviewEngine.js";
@@ -21,7 +21,7 @@ async function runTest() {
     jobRole: "Backend Developer",
     topics: ["Node.js"],
     difficulty: "Medium",
-    experienceLevel: "2-3 Years",
+    experienceLevel: "3-5 Years",
     duration: 30,
     language: "English",
     interviewType: "groq"

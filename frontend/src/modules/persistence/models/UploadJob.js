@@ -10,33 +10,23 @@ export class UploadJob {
             currentStage: null,
             stageProgress: 0,
             bytesLoaded: 0,
-            totalBytes: 0
+            totalBytes: payload?.recordingBlob?.size || 0
         };
         this.retries = 0;
         this.payload = payload;
         this.createdAt = Date.now();
+        this.error = null;
     }
 
     updateState(newState) {
         this.state = newState;
     }
 
-    updateProgress({ overallProgress, currentStage, stageProgress, bytesLoaded, totalBytes }) {
-        if (overallProgress !== undefined) {
-            this.progress.overallProgress = overallProgress;
-        }
-        if (currentStage !== undefined) {
-            this.progress.currentStage = currentStage;
-        }
-        if (stageProgress !== undefined) {
-            this.progress.stageProgress = stageProgress;
-        }
-        if (bytesLoaded !== undefined) {
-            this.progress.bytesLoaded = bytesLoaded;
-        }
-        if (totalBytes !== undefined) {
-            this.progress.totalBytes = totalBytes;
-        }
+    updateProgress(update = {}) {
+        this.progress = {
+            ...this.progress,
+            ...update
+        };
     }
 
     incrementRetries() {

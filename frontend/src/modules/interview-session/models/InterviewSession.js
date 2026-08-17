@@ -1,5 +1,6 @@
 export class InterviewSession {
   constructor({
+    _id,
     sessionId,
     interviewId,
     candidateId,
@@ -13,6 +14,7 @@ export class InterviewSession {
     statistics,
     metadata
   }) {
+    this._id = _id || null;
     this.sessionId = sessionId;
     this.interviewId = interviewId;
     this.candidateId = candidateId;

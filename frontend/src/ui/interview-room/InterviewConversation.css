@@ -117,8 +117,7 @@
 
 /* Camera Container */
 .camera-container {
-  background: var(--color-dark-800);
-  min-height: 180px;
+  background: var(--color-surface, #16161E);
 }
 
 /* Conversation Divider */

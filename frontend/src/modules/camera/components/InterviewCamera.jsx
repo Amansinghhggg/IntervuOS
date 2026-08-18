@@ -33,7 +33,9 @@ export const InterviewCamera = ({
   faceSnapshot = null,
   browserStatus = null,
   activeViolations = [],
-  setVideoElement = null 
+  setVideoElement = null,
+  compact = false,
+  className = ""
 }) => {
   const videoRef = useRef(null);
 
@@ -59,34 +61,34 @@ export const InterviewCamera = ({
   }, [stream, setVideoElement]);
 
   return (
-    <div className={`camera-container relative overflow-hidden rounded-2xl bg-dark-800 aspect-video w-full transition-all duration-500 ${
+    <div className={`camera-container relative overflow-hidden rounded-2xl bg-[var(--color-surface,#16161E)] w-full h-full transition-all duration-300 ${
       isRecording 
-        ? 'border border-primary-500/50 shadow-[0_0_30px_rgba(99,102,241,0.15)]' 
-        : 'border border-dark-700'
-    }`}>
-      {/* Violation Status Overlay (Top Center) */}
-      {activeViolations && activeViolations.length > 0 && (
+        ? 'border border-[var(--color-border-active,#6338F6)] shadow-lg' 
+        : 'border border-[var(--color-border,#232330)]'
+    } ${className}`}>
+      {/* Violation Status Overlay (Top Center) - shown on desktop or when expanded */}
+      {!compact && activeViolations && activeViolations.length > 0 && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
           <ViolationIndicator activeViolations={activeViolations} />
         </div>
       )}
 
       {/* Browser Status Overlay (Top Center, pushed down if violations exist) */}
-      {browserStatus && (
+      {!compact && browserStatus && (
         <div className={`absolute left-1/2 -translate-x-1/2 z-10 transition-all duration-300 ${activeViolations?.length > 0 ? 'top-14' : 'top-4'}`}>
           <BrowserStatusIndicator status={browserStatus} />
         </div>
       )}
 
       {/* Device Health Overlay (Top Right) */}
-      {deviceSnapshot && (
+      {!compact && deviceSnapshot && (
         <div className="absolute top-4 right-4 z-10">
           <DeviceHealthIndicator snapshot={deviceSnapshot} />
         </div>
       )}
 
       {/* Face Status Overlay (Top Left) */}
-      {faceSnapshot && (
+      {!compact && faceSnapshot && (
         <div className="absolute top-4 left-4 z-10">
           <FaceStatusIndicator snapshot={faceSnapshot} />
         </div>
@@ -106,49 +108,39 @@ export const InterviewCamera = ({
 
       {/* Initializing State */}
       {state === CAMERA_STATES.INITIALIZING && (
-        <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-dark-400">
-          <Loader2 className="w-8 h-8 animate-spin text-primary-400" />
-          <span className="text-sm">Starting camera...</span>
+        <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-[var(--color-text-muted)] p-2">
+          <Loader2 className="w-6 h-6 animate-spin text-[var(--color-primary)]" />
+          <span className="text-xs">Starting camera...</span>
         </div>
       )}
 
       {/* Idle State — Camera Not Started */}
       {state === CAMERA_STATES.IDLE && (
-        <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-dark-500">
-          <div className="w-16 h-16 rounded-full bg-dark-700 flex items-center justify-center">
-            <Camera className="w-8 h-8" />
+        <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-[var(--color-text-muted)] p-2">
+          <div className="w-10 h-10 rounded-full bg-[var(--color-surface-hover)] flex items-center justify-center">
+            <Camera className="w-5 h-5" />
           </div>
-          <span className="text-sm">Camera preview</span>
+          <span className="text-xs">Camera preview</span>
         </div>
       )}
 
       {/* Error State */}
       {state === CAMERA_STATES.ERROR && (
-        <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-4">
-          <div className="w-16 h-16 rounded-full bg-danger-500/10 flex items-center justify-center">
-            <AlertCircle className="w-8 h-8 text-danger-400" />
+        <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-3 text-center">
+          <div className="w-10 h-10 rounded-full bg-[var(--color-danger)]/15 flex items-center justify-center">
+            <AlertCircle className="w-5 h-5 text-[var(--color-danger)]" />
           </div>
-          <p className="text-sm text-dark-400 text-center max-w-[200px]">
+          <p className="text-xs text-[var(--color-text-secondary)] max-w-[180px]">
             {error?.message || 'Camera unavailable'}
           </p>
         </div>
       )}
 
-      {/* Recording Badge Placeholder — reserved for future recording module */}
-      <div className="absolute top-3 left-3">
-        {/* RecordingIndicator will be placed here in the recording sprint */}
-      </div>
-
-      {/* Monitoring Overlay Placeholder — reserved for future monitoring */}
-      <div className="absolute inset-0 pointer-events-none">
-        {/* Face detection / monitoring overlay will be placed here */}
-      </div>
-
-      {/* Warning Placeholder — reserved for future warnings */}
-      {warnings.length > 0 && (
+      {/* Warning Placeholder */}
+      {!compact && warnings.length > 0 && (
         <div className="absolute bottom-3 left-3 right-3">
           {warnings.map((warning, i) => (
-            <div key={i} className="text-xs text-warning-400 bg-dark-900/80 backdrop-blur-sm px-3 py-1.5 rounded-lg mb-1">
+            <div key={i} className="text-xs text-[var(--color-warning)] bg-black/80 backdrop-blur-sm px-3 py-1.5 rounded-lg mb-1">
               {warning}
             </div>
           ))}

@@ -36,56 +36,68 @@ export const InterviewRuntimeProvider = ({ children, sessionId, candidateId }) =
 
   // Provide a specialized action to attach monitoring facts and finalize
   const finalizeInterviewSession = (conversation, finalizedRecordingSession, backendSession) => {
-    if (backendSession) {
-      sessionBuilder.attachBackendSession(backendSession);
+    try {
+      if (backendSession && sessionBuilder.attachBackendSession) {
+        sessionBuilder.attachBackendSession(backendSession);
+      }
+      if (sessionBuilder.attachRecording) {
+        sessionBuilder.attachRecording(finalizedRecordingSession || recordingRuntime?.session);
+      }
+
+      // Prefer the backend session's questions but normalize their timestamps to the frontend timeline
+      // This eliminates clock drift between the candidate's machine and the server.
+      const backendStart = backendSession?.startedAt ? new Date(backendSession.startedAt).getTime() : 0;
+      const recSession = finalizedRecordingSession || recordingRuntime?.session;
+      const frontendStart = (recSession && recSession.startedAt) ? new Date(recSession.startedAt).getTime() : Date.now();
+
+      const questionsWithTimestamps = backendSession?.questions?.length
+        ? backendSession.questions.map((q) => {
+            // Calculate relative time from backend start, and apply to frontend start
+            const normalizeTime = (backendTime) => {
+              if (!backendTime || !backendStart) return null;
+              const offset = new Date(backendTime).getTime() - backendStart;
+              return Math.max(frontendStart, frontendStart + offset);
+            };
+
+            return {
+              question: q.question,
+              answer: q.answer || null,
+              startedAt: normalizeTime(q.askedAt) || null,
+              endedAt: normalizeTime(q.answeredAt) || null,
+              topic: q.topic,
+              difficulty: q.difficulty,
+              type: q.type,
+            };
+          })
+        : conversation?.questions || [];
+
+      sessionBuilder.attachConversation({
+        questions: questionsWithTimestamps,
+        answers: conversation?.answers || [],
+      });
+      sessionBuilder.attachViolations({
+        active: violationRuntime?.active || [],
+        history: violationRuntime?.history || [],
+        timeline: violationRuntime?.timeline || [],
+        statistics: violationRuntime?.statistics || {}
+      });
+      sessionBuilder.attachMonitoring({
+        device: deviceRuntime?.history || [],
+        browser: browserRuntime?.history || [],
+        face: faceRuntime?.history || []
+      });
+      
+      return sessionBuilder.finalizeAndBuild();
+    } catch (err) {
+      console.warn("[InterviewRuntimeProvider] Error during finalization, using fallback session:", err);
+      return sessionBuilder.session || {
+        sessionId: backendSession?._id || sessionId || Date.now().toString(),
+        interviewId: backendSession?.interviewId || sessionId || 'default',
+        candidateId: candidateId || backendSession?.candidateId || 'candidate',
+        endedAt: Date.now(),
+        conversation: conversation || { questions: [] }
+      };
     }
-    sessionBuilder.attachRecording(finalizedRecordingSession || recordingRuntime.session);
-
-    // Prefer the backend session's questions but normalize their timestamps to the frontend timeline
-    // This eliminates clock drift between the candidate's machine and the server.
-    const backendStart = backendSession?.startedAt ? new Date(backendSession.startedAt).getTime() : 0;
-    const recSession = finalizedRecordingSession || recordingRuntime.session;
-    const frontendStart = (recSession && recSession.startedAt) ? new Date(recSession.startedAt).getTime() : Date.now();
-
-
-    const questionsWithTimestamps = backendSession?.questions?.length
-      ? backendSession.questions.map((q) => {
-          // Calculate relative time from backend start, and apply to frontend start
-          const normalizeTime = (backendTime) => {
-            if (!backendTime || !backendStart) return null;
-            const offset = new Date(backendTime).getTime() - backendStart;
-            return Math.max(frontendStart, frontendStart + offset);
-          };
-
-          return {
-            question: q.question,
-            answer: q.answer || null,
-            startedAt: normalizeTime(q.askedAt) || null,
-            endedAt: normalizeTime(q.answeredAt) || null,
-            topic: q.topic,
-            difficulty: q.difficulty,
-            type: q.type,
-          };
-        })
-      : conversation.questions || [];
-
-    sessionBuilder.attachConversation({
-      questions: questionsWithTimestamps,
-      answers: conversation.answers || [],
-    });
-    sessionBuilder.attachViolations({
-      active: violationRuntime.active,
-      history: violationRuntime.history,
-      timeline: violationRuntime.timeline,
-      statistics: violationRuntime.statistics
-    });
-    sessionBuilder.attachMonitoring({
-      device: deviceRuntime.history,
-      browser: browserRuntime.history,
-      face: faceRuntime.history
-    });
-    
-    return sessionBuilder.finalizeAndBuild();
   };
 
   // Grouped context shape exposing runtime modules safely

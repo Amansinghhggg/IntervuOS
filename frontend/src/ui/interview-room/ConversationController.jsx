@@ -165,11 +165,11 @@ const ConversationController = ({
 
   // ─── Render ───────────────────────────────────────
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 h-full w-full bg-slate-950 divide-y lg:divide-y-0 lg:divide-x divide-slate-800/80 overflow-y-auto lg:overflow-hidden">
-      {/* ForkTalent Section */}
+    <div className="relative flex flex-col h-full w-full bg-[var(--color-canvas,#0B0B0E)] p-3 sm:p-4 gap-2.5 sm:gap-3 overflow-hidden lg:grid lg:grid-cols-2 lg:p-0 lg:gap-0 lg:divide-x lg:divide-[var(--color-border,#232330)]">
+      {/* AI Section */}
       <section
-        className="bg-slate-950 flex flex-col relative overflow-hidden min-h-[440px] lg:min-h-0 lg:h-full"
-        aria-label="ForkTalent AI Section"
+        className="flex-1 min-h-0 flex flex-col justify-between lg:h-full overflow-hidden"
+        aria-label="AI Section"
       >
         <InterviewAI
           currentQuestion={currentQuestion}
@@ -183,9 +183,9 @@ const ConversationController = ({
         />
       </section>
 
-      {/* Candidate Section */}
+      {/* Candidate Section (Floating PiP & Bottom Submit on Mobile, Right Column on Desktop) */}
       <section
-        className="bg-slate-950 flex flex-col relative overflow-hidden min-h-[440px] lg:min-h-0 lg:h-full"
+        className="shrink-0 w-full lg:flex-1 lg:h-full lg:min-h-0"
         aria-label="Candidate Section"
       >
         <InterviewCandidate

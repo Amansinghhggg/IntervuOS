@@ -15,6 +15,14 @@ export const useInterviewSession = () => {
     }
   }, []);
 
+  const attachBackendSession = useCallback((backendSession) => {
+    try {
+      builderRef.current.attachBackendSession(backendSession);
+    } catch (err) {
+      setError(err);
+    }
+  }, []);
+
   const attachRecording = useCallback((recordingSession) => {
     try {
       builderRef.current.attachRecording(recordingSession);
@@ -65,6 +73,7 @@ export const useInterviewSession = () => {
     isFinalized,
     error,
     initialize,
+    attachBackendSession,
     attachRecording,
     attachConversation,
     attachViolations,

@@ -35,9 +35,9 @@ export default function AIAvatar({
   return (
     <div
       className={cn(
-        "relative w-48 h-48 sm:w-56 sm:h-56 md:w-80 md:h-80 lg:w-96 lg:h-96 rounded-[32px] overflow-hidden shadow-2xl bg-gradient-to-b from-[#1c1c24] to-[#0a0a0f] border border-[var(--border)] flex items-center justify-center group transition-all duration-500",
-        state === AvatarState.SPEAKING && "ring-2 ring-[var(--primary)] ring-offset-4 ring-offset-[var(--background)] shadow-[0_0_40px_rgba(99,102,241,0.2)]",
-        state === AvatarState.THINKING && "ring-1 ring-[var(--primary)] ring-offset-2 ring-offset-[var(--background)] shadow-[0_0_20px_rgba(99,102,241,0.1)]",
+        "relative w-40 h-40 sm:w-52 sm:h-52 md:w-72 md:h-72 lg:w-88 lg:h-88 xl:w-96 xl:h-96 max-h-[36vh] max-w-[36vh] sm:max-h-none sm:max-w-none aspect-square rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-xl bg-gradient-to-b from-[#1c1c24] to-[#0a0a0f] border border-[var(--color-border,#232330)] flex items-center justify-center group transition-all duration-300",
+        state === AvatarState.SPEAKING && "ring-2 ring-[var(--color-primary,#5B3AF2)] ring-offset-2 ring-offset-[var(--color-canvas,#0B0B0E)] shadow-lg shadow-[var(--color-primary)]/20",
+        state === AvatarState.THINKING && "ring-1 ring-[var(--color-primary,#5B3AF2)] ring-offset-2 ring-offset-[var(--color-canvas,#0B0B0E)]",
         className
       )}
     >

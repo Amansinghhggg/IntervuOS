@@ -66,6 +66,12 @@ export const adminService = {
     const response = await api.patch(`/admin/campaigns/${id}`, data);
     return response.data;
   },
+
+  // Re-enroll a candidate for a campaign (resets completed/in-progress attempt)
+  reEnrollCandidate: async (campaignId, data) => {
+    const response = await api.post(`/admin/campaigns/${campaignId}/re-enroll`, data);
+    return response.data;
+  },
 };
 
 export default adminService;

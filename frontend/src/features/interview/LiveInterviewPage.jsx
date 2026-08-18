@@ -100,7 +100,7 @@ const LiveInterviewAIContent = ({
         return;
       }
 
-      if (runtime.state !== INTERVIEW_RUNTIME_STATES.FINALIZED && !hasFinalizedRef.current) {
+      if (!hasFinalizedRef.current) {
         hasFinalizedRef.current = true;
         actions.stop().then((recordingSession) => {
           const interviewSession = actions.finalizeInterviewSession(
@@ -108,13 +108,28 @@ const LiveInterviewAIContent = ({
             recordingSession,
             session
           );
-          save(interviewSession, recordingSession?.blob);
+          const recordingBlob = recordingSession?.blob || recordingSession?.recording?.blob || null;
+          save(interviewSession, recordingBlob);
         }).catch(err => {
           console.error("[LiveInterviewPage] Finalization failed:", err);
+          const fallbackSession = {
+            _id: session?._id || interview?._id || "session_" + Date.now(),
+            sessionId: session?._id || interview?._id || "session_" + Date.now(),
+            interviewId: interview?._id || session?.interviewId || "interview_" + Date.now(),
+            candidateId: user?.email || user?._id || "candidate",
+            endedAt: Date.now(),
+            conversation: { questions, answers }
+          };
+          try {
+            save(fallbackSession, null);
+          } catch (saveErr) {
+            console.error("[LiveInterviewPage] Fallback save failed:", saveErr);
+            navigate("/candidate/dashboard");
+          }
         });
       }
     }
-  }, [isInterviewFinished, isMockMode, navigate]);
+  }, [isInterviewFinished, isMockMode, navigate, questions, answers, session, interview, actions, save, user]);
 
   if (isInterviewFinished && isMockMode) {
     return (
@@ -139,42 +154,49 @@ const LiveInterviewAIContent = ({
     );
   }
 
-  return (
-    <div className="h-[100dvh] min-h-screen lg:h-screen bg-slate-950 flex flex-col relative overflow-hidden font-sans text-slate-100 antialiased">
-      {/* Background ambient lighting */}
-      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[140px] pointer-events-none" />
+  // Intermediate state while session is finalizing before uploadState initializes
+  if (isInterviewFinished && !isMockMode) {
+    return (
+      <div className="h-screen w-full bg-[var(--color-canvas,#0B0B0E)] flex flex-col items-center justify-center space-y-4 text-white font-sans">
+        <Loader2 className="w-10 h-10 animate-spin text-[var(--color-primary,#5B3AF2)]" />
+        <h2 className="text-lg font-semibold tracking-wide">Finalizing interview submission...</h2>
+        <p className="text-xs text-[var(--color-text-secondary,#94A3B8)]">Preparing recording and evaluation pipeline</p>
+      </div>
+    );
+  }
 
+  return (
+    <div className="h-[100dvh] min-h-screen lg:h-screen bg-[var(--color-canvas,#0B0B0E)] flex flex-col relative overflow-hidden font-sans text-[var(--color-text-primary,#FFFFFF)] antialiased">
       {/* Top Bar */}
-      <header className="fixed top-0 left-0 right-0 h-16 bg-slate-950/80 backdrop-blur-xl flex items-center justify-between px-3 sm:px-6 z-50 border-b border-slate-800/80 shadow-lg">
+      <header className="fixed top-0 left-0 right-0 h-16 bg-[var(--color-canvas,#0B0B0E)]/90 backdrop-blur-xl flex items-center justify-between px-3 sm:px-6 z-50 border-b border-[var(--color-border,#232330)] shadow-sm">
         <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-          <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] sm:text-xs font-bold tracking-wider uppercase shrink-0">
-            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.8)] shrink-0" />
+          <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full bg-[var(--color-danger)]/15 border border-[var(--color-danger)]/30 text-[var(--color-danger)] text-[10px] sm:text-xs font-bold tracking-wider uppercase shrink-0">
+            <span className="w-2 h-2 rounded-full bg-[var(--color-danger)] animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.8)] shrink-0" />
             <span className="hidden sm:inline">REC • HD 1080p</span>
             <span className="sm:hidden">REC</span>
           </div>
-          <div className="hidden md:block h-4 w-px bg-slate-800 shrink-0" />
-          <span className="text-xs sm:text-sm font-semibold text-slate-300 hidden md:flex items-center gap-2 truncate">
-            <span className="text-slate-400 font-normal truncate">{interview?.jobRole || "AI Technical Interview"}</span>
-            <span className="text-slate-600">•</span>
-            <span className="text-slate-200 font-medium truncate">{user?.name || session?.candidateId || "Candidate"}</span>
+          <div className="hidden md:block h-4 w-px bg-[var(--color-border,#232330)] shrink-0" />
+          <span className="text-xs sm:text-sm font-semibold text-[var(--color-text-secondary,#94A3B8)] hidden md:flex items-center gap-2 truncate">
+            <span className="text-[var(--color-text-muted,#6E7A8A)] font-normal truncate">{interview?.jobRole || "AI Technical Interview"}</span>
+            <span className="text-[var(--color-text-muted,#6E7A8A)]">•</span>
+            <span className="text-[var(--color-text-primary,#FFFFFF)] font-medium truncate">{user?.name || session?.candidateId || "Candidate"}</span>
           </span>
         </div>
         
         <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           <div className={`px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-xl border text-xs sm:text-sm font-mono font-bold tracking-tight shadow-inner transition-colors shrink-0 ${
             timeLeft <= 0 
-              ? 'bg-rose-950/40 border-rose-500/40 text-rose-400 animate-pulse' 
+              ? 'bg-[var(--color-danger)]/15 border-[var(--color-danger)]/40 text-[var(--color-danger)] animate-pulse' 
               : timeLeft <= 300 
-                ? 'bg-amber-950/30 border-amber-500/30 text-amber-400' 
-                : 'bg-slate-900/80 border-slate-800 text-indigo-400'
+                ? 'bg-[var(--color-warning)]/15 border-[var(--color-warning)]/40 text-[var(--color-warning)]' 
+                : 'bg-[var(--color-surface,#16161E)] border-[var(--color-border,#232330)] text-[var(--color-text-accent,#C4B5FD)]'
           }`}>
              {timeLeft <= 0 ? `GRACE: 00:${(60 - Math.abs(timeLeft)).toString().padStart(2, '0')}` : formatDisplayTime(timeLeft)}
           </div>
 
           <button
             onClick={handleEndInterview}
-            className="px-2.5 sm:px-4 py-1.5 rounded-xl border border-slate-800 bg-slate-900/80 hover:bg-rose-950/30 hover:border-rose-800/50 hover:text-rose-300 text-slate-300 text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all duration-200 shadow-sm shrink-0"
+            className="px-2.5 sm:px-4 py-1.5 rounded-xl border border-[var(--color-border,#232330)] bg-[var(--color-surface,#16161E)] hover:bg-[var(--color-danger)]/15 hover:border-[var(--color-danger)]/40 hover:text-[var(--color-danger)] text-[var(--color-text-secondary,#94A3B8)] text-[10px] sm:text-xs font-semibold uppercase tracking-wider transition-all duration-200 shadow-sm shrink-0 cursor-pointer"
           >
             End Interview
           </button>

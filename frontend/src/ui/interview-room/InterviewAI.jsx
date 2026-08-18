@@ -27,64 +27,66 @@ const InterviewAI = ({
   };
 
   return (
-    <div className="flex flex-col relative w-full h-full p-4 sm:p-6 lg:p-8 justify-between gap-4 sm:gap-5">
+    <div className="flex flex-col relative w-full h-full p-3 sm:p-4 lg:p-6 xl:p-8 justify-between gap-2.5 sm:gap-4 lg:gap-5 min-h-0">
 
-      {/* AI Header */}
-      <div className="flex items-center justify-between">
+      {/* AI Header (Hidden on small mobile to maximize avatar space, visible on tablet/desktop) */}
+      <div className="hidden sm:flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.8)]" />
-          <div className="text-slate-400 text-xs font-bold uppercase tracking-[0.25em]">
-            AI Interviewer <span className="text-slate-600">•</span> AI-OS v2.4
+          <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-primary,#5B3AF2)] shadow-[0_0_10px_rgba(91,58,242,0.8)]" />
+          <div className="text-[var(--color-text-secondary,#94A3B8)] text-xs font-semibold tracking-wide">
+            AI Interviewer <span className="text-[var(--color-text-muted,#6E7A8A)]">•</span> IntervuOS
           </div>
         </div>
       </div>
 
-      {/* Large Avatar Container */}
-      <div className="relative flex-1 min-h-[260px] sm:min-h-[320px] lg:min-h-0 w-full rounded-[24px] sm:rounded-[32px] overflow-hidden border border-slate-800/80 bg-slate-900/60 shadow-[0_20px_50px_rgba(0,0,0,0.6)] flex items-center justify-center group">
+      {/* Avatar Container */}
+      <div className="relative flex-1 min-h-0 w-full rounded-2xl sm:rounded-3xl lg:rounded-[32px] overflow-hidden border border-[var(--color-border,#232330)] bg-[var(--color-surface,#16161E)] shadow-lg flex items-center justify-center group">
         <AIAvatar state={getAvatarState()} audioElement={audioRef} />
 
         {/* Status Badge Overlay */}
-        <div className="absolute bottom-4 left-4 right-4 bg-slate-950/80 backdrop-blur-md p-3.5 rounded-2xl flex items-center justify-between border border-slate-800/80 shadow-xl z-20">
-          <div className="flex items-center gap-2.5">
-            <span className="text-slate-300 text-xs font-semibold tracking-wide">
-              AI Interviewer
+        <div className="absolute bottom-2.5 sm:bottom-4 left-2.5 right-2.5 sm:left-4 sm:right-4 bg-[var(--color-canvas,#0B0B0E)]/90 backdrop-blur-md p-2.5 sm:p-3 rounded-xl sm:rounded-2xl flex items-center justify-between border border-[var(--color-border,#232330)] shadow-lg z-20">
+          <div className="flex items-center gap-2">
+            <span className="text-[var(--color-text-secondary,#94A3B8)] text-xs font-medium hidden sm:inline">
+              Interviewer
+            </span>
+            <span className="text-[var(--color-text-primary,#FFFFFF)] text-xs font-semibold sm:hidden">
+              AI
             </span>
           </div>
 
-          <div className={`px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 border ${isError
-              ? 'bg-rose-950/40 text-rose-400 border-rose-800/40' :
+          <div className={`px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium flex items-center gap-1.5 border ${
+            isError
+              ? 'bg-[var(--color-danger)]/15 text-[var(--color-danger)] border-[var(--color-danger)]/30' :
               isSpeaking
-                ? 'bg-emerald-950/40 text-emerald-400 border-emerald-800/40' :
+                ? 'bg-[var(--color-success)]/15 text-[var(--color-success)] border-[var(--color-success)]/30' :
                 isThinking
-                  ? 'bg-indigo-950/40 text-indigo-300 border-indigo-800/40' :
-                  'bg-slate-900/80 text-slate-400 border-slate-800'
-            }`}>
-            {isSpeaking && <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />}
-            {isThinking && <Loader2 className="w-3 h-3 animate-spin text-indigo-400" />}
-            <span>{statusMessage || (isSpeaking ? 'AI Speaking' : isThinking ? 'Processing' : 'AI Listening')}</span>
+                  ? 'bg-[var(--color-primary-tint)] text-[var(--color-text-accent)] border-[var(--color-border-active)]' :
+                  'bg-[var(--color-surface-hover)] text-[var(--color-text-muted)] border-[var(--color-border)]'
+          }`}>
+            {isSpeaking && <span className="w-2 h-2 rounded-full bg-[var(--color-success)] animate-pulse" />}
+            {isThinking && <Loader2 className="w-3 h-3 animate-spin text-[var(--color-text-accent)]" />}
+            <span>{statusMessage || (isSpeaking ? 'AI Speaking' : isThinking ? 'Processing...' : 'AI Listening')}</span>
           </div>
         </div>
       </div>
 
       {/* Bottom - Question Prompt Card */}
-      <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-4 sm:p-5 shadow-2xl backdrop-blur-xl relative group w-full">
-        <div className="flex items-center gap-2 text-indigo-400 text-[11px] font-bold uppercase tracking-wider mb-1.5">
-          <span>Current Question</span>
-        </div>
-
-        <p className="text-slate-100 text-sm sm:text-base leading-relaxed font-medium pr-12 line-clamp-3">
-          "{currentQuestion?.question || "Initializing question..."}"
-        </p>
-
+      <div className="bg-[var(--color-surface,#16161E)] border border-[var(--color-border,#232330)] rounded-2xl p-4 sm:p-5 shadow-lg backdrop-blur-xl relative group w-full shrink-0">
         {onReplay && (
           <button
             onClick={onReplay}
-            className="absolute top-4 right-4 p-2.5 rounded-xl bg-slate-800/80 hover:bg-indigo-600 hover:text-white border border-slate-700/80 transition-all text-slate-400 shadow-md group/btn"
-            title="Replay Audio Prompt"
+            className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 px-2.5 py-1.5 rounded-xl bg-[var(--color-surface-hover,#1E1E2A)] hover:bg-[var(--color-primary,#5B3AF2)] text-[var(--color-text-primary,#FFFFFF)] border border-[var(--color-border,#232330)] hover:border-[var(--color-border-active,#6338F6)] transition-all duration-200 shadow-sm flex items-center gap-1.5 group/btn cursor-pointer active:scale-95 shrink-0 z-10"
+            title="Repeat question audio"
+            aria-label="Repeat question audio"
           >
-            <Volume2 className="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
+            <Volume2 className="w-3.5 h-3.5 text-[var(--color-text-accent,#C4B5FD)] group-hover/btn:text-white transition-colors" />
+            <span className="text-xs font-medium">Repeat</span>
           </button>
         )}
+
+        <p className="text-[var(--color-text-primary,#FFFFFF)] text-xs sm:text-sm md:text-base leading-relaxed font-medium max-h-[16vh] sm:max-h-[20vh] overflow-y-auto pr-18 sm:pr-20">
+          "{currentQuestion?.question || "Initializing question..."}"
+        </p>
       </div>
     </div>
   );

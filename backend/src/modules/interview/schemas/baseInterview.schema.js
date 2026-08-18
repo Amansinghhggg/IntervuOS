@@ -29,6 +29,23 @@ export const candidateSubSchema = new mongoose.Schema({
     ref: "InterviewResult",
     default: null,
   },
+  reEnrollCount: {
+    type: Number,
+    default: 0,
+  },
+  reEnrolledAt: {
+    type: Date,
+    default: null,
+  },
+  reEnrollReason: {
+    type: String,
+    default: null,
+  },
+  reEnrolledBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null,
+  },
 }, { _id: false });
 
 /**

@@ -63,78 +63,74 @@ const InterviewCandidate = ({
   };
 
   const isRecordingActive = recordingState === RECORDING_STATES.RECORDING || isListening;
-  const isSubmitDisabled = !isRecordingActive && (!candidateTranscript || candidateTranscript.length < 2) || isTranscribing;
+  const isSubmitDisabled = (!isRecordingActive && (!candidateTranscript || candidateTranscript.length < 2)) || isTranscribing;
 
   return (
-    <div className="flex flex-col relative w-full h-full p-4 sm:p-6 lg:p-8 justify-between gap-4 sm:gap-5">
-      {/* Candidate Header */}
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col justify-between w-full lg:h-full lg:p-6 xl:p-8 lg:gap-5 min-h-0">
+      {/* Candidate Header (Desktop Only) */}
+      <div className="hidden lg:flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)] shrink-0" />
-          <div className="text-slate-300 text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em] truncate">
-            You (Candidate) <span className="text-slate-600">•</span> Live Camera Feed
+          <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-success,#10B981)] shadow-[0_0_10px_rgba(16,185,129,0.8)] shrink-0" />
+          <div className="text-[var(--color-text-secondary,#94A3B8)] text-xs font-semibold tracking-wide truncate">
+            You (Candidate) <span className="text-[var(--color-text-muted,#6E7A8A)]">•</span> Live Camera Feed
           </div>
         </div>
 
-        <div className="px-2.5 sm:px-3 py-1 rounded-full bg-slate-900/90 border border-slate-800 text-[10px] sm:text-[11px] font-semibold text-emerald-400 flex items-center gap-1.5 shadow-sm shrink-0">
-          <Video className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-          <span className="hidden sm:inline">Camera Connected</span>
-          <span className="sm:hidden">Live</span>
+        <div className="px-3 py-1 rounded-full bg-[var(--color-surface,#16161E)] border border-[var(--color-border,#232330)] text-xs font-medium text-[var(--color-success,#10B981)] flex items-center gap-1.5 shadow-sm shrink-0">
+          <Video className="w-3.5 h-3.5 text-[var(--color-success,#10B981)] shrink-0" />
+          <span>Camera Connected</span>
         </div>
       </div>
 
-      {/* Large Camera Viewport */}
-      <div className="relative flex-1 min-h-[220px] sm:min-h-[280px] lg:min-h-0 w-full rounded-[24px] sm:rounded-[32px] overflow-hidden border border-slate-700/80 ring-1 ring-white/10 bg-slate-900/90 shadow-[0_25px_60px_rgba(0,0,0,0.8)] flex items-center justify-center group">
-        <InterviewCamera
-          stream={cameraStream}
-          state={cameraState}
-          warnings={cameraWarnings}
-          error={cameraError}
-          isRecording={isListening}
-          deviceSnapshot={deviceSnapshot}
-          faceSnapshot={faceSnapshot}
-          browserStatus={browserStatus}
-          activeViolations={activeViolations}
-          setVideoElement={setVideoElement}
-        />
+      {/* Camera Viewport Stage: Floating Corner PiP on Mobile, Card Stage with Centered 16:9 Frame on Desktop */}
+      <div className="absolute top-5 right-5 sm:top-6 sm:right-6 w-24 h-24 sm:w-28 sm:h-28 rounded-2xl border border-[var(--color-border,#232330)] shadow-2xl ring-1 ring-white/10 bg-[var(--color-surface,#16161E)] overflow-hidden z-30 lg:static lg:w-full lg:flex-1 lg:min-h-0 lg:rounded-[32px] lg:shadow-lg lg:flex lg:items-center lg:justify-center lg:p-6 group">
+        
+        {/* Centered 16:9 Camera Box on Desktop */}
+        <div className="w-full h-full lg:w-full lg:max-w-[540px] lg:aspect-video lg:max-h-[44vh] lg:rounded-2xl lg:overflow-hidden lg:border lg:border-[var(--color-border-active,#6338F6)]/40 lg:shadow-xl lg:ring-1 lg:ring-white/10 relative flex items-center justify-center bg-black/40">
+          <InterviewCamera
+            stream={cameraStream}
+            state={cameraState}
+            warnings={cameraWarnings}
+            error={cameraError}
+            isRecording={isListening}
+            deviceSnapshot={deviceSnapshot}
+            faceSnapshot={faceSnapshot}
+            browserStatus={browserStatus}
+            activeViolations={activeViolations}
+            setVideoElement={setVideoElement}
+            compact={false}
+            className="w-full h-full object-cover"
+          />
 
-        {/* Ambient Top Vignette */}
-        <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-black/60 to-transparent pointer-events-none z-10" />
+          {/* Ambient Top Vignette (Desktop Only) */}
+          <div className="hidden lg:block absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-black/60 to-transparent pointer-events-none z-10" />
 
-        {/* Candidate Info Overlay */}
-        <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4 bg-slate-950/85 backdrop-blur-xl p-3 sm:p-3.5 rounded-2xl flex items-center justify-between border border-slate-800/90 shadow-2xl z-20">
-          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-            <div className="relative flex items-center justify-center w-3 h-3 shrink-0">
-              <span className="absolute w-full h-full bg-emerald-400 rounded-full animate-ping opacity-75" />
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+          {/* Mobile PiP Corner Indicator Overlay */}
+          <div className="lg:hidden absolute bottom-1.5 left-1.5 right-1.5 flex items-center justify-between pointer-events-none z-20">
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-black/75 backdrop-blur-md text-[9px] font-bold text-white shadow">
+              <span className={`w-1.5 h-1.5 rounded-full ${isListening ? 'bg-[var(--color-success,#10B981)] animate-pulse' : 'bg-slate-400'}`} />
+              <span>YOU</span>
             </div>
-            <span className="text-slate-100 text-xs font-bold tracking-wide truncate">
-              {user?.name || "Candidate"}
-            </span>
+
+            {activeViolations && activeViolations.length > 0 && (
+              <div className="p-0.5 rounded-md bg-[var(--color-danger,#F43F5E)]/90 text-white shadow">
+                <ShieldAlert className="w-3 h-3" />
+              </div>
+            )}
           </div>
-
-          {isListening ? (
-            <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider shadow-inner shrink-0">
-              <Mic className="w-3.5 h-3.5 animate-pulse text-emerald-400 shrink-0" />
-              <span>Mic Live</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-slate-400 text-[10px] sm:text-[11px] font-medium shrink-0">
-              <span>Ready</span>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Vibrant High-Contrast Submit Action Bar */}
-      <div className="w-full">
+      {/* Single Primary CTA: Submit Answer & Continue */}
+      <div className="w-full shrink-0">
         <button
           onClick={handleManualSubmit}
           disabled={isSubmitDisabled}
-          className={`w-full py-3.5 sm:py-4.5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-[0.15em] transition-all duration-300 flex items-center justify-center gap-2.5 sm:gap-3 shadow-xl ${isSubmitDisabled
-              ? 'bg-slate-900 border border-slate-800 text-slate-500 cursor-not-allowed opacity-50'
-              : 'bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 hover:from-violet-500 hover:via-indigo-500 hover:to-purple-500 text-white border border-indigo-400/40 shadow-[0_0_30px_rgba(99,102,241,0.5)] hover:shadow-[0_0_45px_rgba(139,92,246,0.7)] active:scale-[0.99] cursor-pointer'
-            }`}
+          className={`w-full py-3.5 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm tracking-wide transition-all duration-200 flex items-center justify-center gap-2.5 shadow-md active:scale-[0.99] cursor-pointer ${
+            isSubmitDisabled
+              ? 'bg-[var(--color-surface-hover,#1E1E2A)] border border-[var(--color-border,#232330)] text-[var(--color-text-muted,#6E7A8A)] cursor-not-allowed opacity-50'
+              : 'bg-[var(--color-primary,#5B3AF2)] hover:bg-[var(--color-primary-hover,#472CD7)] text-white shadow-[0_0_25px_rgba(91,58,242,0.35)] hover:shadow-[0_0_35px_rgba(91,58,242,0.5)]'
+          }`}
         >
           {isTranscribing ? (
             <>

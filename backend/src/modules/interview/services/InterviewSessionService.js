@@ -594,7 +594,13 @@ class InterviewSessionService {
    * @returns {Promise<Object>} Updated session
    */
   async uploadRecordingToCloudinary(sessionId, candidateId, file) {
-    const session = await InterviewSession.findOne({ _id: sessionId, candidateId });
+    let session = await InterviewSession.findOne({ _id: sessionId, candidateId });
+    if (!session) {
+      session = await InterviewSession.findOne({ interviewId: sessionId, candidateId }).sort({ createdAt: -1 });
+    }
+    if (!session) {
+      session = await InterviewSession.findById(sessionId);
+    }
     if (!session) {
       throw new Error("not_found");
     }

@@ -31,6 +31,7 @@ import {
   Check,
   Filter,
   Loader2,
+  RotateCcw,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -109,6 +110,9 @@ export default function AdminDashboardPage() {
   const [campaignSearch, setCampaignSearch] = useState("");
   const [loadingCampaigns, setLoadingCampaigns] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState(null);
+  const [reEnrollEmailInput, setReEnrollEmailInput] = useState("");
+  const [reEnrollReasonInput, setReEnrollReasonInput] = useState("");
+  const [reEnrollingCandidateEmail, setReEnrollingCandidateEmail] = useState(null);
 
   // Tab 4: Mock Attempts Data
   const [mockAttempts, setMockAttempts] = useState([]);
@@ -301,6 +305,36 @@ export default function AdminDashboardPage() {
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to update campaign controls");
+    }
+  };
+
+  const handleReEnrollCandidate = async (campaignId, email, reason = "") => {
+    if (!campaignId || !email) {
+      toast.error("Please provide candidate email");
+      return;
+    }
+    try {
+      setReEnrollingCandidateEmail(email);
+      const res = await adminService.reEnrollCandidate(campaignId, {
+        email,
+        reason: reason || "Admin re-enrolled candidate",
+        resetSession: true,
+      });
+      if (res.success) {
+        toast.success(res.message || `Candidate ${email} re-enrolled successfully`);
+        setCampaigns((prev) =>
+          prev.map((c) => (c._id === campaignId ? { ...c, ...res.campaign } : c))
+        );
+        if (selectedCampaign && selectedCampaign._id === campaignId) {
+          setSelectedCampaign((prev) => ({ ...prev, ...res.campaign }));
+        }
+        setReEnrollEmailInput("");
+        setReEnrollReasonInput("");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to re-enroll candidate");
+    } finally {
+      setReEnrollingCandidateEmail(null);
     }
   };
 
@@ -1197,34 +1231,120 @@ export default function AdminDashboardPage() {
                     </div>
                   )}
 
-                  {selectedCampaign.assignedCandidates?.length > 0 && (
-                    <div className="space-y-2">
-                      <h4 className="text-xs font-medium text-[var(--color-text-primary)]">
-                        Assigned candidates ({selectedCampaign.assignedCandidates.length})
+                  {/* Assigned Candidates & Re-Enroll Controls */}
+                  <div className="space-y-3 p-4 rounded-2xl bg-[var(--color-canvas)] border border-[var(--color-border)]">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-medium text-[var(--color-text-primary)] flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5 text-[var(--color-text-accent,#C4B5FD)]" />
+                        Assigned candidates ({selectedCampaign.assignedCandidates?.length || 0})
                       </h4>
-                      <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                      <span className="text-[11px] text-[var(--color-text-secondary)]">
+                        Limit: {selectedCampaign.maxCandidates || "Unlimited"}
+                      </span>
+                    </div>
+
+                    {/* Quick Re-enroll / Enroll Form */}
+                    <div className="p-3 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] space-y-2">
+                      <p className="text-[11px] font-medium text-[var(--color-text-accent,#C4B5FD)]">
+                        Enroll or Re-enroll Candidate
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <input
+                          type="email"
+                          placeholder="candidate@example.com"
+                          value={reEnrollEmailInput}
+                          onChange={(e) => setReEnrollEmailInput(e.target.value)}
+                          className="px-3 py-1.5 rounded-lg bg-[var(--color-canvas)] border border-[var(--color-border)] text-xs text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-border-active,#6338F6)]"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Reason (e.g. Employer retake request)"
+                          value={reEnrollReasonInput}
+                          onChange={(e) => setReEnrollReasonInput(e.target.value)}
+                          className="px-3 py-1.5 rounded-lg bg-[var(--color-canvas)] border border-[var(--color-border)] text-xs text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-border-active,#6338F6)]"
+                        />
+                      </div>
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          disabled={!reEnrollEmailInput || reEnrollingCandidateEmail}
+                          onClick={() => handleReEnrollCandidate(selectedCampaign._id, reEnrollEmailInput, reEnrollReasonInput)}
+                          className="px-3.5 py-1.5 text-xs font-medium rounded-lg bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 shadow-sm cursor-pointer transition-all"
+                        >
+                          {reEnrollingCandidateEmail === reEnrollEmailInput ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              <span>Re-enrolling...</span>
+                            </>
+                          ) : (
+                            <>
+                              <RotateCcw className="w-3.5 h-3.5" />
+                              <span>Re-enroll / Add Candidate</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Candidates List */}
+                    {selectedCampaign.assignedCandidates?.length > 0 ? (
+                      <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                         {selectedCampaign.assignedCandidates.map((c, idx) => (
                           <div
                             key={idx}
-                            className="flex items-center justify-between p-2.5 rounded-xl bg-[var(--color-canvas)] border border-[var(--color-border)] text-xs"
+                            className="flex flex-col sm:flex-row sm:items-center justify-between p-2.5 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-xs gap-2"
                           >
-                            <span className="font-mono text-[var(--color-text-primary)]">{c.email}</span>
-                            <span
-                              className={`px-2 py-0.5 text-[10px] font-medium rounded-full border ${
-                                c.status === "Completed"
-                                  ? "bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/30"
-                                  : c.status === "In Progress"
-                                  ? "bg-[var(--color-warning)]/10 text-[var(--color-warning)] border-[var(--color-warning)]/30"
-                                  : "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-[var(--color-border-active,#6338F6)]/30"
-                              }`}
-                            >
-                              {c.status}
-                            </span>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="font-mono text-[var(--color-text-primary)] truncate">{c.email}</span>
+                              {c.reEnrollCount > 0 && (
+                                <span className="px-1.5 py-0.5 text-[9px] font-semibold rounded bg-[var(--color-primary-tint)] text-[var(--color-text-accent)] border border-[var(--color-border-active)]/30 shrink-0">
+                                  {c.reEnrollCount}x Re-enrolled
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span
+                                className={`px-2 py-0.5 text-[10px] font-medium rounded-full border ${
+                                  c.status === "Completed"
+                                    ? "bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/30"
+                                    : c.status === "In Progress"
+                                    ? "bg-[var(--color-warning)]/10 text-[var(--color-warning)] border-[var(--color-warning)]/30"
+                                    : "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border-[var(--color-border-active,#6338F6)]/30"
+                                }`}
+                              >
+                                {c.status}
+                              </span>
+
+                              <button
+                                type="button"
+                                disabled={reEnrollingCandidateEmail === c.email}
+                                onClick={() => handleReEnrollCandidate(selectedCampaign._id, c.email, "Admin reset attempt for retake")}
+                                className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-[var(--color-primary-tint)] text-[var(--color-text-accent)] border border-[var(--color-border-active)] hover:bg-[var(--color-primary)] hover:text-white transition-all flex items-center gap-1 cursor-pointer active:scale-95 disabled:opacity-50"
+                                title="Reset session & re-enroll candidate for a fresh attempt"
+                              >
+                                {reEnrollingCandidateEmail === c.email ? (
+                                  <>
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                    <span>Resetting...</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <RotateCcw className="w-3 h-3" />
+                                    <span>Re-enroll</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>
-                    </div>
-                  )}
+                    ) : (
+                      <p className="text-xs text-[var(--color-text-muted)] text-center py-2">
+                        No candidates assigned to this campaign yet.
+                      </p>
+                    )}
+                  </div>
 
                   {/* Bottom Action */}
                   <div className="pt-4 border-t border-[var(--color-border)] flex items-center justify-between">

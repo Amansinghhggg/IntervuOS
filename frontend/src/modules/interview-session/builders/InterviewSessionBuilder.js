@@ -32,13 +32,14 @@ export class InterviewSessionBuilder {
     this._ensureNotFinalized();
     if (backendSession) {
       if (backendSession._id) {
-        this.sessionData._id = backendSession._id;
+        this.sessionData._id = backendSession._id.toString();
+        this.sessionData.sessionId = backendSession._id.toString();
       }
       if (backendSession.interviewId) {
-        this.sessionData.interviewId = backendSession.interviewId;
+        this.sessionData.interviewId = backendSession.interviewId.toString();
       }
       if (backendSession.candidateId) {
-        this.sessionData.candidateId = backendSession.candidateId;
+        this.sessionData.candidateId = backendSession.candidateId.toString();
       }
     }
     return this;

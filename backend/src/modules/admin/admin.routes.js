@@ -12,6 +12,7 @@ import {
   getCampaigns,
   getCampaignById,
   updateCampaignControls,
+  reEnrollCandidate,
 } from "./admin.controller.js";
 
 const router = express.Router();
@@ -30,5 +31,6 @@ router.post("/users/:id/credits", grantBonusCredits);
 router.get("/campaigns", getCampaigns);
 router.get("/campaigns/:id", getCampaignById);
 router.patch("/campaigns/:id", updateCampaignControls);
+router.post("/campaigns/:id/re-enroll", reEnrollCandidate);
 
 export default router;

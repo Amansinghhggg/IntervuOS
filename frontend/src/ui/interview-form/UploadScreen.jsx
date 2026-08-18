@@ -38,7 +38,7 @@ const UploadScreen = ({
     const handleBeforeUnload = (e) => {
       if (isUploading) {
         e.preventDefault();
-        e.returnValue = "Your interview recording is still uploading. Closing this tab will result in data loss. Are you sure you want to leave?";
+        e.returnValue = "Your interview is being saved. Closing this tab may result in lost progress. Are you sure you want to leave?";
       }
     };
 
@@ -53,7 +53,7 @@ const UploadScreen = ({
     if (uploadState === UPLOAD_STATES.COMPLETED) {
       return { 
         displayPercent: 100, 
-        stageName: "Upload complete", 
+        stageName: "Session saved successfully", 
         bytesString: null, 
         currentStage: UPLOAD_STAGES.FINALIZE,
         stageProgressVal: 100
@@ -64,7 +64,7 @@ const UploadScreen = ({
       const defaultPercent = uploadState === UPLOAD_STATES.QUEUED ? 4 : 10;
       return { 
         displayPercent: defaultPercent, 
-        stageName: "Preparing upload...", 
+        stageName: "Saving session, please wait...", 
         bytesString: null, 
         currentStage: UPLOAD_STAGES.RECORDING_UPLOAD,
         stageProgressVal: 0
@@ -77,21 +77,21 @@ const UploadScreen = ({
     const isNetworkDone = progress.isNetworkComplete;
     const isServerDone = progress.isServerComplete;
 
-    let name = "Uploading recording...";
+    let name = "Saving session, please wait...";
     if (stage === UPLOAD_STAGES.RECORDING_UPLOAD) {
       if (isServerDone) {
-        name = "Video archived to cloud storage";
+        name = "Interview recording saved";
       } else if (isNetworkDone || stageProg >= 100) {
-        name = "Archiving & securing video in cloud storage...";
+        name = "Processing interview recording, please wait...";
       } else if (stageProg > 0) {
-        name = `Uploading video & audio (${stageProg}%)`;
+        name = `Saving interview recording (${stageProg}%)...`;
       } else {
-        name = "Connecting to video storage...";
+        name = "Saving interview recording, please wait...";
       }
     } else if (stage === UPLOAD_STAGES.SESSION_UPLOAD) {
-      name = "Saving interview responses & telemetry...";
+      name = "Saving your responses, please wait...";
     } else if (stage === UPLOAD_STAGES.FINALIZE) {
-      name = "Verifying session integrity...";
+      name = "Finalizing session, please wait...";
     }
 
     let bStr = null;
@@ -99,7 +99,7 @@ const UploadScreen = ({
       const loadedFmt = formatBytes(progress.bytesLoaded);
       const totalFmt = formatBytes(progress.totalBytes);
       if (isNetworkDone && !isServerDone) {
-        bStr = `${totalFmt} / ${totalFmt} • Encrypting`;
+        bStr = `${totalFmt} / ${totalFmt} • Processing`;
       } else {
         bStr = `${loadedFmt} / ${totalFmt}`;
       }
@@ -152,24 +152,24 @@ const UploadScreen = ({
             
             <div className="space-y-1.5">
               <h2 className="text-xl font-medium tracking-tight text-[var(--color-text-primary,#FFFFFF)]">
-                Interview submitted successfully
+                Interview saved successfully
               </h2>
               <p className="text-sm text-[var(--color-text-secondary,#94A3B8)] max-w-md mx-auto">
-                Your video recording and responses have been securely archived. Your evaluation results will be processed shortly.
+                Your responses and recording have been saved. Your evaluation will be processed shortly.
               </p>
             </div>
 
             <div className="w-full bg-[var(--color-canvas,#0B0B0E)] border border-[var(--color-border,#232330)] rounded-lg p-3.5 flex items-center justify-between text-xs text-[var(--color-text-secondary,#94A3B8)]">
               <span className="flex items-center gap-2">
-                <Lock className="w-3.5 h-3.5 text-[var(--color-success,#10B981)]" />
-                Encrypted & Stored
+                <CheckCircle2 className="w-3.5 h-3.5 text-[var(--color-success,#10B981)]" />
+                Session Complete
               </span>
               <span className="font-mono text-[var(--color-text-accent,#C4B5FD)]">Status: Ready</span>
             </div>
 
             <button
               onClick={onContinue}
-              className="w-full mt-2 inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[var(--color-primary,#5B3AF2)] hover:bg-[var(--color-primary-hover,#472CD7)] text-white font-medium text-sm rounded-lg transition-colors shadow-sm"
+              className="w-full mt-2 inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[var(--color-primary,#5B3AF2)] hover:bg-[var(--color-primary-hover,#472CD7)] text-white font-medium text-sm rounded-lg transition-colors shadow-sm cursor-pointer"
             >
               Continue to dashboard
               <ArrowRight className="w-4 h-4" />
@@ -186,10 +186,10 @@ const UploadScreen = ({
             
             <div className="space-y-1.5">
               <h2 className="text-xl font-medium tracking-tight text-[var(--color-text-primary,#FFFFFF)]">
-                Recording upload interrupted
+                Unable to save session
               </h2>
               <p className="text-sm text-[var(--color-text-secondary,#94A3B8)] max-w-md mx-auto">
-                We encountered an issue uploading your interview session. Please check your internet connection and try again.
+                We encountered a connection issue while saving your interview. Please check your network and try again.
               </p>
             </div>
 
@@ -204,14 +204,14 @@ const UploadScreen = ({
             <div className="w-full flex flex-col sm:flex-row gap-3 pt-2">
               <button
                 onClick={onRetry}
-                className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[var(--color-primary,#5B3AF2)] hover:bg-[var(--color-primary-hover,#472CD7)] text-white font-medium text-sm rounded-lg transition-colors shadow-sm"
+                className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[var(--color-primary,#5B3AF2)] hover:bg-[var(--color-primary-hover,#472CD7)] text-white font-medium text-sm rounded-lg transition-colors shadow-sm cursor-pointer"
               >
                 <RefreshCw className="w-4 h-4" />
-                Retry upload
+                Retry saving
               </button>
               <button
                 onClick={onContinue}
-                className="inline-flex items-center justify-center px-4 py-2.5 bg-transparent hover:bg-[var(--color-surface-hover,#1E1E2A)] border border-[var(--color-border,#232330)] text-[var(--color-text-secondary,#94A3B8)] hover:text-white text-sm font-medium rounded-lg transition-colors"
+                className="inline-flex items-center justify-center px-4 py-2.5 bg-transparent hover:bg-[var(--color-surface-hover,#1E1E2A)] border border-[var(--color-border,#232330)] text-[var(--color-text-secondary,#94A3B8)] hover:text-white text-sm font-medium rounded-lg transition-colors cursor-pointer"
               >
                 Skip to dashboard
               </button>
@@ -219,7 +219,7 @@ const UploadScreen = ({
           </div>
         )}
 
-        {/* ACTIVE UPLOADING / QUEUED / RETRYING STATE */}
+        {/* ACTIVE SAVING / QUEUED / RETRYING STATE */}
         {uploadState !== UPLOAD_STATES.COMPLETED && uploadState !== UPLOAD_STATES.FAILED && (
           <div className="flex flex-col space-y-6">
             
@@ -229,7 +229,7 @@ const UploadScreen = ({
                 <h2 className="text-xl font-medium tracking-tight text-[var(--color-text-primary,#FFFFFF)]">
                   {uploadState === UPLOAD_STATES.RETRYING 
                     ? "Reconnecting to server..." 
-                    : "Uploading interview recording"}
+                    : "Saving session, please wait..."}
                 </h2>
                 <p className="text-xs sm:text-sm text-[var(--color-text-secondary,#94A3B8)]">
                   {stageName}
@@ -249,7 +249,7 @@ const UploadScreen = ({
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs font-medium">
                 <span className="text-[var(--color-text-secondary,#94A3B8)]">
-                  {bytesString ? bytesString : "Transmitting payload..."}
+                  {bytesString ? bytesString : "Saving session data..."}
                 </span>
                 <span className="font-mono text-sm font-semibold text-[var(--color-text-accent,#C4B5FD)]">
                   {displayPercent}%
@@ -286,15 +286,15 @@ const UploadScreen = ({
                     stage1Status === "done" ? "text-[var(--color-text-secondary,#94A3B8)]" : 
                     "text-[var(--color-text-muted,#6E7A8A)]"
                   }`}>
-                    Video & audio recording
+                    Interview recording
                   </span>
                 </div>
                 
                 <span className="font-mono text-[11px] text-[var(--color-text-muted,#6E7A8A)]">
                   {stage1Status === "done" 
-                    ? "Uploaded" 
+                    ? "Saved" 
                     : stage1Status === "active" 
-                      ? (progress?.isNetworkComplete && !progress?.isServerComplete ? "Archiving..." : `${stageProgressVal || 0}%`) 
+                      ? (progress?.isNetworkComplete && !progress?.isServerComplete ? "Processing..." : `${stageProgressVal || 0}%`) 
                       : "Pending"}
                 </span>
               </div>
@@ -316,12 +316,12 @@ const UploadScreen = ({
                     stage2Status === "done" ? "text-[var(--color-text-secondary,#94A3B8)]" : 
                     "text-[var(--color-text-muted,#6E7A8A)]"
                   }`}>
-                    Interview responses & telemetry
+                    Question responses
                   </span>
                 </div>
 
                 <span className="font-mono text-[11px] text-[var(--color-text-muted,#6E7A8A)]">
-                  {stage2Status === "done" ? "Synced" : stage2Status === "active" ? "Syncing..." : "Waiting"}
+                  {stage2Status === "done" ? "Saved" : stage2Status === "active" ? "Saving..." : "Waiting"}
                 </span>
               </div>
 
@@ -342,12 +342,12 @@ const UploadScreen = ({
                     stage3Status === "done" ? "text-[var(--color-text-secondary,#94A3B8)]" : 
                     "text-[var(--color-text-muted,#6E7A8A)]"
                   }`}>
-                    Finalizing & integrity check
+                    Completing submission
                   </span>
                 </div>
 
                 <span className="font-mono text-[11px] text-[var(--color-text-muted,#6E7A8A)]">
-                  {stage3Status === "done" ? "Verified" : stage3Status === "active" ? "Finalizing..." : "Waiting"}
+                  {stage3Status === "done" ? "Completed" : stage3Status === "active" ? "Finalizing..." : "Waiting"}
                 </span>
               </div>
 
@@ -355,12 +355,12 @@ const UploadScreen = ({
 
             {/* Connection Safety Notice */}
             <div className="flex items-start gap-2.5 bg-[var(--color-canvas,#0B0B0E)] border border-[var(--color-border,#232330)] rounded-lg p-3 text-xs text-[var(--color-text-secondary,#94A3B8)]">
-              <Lock className="w-4 h-4 text-[var(--color-primary,#5B3AF2)] shrink-0 mt-0.5" />
+              <Clock className="w-4 h-4 text-[var(--color-primary,#5B3AF2)] shrink-0 mt-0.5" />
               <span>
-                Please keep this browser tab open until the upload is complete. Your connection is encrypted.
+                Please keep this window open while we save your interview. This will only take a moment.
                 {uploadState === UPLOAD_STATES.RETRYING && (
                   <span className="block mt-1 font-semibold text-[var(--color-warning,#F59E0B)]">
-                    Attempt {retries} of 3 • Re-establishing connection...
+                    Attempt {retries} of 3 • Reconnecting...
                   </span>
                 )}
               </span>

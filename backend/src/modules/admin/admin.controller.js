@@ -805,3 +805,106 @@ export const updateCampaignControls = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Admin re-enroll a candidate for an interview campaign (resets completed/in-progress attempt)
+// @route   POST /api/admin/campaigns/:id/re-enroll
+// @access  Private (Admin)
+export const reEnrollCandidate = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { email, reason, resetSession = true } = req.body;
+
+    if (!email || typeof email !== "string" || !email.includes("@")) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a valid candidate email address.",
+      });
+    }
+
+    const emailLower = email.trim().toLowerCase();
+    const campaign = await Interview.findById(id);
+
+    if (!campaign) {
+      return res.status(404).json({
+        success: false,
+        message: "Interview campaign not found.",
+      });
+    }
+
+    campaign.assignedCandidates = campaign.assignedCandidates || [];
+    let candidate = campaign.assignedCandidates.find(
+      (c) => c.email && c.email.toLowerCase() === emailLower
+    );
+
+    const reEnrollRecord = {
+      reEnrolledAt: new Date(),
+      reEnrollReason: reason?.trim() || "Admin manual re-enrollment",
+      reEnrolledBy: req.user?._id || null,
+    };
+
+    if (candidate) {
+      candidate.status = "Pending";
+      candidate.joinedAt = null;
+      candidate.submittedAt = null;
+      candidate.resultId = null;
+      candidate.reEnrollCount = (candidate.reEnrollCount || 0) + 1;
+      candidate.reEnrolledAt = reEnrollRecord.reEnrolledAt;
+      candidate.reEnrollReason = reEnrollRecord.reEnrollReason;
+      candidate.reEnrolledBy = reEnrollRecord.reEnrolledBy;
+    } else {
+      candidate = {
+        email: emailLower,
+        status: "Pending",
+        joinedAt: null,
+        submittedAt: null,
+        resultId: null,
+        reEnrollCount: 1,
+        reEnrolledAt: reEnrollRecord.reEnrolledAt,
+        reEnrollReason: reEnrollRecord.reEnrollReason,
+        reEnrolledBy: reEnrollRecord.reEnrolledBy,
+      };
+      campaign.assignedCandidates.push(candidate);
+    }
+
+    // Reset previous interview session & purge cache if requested
+    if (resetSession) {
+      const candidateUser = await User.findOne({ email: emailLower }).select("_id");
+      if (candidateUser) {
+        await InterviewSession.deleteMany({
+          interviewId: campaign._id,
+          candidateId: candidateUser._id,
+        });
+
+        try {
+          const { voiceSessionCache } = await import("../interview/services/voiceSessionCache.service.js");
+          await voiceSessionCache.clearSession(campaign._id.toString(), candidateUser._id.toString());
+        } catch (cacheErr) {
+          console.warn("[Admin Re-Enroll] Failed to clear voice session cache:", cacheErr.message);
+        }
+      }
+    }
+
+    await campaign.save();
+    await campaign.populate("employer", "name email companyName profilePicture isVerified");
+
+    // Invalidate all related caches
+    await Promise.all([
+      cacheService.invalidateCachePattern("admin:*"),
+      cacheService.invalidateCachePattern("interview:*"),
+      cacheService.invalidateCachePattern("user:*"),
+      cacheService.invalidateCache(`employer:interviews:${campaign.employer?._id || campaign.employer}`),
+    ]);
+
+    console.log(`[Admin Re-Enroll] Admin ${req.user?.email || req.user?._id} re-enrolled ${emailLower} for campaign ${campaign.interviewCode} (${campaign._id}). Reason: ${reEnrollRecord.reEnrollReason}`);
+
+    res.status(200).json({
+      success: true,
+      message: `Candidate ${emailLower} successfully re-enrolled in campaign ${campaign.interviewCode}.`,
+      campaign,
+      candidate,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

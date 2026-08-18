@@ -36,8 +36,8 @@ export const InsufficientCreditsModal = ({
       id: "bundle_pro",
       title: "Pro Pack (Recommended)",
       credits: 150,
-      price: 199,
-      rate: "₹1.33/cr",
+      price: 259, // +30% from ₹199
+      rate: "₹1.73/cr",
       popular: true
     }
   ];

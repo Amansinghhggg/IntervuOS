@@ -121,7 +121,9 @@ export default function CandidateSubscriptionsPage() {
       // 1. Create Order on Backend
       const { data: orderData } = await api.post('/payments/create-order', {
         credits,
-        amount: price
+        amount: price,
+        bundleId: id,
+        planId: id,
       });
 
       if (!orderData?.success || !orderData?.orderId) {
@@ -260,9 +262,9 @@ export default function CandidateSubscriptionsPage() {
     {
       id: 'bundle_pro',
       title: 'Pro Placement Pack',
-      price: 199,
+      price: 259, // +30% from ₹199
       credits: 150,
-      ratePerCredit: '₹1.33/cr',
+      ratePerCredit: '₹1.73/cr',
       description: 'Our most popular tier for serious prep across 5-7 deep-dive sessions.',
       features: [
         '150 AI Interview Credits',
@@ -276,9 +278,9 @@ export default function CandidateSubscriptionsPage() {
     {
       id: 'bundle_master',
       title: 'Master Placement Pack',
-      price: 399,
+      price: 599, // +50% from ₹399
       credits: 400,
-      ratePerCredit: '₹1.00/cr',
+      ratePerCredit: '₹1.50/cr',
       description: 'Maximum volume value for company-specific interview mastery.',
       features: [
         '400 AI Interview Credits',

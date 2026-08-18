@@ -203,7 +203,6 @@ const InterviewDetailsPage = () => {
           const cId = candidate._id || candidate.resultId || candidate.email;
           const { data } = await api.post(`/interviews/${id}/candidates/${cId}/re-enroll`);
           if (data.success) {
-            toast.success("Candidate re-enrolled successfully.");
             await fetchInterview();
             setConfirmModal((prev) => ({ ...prev, isOpen: false, isLoading: false }));
           }
@@ -353,8 +352,8 @@ const InterviewDetailsPage = () => {
               <span className="text-[var(--color-border)]">•</span>
               <span
                 className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border ${interview.status === "active"
-                    ? "bg-[var(--color-info-tint,rgba(59,130,246,0.15))] text-[var(--color-info,#3B82F6)] border-[var(--color-info,#3B82F6)]/30"
-                    : "bg-[var(--color-surface)] text-[var(--color-text-secondary)] border-[var(--color-border)]"
+                  ? "bg-[var(--color-info-tint,rgba(59,130,246,0.15))] text-[var(--color-info,#3B82F6)] border-[var(--color-info,#3B82F6)]/30"
+                  : "bg-[var(--color-surface)] text-[var(--color-text-secondary)] border-[var(--color-border)]"
                   }`}
               >
                 {interview.status === "active" ? "Active campaign" : "Completed"}
@@ -412,15 +411,15 @@ const InterviewDetailsPage = () => {
       {/* Campaign Verification & Visibility Banner (Flat surface with accent left border) */}
       <div
         className={`p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] border-l-4 ${interview.isVerified
-            ? "border-l-[var(--color-success)]"
-            : "border-l-[var(--color-warning)]"
+          ? "border-l-[var(--color-success)]"
+          : "border-l-[var(--color-warning)]"
           } flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4`}
       >
         <div className="flex items-start gap-3.5">
           <div
             className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border mt-0.5 ${interview.isVerified
-                ? "bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/30"
-                : "bg-[var(--color-warning)]/10 text-[var(--color-warning)] border-[var(--color-warning)]/30"
+              ? "bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/30"
+              : "bg-[var(--color-warning)]/10 text-[var(--color-warning)] border-[var(--color-warning)]/30"
               }`}
           >
             {interview.isVerified ? (
@@ -432,8 +431,8 @@ const InterviewDetailsPage = () => {
           <div>
             <h4
               className={`text-sm font-medium ${interview.isVerified
-                  ? "text-[var(--color-success)]"
-                  : "text-[var(--color-warning)]"
+                ? "text-[var(--color-success)]"
+                : "text-[var(--color-warning)]"
                 }`}
             >
               {interview.isVerified
@@ -787,8 +786,8 @@ const InterviewDetailsPage = () => {
                       type="button"
                       onClick={() => setCurrentPage(pageNum)}
                       className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${currentPage === pageNum
-                          ? "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)]"
-                          : "border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                        ? "bg-[var(--color-primary-tint,rgba(99,56,246,0.15))] text-[var(--color-text-accent,#C4B5FD)] border border-[var(--color-border-active,#6338F6)]"
+                        : "border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                         }`}
                     >
                       {pageNum}

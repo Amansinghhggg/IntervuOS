@@ -20,24 +20,61 @@ const getRazorpayInstance = () => {
   return new Razorpay({ key_id, key_secret });
 };
 
-// @desc    Create Razorpay Order for Custom Credits
+// Curated Practice Packs Specification (Source of Truth)
+export const CURATED_BUNDLES = {
+  bundle_starter: {
+    id: "bundle_starter",
+    title: "Starter Practice Pack",
+    credits: 45,
+    price: 99,
+  },
+  bundle_pro: {
+    id: "bundle_pro",
+    title: "Pro Placement Pack",
+    credits: 150,
+    price: 259, // Increased by 30% from ₹199 (₹258.7 -> ₹259)
+  },
+  bundle_master: {
+    id: "bundle_master",
+    title: "Master Placement Pack",
+    credits: 400,
+    price: 599, // Increased by 50% from ₹399 (₹598.5 -> ₹599)
+  },
+};
+
+// @desc    Create Razorpay Order for Custom Credits or Curated Packs
 // @route   POST /api/payments/create-order
 // @access  Private (Candidate)
 export const createOrder = async (req, res, next) => {
   try {
-    const { credits } = req.body;
-    const parsedCredits = parseInt(credits, 10) || 0;
+    const { credits, bundleId, planId } = req.body;
+    const targetBundleId = bundleId || planId;
 
-    if (!parsedCredits || parsedCredits < 20) {
-      return res.status(400).json({
-        success: false,
-        message: "Minimum custom credit purchase is 20 credits (₹50).",
-      });
+    let finalCredits;
+    let amountInRupees;
+    let description;
+
+    if (targetBundleId && CURATED_BUNDLES[targetBundleId]) {
+      const bundle = CURATED_BUNDLES[targetBundleId];
+      finalCredits = bundle.credits;
+      amountInRupees = bundle.price;
+      description = `Purchased ${bundle.title} (${finalCredits} Credits)`;
+    } else {
+      finalCredits = parseInt(credits, 10) || 0;
+
+      if (!finalCredits || finalCredits < 20) {
+        return res.status(400).json({
+          success: false,
+          message: "Minimum custom credit purchase is 20 credits (₹50).",
+        });
+      }
+
+      // Server-side dynamic rate calculation (<50 credits = ₹2.5, >=50 credits = ₹1.8)
+      const rate = finalCredits < 50 ? 2.5 : 1.8;
+      amountInRupees = Math.round(finalCredits * rate);
+      description = `Purchased ${finalCredits} Custom Credits`;
     }
 
-    // Server-side dynamic rate calculation (<50 credits = ₹2.5, >=50 credits = ₹1.8)
-    const rate = parsedCredits < 50 ? 2.5 : 1.8;
-    const amountInRupees = Math.round(parsedCredits * rate);
     const amountInPaise = amountInRupees * 100;
 
     const razorpay = getRazorpayInstance();
@@ -49,11 +86,11 @@ export const createOrder = async (req, res, next) => {
       await Transaction.create({
         userId: req.user._id,
         type: "PURCHASE",
-        credits: parsedCredits,
+        credits: finalCredits,
         amount: amountInRupees,
         razorpayOrderId: mockOrderId,
         status: "created",
-        description: `Purchased ${parsedCredits} Custom Credits`,
+        description,
       });
 
       return res.status(200).json({
@@ -80,11 +117,11 @@ export const createOrder = async (req, res, next) => {
       await Transaction.create({
         userId: req.user._id,
         type: "PURCHASE",
-        credits: parsedCredits,
+        credits: finalCredits,
         amount: amountInRupees,
         razorpayOrderId: order.id,
         status: "created",
-        description: `Purchased ${parsedCredits} Custom Credits`,
+        description,
       });
 
       return res.status(200).json({
@@ -101,11 +138,11 @@ export const createOrder = async (req, res, next) => {
       await Transaction.create({
         userId: req.user._id,
         type: "PURCHASE",
-        credits: parsedCredits,
+        credits: finalCredits,
         amount: amountInRupees,
         razorpayOrderId: mockOrderId,
         status: "created",
-        description: `Purchased ${parsedCredits} Custom Credits`,
+        description,
       });
 
       return res.status(200).json({

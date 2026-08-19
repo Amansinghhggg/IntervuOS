@@ -23,7 +23,8 @@ import CandidateHelpSupportPage from "../features/candidate/CandidateHelpSupport
 import MockReportsPage from "../features/candidate/MockReportsPage";
 import AdminLayout from "../features/admin/AdminLayout";
 import AdminDashboardPage from "../features/admin/AdminDashboardPage";
-import LandingPage from "../features/marketing/LandingPage";
+import CandidateLandingPage from "../features/marketing/CandidateLandingPage";
+import EmployerLandingPage from "../features/marketing/EmployerLandingPage";
 import { Loader2 } from "lucide-react";
 
 function App() {
@@ -59,17 +60,31 @@ function App() {
         <Route path="/test/voice" element={<VoiceTestPage />} />
         <Route path="/test/avatar" element={<AvatarTestPage />} />
 
-        {/* Public Routes */}
+        {/* Public Dedicated Landing Routes */}
         <Route
           path="/"
           element={
             user ? (
               <Navigate to={getRoleDefaultRoute()} replace />
             ) : (
-              <LandingPage />
+              <CandidateLandingPage />
             )
           }
         />
+        <Route
+          path="/employers"
+          element={
+            user ? (
+              <Navigate to={getRoleDefaultRoute()} replace />
+            ) : (
+              <EmployerLandingPage />
+            )
+          }
+        />
+        <Route path="/candidates" element={<Navigate to="/" replace />} />
+        <Route path="/for-candidates" element={<Navigate to="/" replace />} />
+        <Route path="/for-business" element={<Navigate to="/employers" replace />} />
+        <Route path="/business" element={<Navigate to="/employers" replace />} />
         <Route
           path="/login"
           element={

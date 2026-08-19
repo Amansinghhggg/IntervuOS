@@ -79,9 +79,8 @@ function ScreenshotPlaceholder({
           onOpenFullView(imageSrc, caption, alt);
         }
       }}
-      className={`w-full ${height} rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] flex flex-col items-center justify-center relative overflow-hidden group ${
-        imageSrc && !imgError ? "cursor-pointer" : ""
-      }`}
+      className={`w-full ${height} rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] flex flex-col items-center justify-center relative overflow-hidden group ${imageSrc && !imgError ? "cursor-pointer" : ""
+        }`}
     >
       {stepNumber && (
         <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-[var(--color-canvas)]/90 backdrop-blur-md border border-[var(--color-border)] text-[10px] font-mono text-[var(--color-text-accent)] font-medium z-10 shadow-xs">
@@ -148,6 +147,17 @@ function VideoPlaceholder({ audience = "candidate" }) {
   const [hasError, setHasError] = useState(false);
   const videoRef = useRef(null);
 
+  // When tab/audience or video source changes, reset state and load fresh video
+  useEffect(() => {
+    setIsPlaying(false);
+    setHasError(false);
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+      videoRef.current.load();
+    }
+  }, [videoSrc]);
+
   const togglePlay = () => {
     if (!videoRef.current) return;
 
@@ -174,16 +184,17 @@ function VideoPlaceholder({ audience = "candidate" }) {
   return (
     <div className="w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-2 sm:p-2.5 shadow-xs relative overflow-hidden">
       {/* Video Container */}
-      <div 
+      <div
         onClick={togglePlay}
         className="relative w-full aspect-video rounded-xl bg-[var(--color-canvas)] border border-[var(--color-border)] flex flex-col items-center justify-center overflow-hidden group cursor-pointer select-none"
       >
-        {/* Real Video Element without default browser controls */}
+        {/* Real Video Element with key and direct src to force clean decoder reload */}
         <video
+          key={videoSrc}
           ref={videoRef}
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
-            isPlaying ? "opacity-100 z-10" : "opacity-0 pointer-events-none"
-          }`}
+          src={videoSrc}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${isPlaying ? "opacity-100 z-10" : "opacity-0 pointer-events-none"
+            }`}
           poster={posterSrc}
           preload="metadata"
           playsInline
@@ -942,7 +953,7 @@ export default function LandingPage() {
                 {/* Right Column: Candidate Demo Video Placeholder */}
                 <div className="lg:col-span-6">
                   {/* PLACEHOLDER VIDEO: Candidate Demo */}
-                  <VideoPlaceholder audience="candidate" />
+                  <VideoPlaceholder key="candidate-video-player" audience="candidate" />
                 </div>
 
               </div>
@@ -1168,7 +1179,7 @@ export default function LandingPage() {
                 {/* Right Column: Employer Demo Video Placeholder */}
                 <div className="lg:col-span-6">
                   {/* PLACEHOLDER VIDEO: Employer Demo */}
-                  <VideoPlaceholder audience="business" />
+                  <VideoPlaceholder key="business-video-player" audience="business" />
                 </div>
 
               </div>
@@ -1533,7 +1544,7 @@ export default function LandingPage() {
                 <div className="flex items-center gap-2">
                   <Mail className="w-3.5 h-3.5 text-[var(--color-text-accent)] shrink-0" />
                   {/* PLACEHOLDER: Contact Email */}
-                  <span className="select-all">hello@forktalent.com</span>
+                  <span className="select-all">2468amansingh@gmail.com</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
@@ -1543,7 +1554,7 @@ export default function LandingPage() {
                 <div className="flex items-start gap-2">
                   <MapPin className="w-3.5 h-3.5 text-[var(--color-text-accent)] shrink-0 mt-0.5" />
                   {/* PLACEHOLDER: Office Address */}
-                  <span>402 Apex Towers, Cyber City, Bangalore, India</span>
+                  <span>Andheri ,Mumbai,India</span>
                 </div>
               </div>
             </div>

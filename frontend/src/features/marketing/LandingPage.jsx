@@ -37,6 +37,11 @@ import {
   LayoutDashboard,
   Star,
   Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Maximize2,
+  X,
   Share2,
   Mail,
   Phone,
@@ -55,115 +60,193 @@ function trackEvent(eventName, payload = {}) {
 }
 
 /**
- * Reusable screenshot placeholder box with bordered container, icon, and descriptive caption.
+ * Reusable screenshot display box with zoom preview and lightbox trigger.
  */
-function ScreenshotPlaceholder({ caption, alt, height = "h-56 sm:h-72", stepNumber = null }) {
+function ScreenshotPlaceholder({
+  imageSrc,
+  caption,
+  alt,
+  height = "h-64 sm:h-80",
+  stepNumber = null,
+  onOpenFullView = null
+}) {
+  const [imgError, setImgError] = useState(false);
+
   return (
-    <div className={`w-full ${height} rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface-hover)]/30 flex flex-col items-center justify-center p-6 text-center space-y-3 transition-colors relative overflow-hidden group`}>
+    <div
+      onClick={() => {
+        if (imageSrc && !imgError && onOpenFullView) {
+          onOpenFullView(imageSrc, caption, alt);
+        }
+      }}
+      className={`w-full ${height} rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] flex flex-col items-center justify-center relative overflow-hidden group ${
+        imageSrc && !imgError ? "cursor-pointer" : ""
+      }`}
+    >
       {stepNumber && (
-        <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-[var(--color-canvas)] border border-[var(--color-border)] text-[10px] font-mono text-[var(--color-text-accent)] font-medium">
-          Step 0{stepNumber}
+        <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-[var(--color-canvas)]/90 backdrop-blur-md border border-[var(--color-border)] text-[10px] font-mono text-[var(--color-text-accent)] font-medium z-10 shadow-xs">
+          Stage 0{stepNumber}
         </div>
       )}
-      <div className="w-12 h-12 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-accent)] shadow-xs transition-transform group-hover:scale-105">
-        <Camera className="w-6 h-6" />
-      </div>
-      <div className="space-y-1 max-w-sm">
-        <p className="text-xs sm:text-sm font-medium text-[var(--color-text-primary)]">
-          {caption || "Product Interface Preview"}
-        </p>
-        <p className="text-[11px] text-[var(--color-text-muted)]">
-          {alt || "Actual workspace visualization"}
-        </p>
-      </div>
-      <span className="text-[10px] font-mono text-[var(--color-text-muted)] opacity-60">
-        {/* PLACEHOLDER: Real product screenshot asset will be inserted here */}
-        [UI Screenshot Asset Placeholder]
-      </span>
+
+      {imageSrc && !imgError ? (
+        <>
+          <img
+            src={imageSrc}
+            alt={alt || caption || "Product Interface"}
+            onError={() => setImgError(true)}
+            className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.03]"
+          />
+          {/* Hover overlay with Full View button */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-canvas)]/90 via-[var(--color-canvas)]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-4 z-10">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs font-medium text-[var(--color-text-primary)] truncate max-w-[70%]">
+                {caption}
+              </p>
+              <button
+                type="button"
+                className="px-3 py-1.5 rounded-xl bg-[var(--color-primary)] text-white text-[11px] font-medium flex items-center gap-1.5 shadow-lg shadow-[var(--color-primary)]/40 hover:bg-[var(--color-primary-hover)] transition-colors shrink-0"
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+                <span>Full View</span>
+              </button>
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="flex flex-col items-center justify-center p-6 text-center space-y-3">
+          <div className="w-12 h-12 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-accent)] shadow-xs transition-transform group-hover:scale-105">
+            <Camera className="w-6 h-6" />
+          </div>
+          <div className="space-y-1 max-w-sm">
+            <p className="text-xs sm:text-sm font-medium text-[var(--color-text-primary)]">
+              {caption || "Product Interface Preview"}
+            </p>
+            <p className="text-[11px] text-[var(--color-text-muted)]">
+              {alt || "Actual workspace visualization"}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 /**
- * Reusable video placeholder box with animated mock waveform and visible badge.
+ * Reusable video player box supporting interactive playback, poster preview, and waveform simulation.
  */
 function VideoPlaceholder({ audience = "candidate" }) {
   const isCandidate = audience === "candidate";
   const videoSrc = isCandidate
     ? "/assets/video/candidate-demo-placeholder.mp4"
     : "/assets/video/employer-demo-placeholder.mp4";
+  const posterSrc = isCandidate
+    ? "/assets/images/candidate-poster.png"
+    : "/assets/images/employer-poster.png";
+
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const videoRef = useRef(null);
+
+  const togglePlay = () => {
+    if (!videoRef.current) return;
+
+    if (isPlaying) {
+      videoRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      videoRef.current
+        .play()
+        .then(() => {
+          setIsPlaying(true);
+          setHasError(false);
+        })
+        .catch(() => {
+          setHasError(true);
+          setIsPlaying(false);
+          toast("Click to play interactive video demo.", {
+            icon: "🎬"
+          });
+        });
+    }
+  };
 
   return (
-    <div className="w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-5 shadow-xs relative overflow-hidden space-y-3">
+    <div className="w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-2 sm:p-2.5 shadow-xs relative overflow-hidden">
       {/* Video Container */}
-      <div className="relative w-full aspect-video rounded-xl bg-[var(--color-canvas)] border border-[var(--color-border)] flex flex-col items-center justify-center overflow-hidden group">
-        {/* Hidden video element holding source for future asset swap */}
+      <div 
+        onClick={togglePlay}
+        className="relative w-full aspect-video rounded-xl bg-[var(--color-canvas)] border border-[var(--color-border)] flex flex-col items-center justify-center overflow-hidden group cursor-pointer select-none"
+      >
+        {/* Real Video Element without default browser controls */}
         <video
-          className="absolute inset-0 w-full h-full object-cover opacity-0 pointer-events-none"
-          poster={isCandidate ? "/assets/images/candidate-poster.png" : "/assets/images/employer-poster.png"}
-          preload="none"
+          ref={videoRef}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+            isPlaying ? "opacity-100 z-10" : "opacity-0 pointer-events-none"
+          }`}
+          poster={posterSrc}
+          preload="metadata"
+          playsInline
+          onEnded={() => setIsPlaying(false)}
+          onError={() => setHasError(true)}
         >
           <source src={videoSrc} type="video/mp4" />
-          {/* TODO: Replace with real demo video asset */}
         </video>
 
-        {/* Dynamic UI Preview Inside Video Frame */}
-        <div className="w-full h-full flex flex-col justify-between p-4 sm:p-6 bg-gradient-to-b from-[var(--color-canvas)]/40 via-transparent to-[var(--color-canvas)]/90 select-none">
-          {/* Top Status Bar */}
-          <div className="flex items-center justify-between w-full">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--color-surface)]/90 backdrop-blur-md border border-[var(--color-border)] text-[10px] font-mono text-emerald-400">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-              <span>{isCandidate ? "Live AI Technical Session" : "Candidate Evaluation Stream"}</span>
-            </div>
-            <span className="text-[10px] font-mono text-[var(--color-text-muted)] bg-[var(--color-surface)] px-2 py-0.5 rounded-md border border-[var(--color-border)]">
-              {isCandidate ? "Turn 03/06 • 12:45" : "Rank #1 • SDE-2 Track"}
-            </span>
-          </div>
+        {/* Dynamic UI Preview / Poster Inside Video Frame (Shown when paused/stopped) */}
+        {!isPlaying && (
+          <div className="w-full h-full flex flex-col justify-between p-4 sm:p-6 bg-gradient-to-b from-[var(--color-canvas)]/70 via-[var(--color-canvas)]/40 to-[var(--color-canvas)]/95 select-none relative z-20">
+            {/* Background Poster Texture */}
+            <img
+              src={posterSrc}
+              alt="Interview UI Preview"
+              className="absolute inset-0 w-full h-full object-cover -z-10 opacity-35 group-hover:scale-105 transition-transform duration-700 ease-out"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+            />
 
-          {/* Center Play Button & Waveform preview */}
-          <div className="flex flex-col items-center justify-center space-y-3 my-auto">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[var(--color-primary)] text-white flex items-center justify-center shadow-lg shadow-[var(--color-primary)]/40 transition-transform group-hover:scale-110 cursor-pointer">
-              <Play className="w-5 h-5 sm:w-6 sm:h-6 fill-white ml-0.5" />
-            </div>
-            <div className="text-center space-y-1">
-              <p className="text-xs sm:text-sm font-medium text-[var(--color-text-primary)]">
-                {isCandidate ? "Watch 90s Candidate Mock Tour" : "Watch 2-Min Recruiter Workflow"}
-              </p>
-              <div className="flex items-center justify-center gap-1 text-[10px] text-[var(--color-text-muted)] font-mono">
-                <span>Autonomous voice synthesis</span>
-                <span>•</span>
-                <span>Real-time feedback</span>
+            {/* Top Status Bar */}
+            <div className="flex items-center justify-between w-full">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-surface)]/90 backdrop-blur-md border border-[var(--color-border)] text-[11px] font-medium text-[var(--color-text-primary)] shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>{isCandidate ? "Meera • AI Technical Interviewer" : "Meera • AI Screening Engine"}</span>
               </div>
             </div>
-          </div>
 
-          {/* Bottom Audio Waveform Simulation */}
-          <div className="flex items-center justify-between gap-1 pt-2 border-t border-[var(--color-border)]/50">
-            <div className="flex items-center gap-1">
-              {[40, 70, 45, 90, 60, 30, 80, 50, 95, 65, 40, 85].map((h, i) => (
-                <div
-                  key={i}
-                  className="w-1 bg-[var(--color-text-accent)]/70 rounded-full transition-all"
-                  style={{ height: `${h * 0.25}px` }}
-                />
-              ))}
+            {/* Center Play Button & Meera Intro CTA */}
+            <div className="flex flex-col items-center justify-center space-y-3 my-auto">
+              <div className="w-13 h-13 sm:w-16 sm:h-16 rounded-2xl bg-[var(--color-primary)] text-white flex items-center justify-center shadow-xl shadow-[var(--color-primary)]/35 transition-all group-hover:scale-110 hover:bg-[var(--color-primary-hover)] active:scale-95">
+                <Play className="w-6 h-6 sm:w-7 sm:h-7 fill-white ml-0.5" />
+              </div>
+
+              <div className="text-center space-y-1">
+                <p className="text-sm sm:text-base font-medium text-[var(--color-text-primary)] tracking-tight">
+                  {isCandidate ? "Say Hi to Meera" : "See How Meera Helps"}
+                </p>
+                <div className="flex items-center justify-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
+                  <span>{isCandidate ? "Live voice interview & unbiased STAR feedback" : "Autonomous screening & anti-cheating leaderboards"}</span>
+                </div>
+              </div>
             </div>
-            <span className="text-[10px] text-[var(--color-text-muted)] font-mono">
-              1080p HD • Interactive Audio
-            </span>
-          </div>
-        </div>
-      </div>
 
-      {/* Developer / Deployer Tag */}
-      <div className="flex items-center justify-between text-[11px] text-[var(--color-text-muted)] px-1">
-        <span className="font-mono">
-          {/* TODO: Replace with real demo video */}
-          [Placeholder Demo Video: {videoSrc}]
-        </span>
-        <span className="text-emerald-400 flex items-center gap-1">
-          <ShieldCheck className="w-3.5 h-3.5" /> 60 FPS
-        </span>
+            {/* Bottom Audio Waveform Simulation */}
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-[var(--color-border)]/60">
+              <div className="flex items-center gap-1">
+                {[35, 65, 45, 85, 55, 30, 90, 60, 95, 70, 40, 80, 50, 75, 40].map((h, i) => (
+                  <div
+                    key={i}
+                    className="w-1 bg-[var(--color-text-accent)]/70 rounded-full transition-all"
+                    style={{ height: `${h * 0.22}px` }}
+                  />
+                ))}
+              </div>
+              <span className="text-[11px] text-[var(--color-text-accent)] font-medium flex items-center gap-1">
+                <Play className="w-3 h-3 fill-current" /> Watch Intro
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -183,6 +266,9 @@ export default function LandingPage() {
   const [activeCandidateStep, setActiveCandidateStep] = useState(0);
   const [activeBusinessStep, setActiveBusinessStep] = useState(0);
 
+  // Lightbox Modal state for full-screen screenshot preview
+  const [lightboxModal, setLightboxModal] = useState(null);
+
   // Accordion FAQ active index
   const [openFaqIndex, setOpenFaqIndex] = useState(0);
 
@@ -201,8 +287,18 @@ export default function LandingPage() {
       }
     };
 
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setLightboxModal(null);
+      }
+    };
+
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, [audience]);
 
   const handleTabChange = (newTab) => {
@@ -369,7 +465,8 @@ export default function LandingPage() {
         }
       ],
       highlight: "AI-calibrated role question banks & syllabus customization",
-      placeholderTag: "Screenshot: Role, Seniority & Topic Calibration Studio",
+      image: "/assets/images/screenshots/candidate-step1-calibration.png",
+      placeholderTag: "Role, Seniority & Topic Calibration Studio",
       altText: "Candidate interview configuration screen with role and topic pills"
     },
     {
@@ -393,7 +490,8 @@ export default function LandingPage() {
         }
       ],
       highlight: "Autonomous live voice interviewer with dynamic turn-taking",
-      placeholderTag: "Screenshot: Live AI Voice Mock Interview Room",
+      image: "/assets/images/screenshots/step2-live-screening.png",
+      placeholderTag: "Live AI Voice Technical Interview Room",
       altText: "Voice synthesis waveform, countdown timer, and turn controller interface"
     },
     {
@@ -417,7 +515,8 @@ export default function LandingPage() {
         }
       ],
       highlight: "Per-question STAR scoring & FAANG model answer comparison",
-      placeholderTag: "Screenshot: STAR Diagnostic Scorecard & Feedback Report",
+      image: "/assets/images/screenshots/step3-diagnostic-scorecard.png",
+      placeholderTag: "STAR Diagnostic Scorecard & Evaluation Matrix",
       altText: "Detailed score breakdown, radar charts, and question-by-question tips"
     },
     {
@@ -441,7 +540,8 @@ export default function LandingPage() {
         }
       ],
       highlight: "1-Click campaign join with code & direct recruiter shortlisting",
-      placeholderTag: "Screenshot: Campaign Code Entry & Direct Employer Gateway",
+      image: "/assets/images/screenshots/candidate-step4-assigned-code.png",
+      placeholderTag: "Campaign Code Entry & Direct Employer Gateway",
       altText: "Join campaign modal with 6-digit code input and employer interview launch"
     }
   ];
@@ -450,35 +550,107 @@ export default function LandingPage() {
   const businessSteps = [
     {
       step: 1,
-      title: "Post a role in minutes",
+      stageBadge: "Role Setup",
+      title: "Post a role & calibrate benchmarks in minutes",
       description:
-        "Define target job titles, required tech stacks, and seniority level. ForkTalent automatically generates comprehensive question banks, or you can import custom benchmark rubrics in 1 click.",
+        "Define target job titles, required tech stacks, and seniority level. ForkTalent automatically generates comprehensive technical question banks, or you can import custom benchmark rubrics in 1 click.",
+      points: [
+        {
+          title: "Role & Seniority Calibration",
+          desc: "Configure exact engineering tracks from Junior to Principal with customized evaluation criteria."
+        },
+        {
+          title: "Custom Rubrics & Question Banks",
+          desc: "Import company benchmark questions or let AI generate adaptive role-specific syllabi."
+        },
+        {
+          title: "Instant 6-Digit Campaign Code",
+          desc: "Distribute via bulk email, CSV upload, or share directly on LinkedIn and ATS job postings."
+        }
+      ],
       highlight: "Custom question bank generation & rubric customization",
-      placeholderTag: "Screenshot: Campaign Creation & Role Configuration"
+      image: "/assets/images/screenshots/step1-campaign-creation.jpg",
+      placeholderTag: "Campaign Creation & Role Configuration",
+      altText: "Recruiter campaign setup screen with tech stack and rubric options"
     },
     {
       step: 2,
-      title: "Let AI screen and rank candidates",
+      stageBadge: "AI Screening",
+      title: "Autonomous live voice screening at scale",
       description:
-        "Candidates undergo realistic 30-minute autonomous voice technical interviews with adaptive follow-ups, strict proctoring verification, and real-time audio transcription.",
+        "Candidates undergo realistic autonomous voice technical interviews with adaptive follow-ups, strict proctoring verification, and real-time audio transcription.",
+      points: [
+        {
+          title: "Concurrent 24/7 Screening",
+          desc: "Screen hundreds of applicants simultaneously without bottlenecking your engineering team."
+        },
+        {
+          title: "Dynamic Follow-up Probing",
+          desc: "The AI tests real technical depth by probing system architecture tradeoffs and edge cases."
+        },
+        {
+          title: "Anti-Cheating Integrity",
+          desc: "Automated tab-switch detection, speaker continuity tracking, and webcam verification."
+        }
+      ],
       highlight: "Autonomous voice interviews & anti-cheating monitoring",
-      placeholderTag: "Screenshot: Autonomous AI Live Screening Room"
+      image: "/assets/images/screenshots/step2-live-screening.png",
+      placeholderTag: "Autonomous AI Live Screening Room",
+      altText: "Live AI interview room with audio waveform and proctoring badges"
     },
     {
       step: 3,
-      title: "Review structured interview scorecards",
+      stageBadge: "Evaluation",
+      title: "Review multidimensional STAR diagnostic scorecards",
       description:
-        "Access ranked candidate leaderboards with multidimensional STAR ratings, radar competency charts, key strengths, weaknesses, and synchronized video playback.",
+        "Access structured candidate evaluations with multi-axis STAR ratings, competency radar charts, key strengths, weaknesses, and synchronized answer breakdowns.",
+      points: [
+        {
+          title: "STAR Methodology Scoring",
+          desc: "Objective scoring across Situation, Task, Action, and Result for every technical question."
+        },
+        {
+          title: "Competency Radar Charts",
+          desc: "Visualize architecture depth, problem-solving, code correctness, and communication."
+        },
+        {
+          title: "Ranked Candidate Leaderboards",
+          desc: "Instant candidate ranking matrices to identify top 5% engineering talent effortlessly."
+        }
+      ],
       highlight: "STAR competency scoring & candidate ranking matrices",
-      placeholderTag: "Screenshot: Candidate Diagnostic Scorecard & Replay"
+      image: "/assets/images/screenshots/step3-diagnostic-scorecard.png",
+      placeholderTag: "Candidate Diagnostic Scorecard & Radar Matrix",
+      altText: "Diagnostic scorecard with competency radar chart and STAR breakdown"
     },
     {
       step: 4,
-      title: "Shortlist and hire — all in one dashboard",
+      stageBadge: "Session Replay",
+      title: "Watch synchronized session replays & question breakdowns",
       description:
-        "Advance verified top performers with 1-click approvals, add collaborative team review notes, and export comprehensive applicant dossiers directly to your ATS.",
-      highlight: "1-Click shortlisting, dossier PDF exports & ATS sync",
-      placeholderTag: "Screenshot: Recruiter Dashboard & Decision Hub"
+        "Deep-dive into full candidate interview replays with synchronized audio playback, live code editor diffs, timestamped question transcripts, and turn-by-turn AI feedback.",
+      points: [
+        {
+          title: "Timestamped Audio & Video Replay",
+          desc: "Jump straight to specific technical questions or architectural tradeoffs without watching the entire recording."
+        },
+        {
+          title: "Synchronized Transcript & Code Playback",
+          desc: "Inspect candidate-written code, compiler output, and speech transcription in real time."
+        },
+        {
+          title: "Anti-Cheating Logs & Integrity",
+          desc: "Review tab switches, audio continuity logs, and facial verification timestamps."
+        },
+        {
+          title: "1-Click Shortlist & ATS Sync",
+          desc: "Advance verified top performers with 1-click approvals and export dossiers directly to your ATS."
+        }
+      ],
+      highlight: "Question-by-question session replay, code playback & 1-click ATS shortlisting",
+      image: "/assets/images/screenshots/step4-session-replay.png",
+      placeholderTag: "Candidate Session Replay & Detailed Insights",
+      altText: "Full interview session replay with synchronized video, audio waveform and code editor"
     }
   ];
 
@@ -830,9 +1002,11 @@ export default function LandingPage() {
                     <div className="lg:col-span-6 space-y-4">
                       <ScreenshotPlaceholder
                         stepNumber={candidateSteps[activeCandidateStep].step}
+                        imageSrc={candidateSteps[activeCandidateStep].image}
                         caption={candidateSteps[activeCandidateStep].placeholderTag}
                         alt={candidateSteps[activeCandidateStep].altText}
                         height="h-64 sm:h-80"
+                        onOpenFullView={(src, caption, alt) => setLightboxModal({ src, title: caption, alt })}
                       />
 
                       {/* Previous / Next Controls */}
@@ -1023,7 +1197,7 @@ export default function LandingPage() {
                     {/* Left: Step Details */}
                     <div className="lg:col-span-6 space-y-5">
                       <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-[var(--color-primary-tint)] text-[var(--color-text-accent)] border border-[var(--color-border-active)]/30 text-xs font-mono">
-                        <span>STAGE {businessSteps[activeBusinessStep].step} OF 4</span>
+                        <span>STAGE {businessSteps[activeBusinessStep].step} OF 4 • {businessSteps[activeBusinessStep].stageBadge}</span>
                       </div>
 
                       <h3 className="text-xl sm:text-2xl font-medium text-[var(--color-text-primary)] tracking-tight">
@@ -1033,6 +1207,18 @@ export default function LandingPage() {
                       <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] leading-relaxed font-normal">
                         {businessSteps[activeBusinessStep].description}
                       </p>
+
+                      {/* Bullet Points */}
+                      {businessSteps[activeBusinessStep].points && (
+                        <ul className="space-y-2.5 text-xs text-[var(--color-text-secondary)] pt-1 border-t border-[var(--color-border)]">
+                          {businessSteps[activeBusinessStep].points.map((pt, pIdx) => (
+                            <li key={pIdx} className="flex items-start gap-2.5">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                              <span><strong>{pt.title}:</strong> {pt.desc}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
 
                       <div className="p-3.5 rounded-xl bg-[var(--color-canvas)] border border-[var(--color-border)] flex items-start gap-2.5 text-xs text-[var(--color-text-accent)]">
                         <Sparkles className="w-4 h-4 shrink-0 mt-0.5" />
@@ -1044,9 +1230,11 @@ export default function LandingPage() {
                     <div className="lg:col-span-6 space-y-4">
                       <ScreenshotPlaceholder
                         stepNumber={businessSteps[activeBusinessStep].step}
+                        imageSrc={businessSteps[activeBusinessStep].image}
                         caption={businessSteps[activeBusinessStep].placeholderTag}
-                        alt={`Recruiter workflow step ${businessSteps[activeBusinessStep].step} preview`}
+                        alt={businessSteps[activeBusinessStep].altText || `Recruiter workflow step ${businessSteps[activeBusinessStep].step} preview`}
                         height="h-64 sm:h-80"
+                        onOpenFullView={(src, caption, alt) => setLightboxModal({ src, title: caption, alt })}
                       />
 
                       {/* Previous / Next Controls */}
@@ -1378,6 +1566,48 @@ export default function LandingPage() {
 
         </div>
       </footer>
+
+      {/* ─────────────────────────────────────────────────────────────
+          8. LIGHTBOX FULL-VIEW SCREENSHOT MODAL
+      ───────────────────────────────────────────────────────────── */}
+      {lightboxModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 md:p-10 animate-fade-in"
+          onClick={() => setLightboxModal(null)}
+        >
+          <div
+            className="relative max-w-6xl w-full max-h-[92vh] flex flex-col bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl overflow-hidden shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Lightbox Header */}
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-[var(--color-border)] bg-[var(--color-canvas)]/90 backdrop-blur-md">
+              <div className="flex items-center gap-2.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                <p className="text-xs sm:text-sm font-medium text-[var(--color-text-primary)]">
+                  {lightboxModal.title || "Interface Screenshot Preview"}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLightboxModal(null)}
+                className="p-1.5 rounded-xl bg-[var(--color-surface)] hover:bg-[var(--color-surface-hover)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-white transition-colors"
+                aria-label="Close full view preview"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Lightbox Image Viewport */}
+            <div className="flex-1 overflow-auto p-2 sm:p-4 flex items-center justify-center bg-[var(--color-canvas)]">
+              <img
+                src={lightboxModal.src}
+                alt={lightboxModal.alt || lightboxModal.title || "Interface full view"}
+                className="max-h-[78vh] w-auto object-contain rounded-xl border border-[var(--color-border)] shadow-md"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

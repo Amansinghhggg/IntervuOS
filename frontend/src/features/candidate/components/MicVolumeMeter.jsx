@@ -34,7 +34,7 @@ export const MicVolumeMeter = () => {
         const updateVolume = () => {
           if (!isMounted || !analyserRef.current) return;
           analyserRef.current.getByteFrequencyData(dataArray);
-          
+
           let sum = 0;
           for (let i = 0; i < dataArray.length; i++) {
             sum += dataArray[i];
@@ -62,7 +62,7 @@ export const MicVolumeMeter = () => {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
       if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
-        audioCtxRef.current.close().catch(() => {});
+        audioCtxRef.current.close().catch(() => { });
       }
     };
   }, []);
@@ -79,13 +79,12 @@ export const MicVolumeMeter = () => {
           return (
             <div
               key={i}
-              className={`w-1.5 h-3 rounded-full transition-all duration-75 ${
-                isActive
-                  ? i >= 4
-                    ? 'bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.8)]'
-                    : 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]'
-                  : 'bg-slate-700/50'
-              }`}
+              className={`w-1.5 h-3 rounded-full transition-all duration-75 ${isActive
+                ? i >= 4
+                  ? 'bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.8)]'
+                  : 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]'
+                : 'bg-slate-700/50'
+                }`}
             />
           );
         })}

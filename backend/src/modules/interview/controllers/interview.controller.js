@@ -677,7 +677,7 @@ const performCandidateReEnrollment = async (interview, targetCandidateId, target
   if (candidateIndex !== -1) {
     const targetCandidateObj = interview.assignedCandidates[candidateIndex];
     if (targetCandidateObj.reEnrollCount && targetCandidateObj.reEnrollCount >= 1) {
-      const err = new Error("Candidate has already been re-enrolled once for this campaign. Maximum re-enrollment limit reached.");
+      const err = new Error("Candidate has already been re-enrolled once for this campaign. Maximum re-enrollment limit reached. Raise A ticket or contact support ");
       err.statusCode = 400;
       throw err;
     }

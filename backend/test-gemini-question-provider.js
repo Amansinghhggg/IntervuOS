@@ -3,7 +3,7 @@ dotenv.config();
 
 // Enforce configuration for the smoke test
 process.env.AI_PROVIDER = 'gemini';
-process.env.GEMINI_MODEL = 'gemini-2.0-flash';
+process.env.GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
 
 import { InterviewConfig } from "./src/modules/interview/services/InterviewConfig.js";
 import { createInterviewEngine } from "./src/modules/interview/services/interviewEngine.js";
@@ -16,7 +16,7 @@ async function runSmokeTest() {
       jobRole: "Node.js Backend Developer",
       topics: ["Node.js", "Express", "MongoDB"],
       difficulty: "Medium",
-      experienceLevel: "2-3 Years",
+      experienceLevel: "1-2 Years",
       duration: 30,
       language: "English",
       interviewType: "gemini"

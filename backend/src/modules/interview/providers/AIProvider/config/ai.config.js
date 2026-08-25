@@ -12,7 +12,7 @@ dotenv.config();
 export const AIConfig = {
   provider: process.env.AI_PROVIDER || "gemini",
   apiKey: process.env.GEMINI_API_KEY,
-  model: process.env.GEMINI_MODEL || "gemini-1.5-flash",
+  model: process.env.GEMINI_MODEL || "gemini-3.6-flash",
   groqApiKey: process.env.GROQ_API_KEY,
   groqModel: process.env.GROQ_MODEL || "openai/gpt-oss-120b",
   temperature: parseFloat(process.env.TEMPERATURE) || 0.7,

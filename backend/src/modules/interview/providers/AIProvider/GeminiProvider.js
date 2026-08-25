@@ -47,7 +47,7 @@ export class GeminiProvider extends BaseAIProvider {
         }
       });
 
-      const text = response.text();
+      const text = typeof response?.text === "function" ? response.text() : response?.text;
       if (!text) {
         throw new Error("AI Provider Error: Empty response from provider.");
       }

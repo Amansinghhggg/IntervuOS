@@ -2,16 +2,19 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // We override some config manually if we want to ensure it tries Gemini
-process.env.AI_PROVIDER = 'gemini';
-process.env.GEMINI_MODEL = 'gemini-2.5-flash';
+process.env.AI_PROVIDER = process.env.AI_PROVIDER || 'gemini';
+if (!process.env.GEMINI_MODEL) {
+  process.env.GEMINI_MODEL = 'gemini-3.6-flash';
+}
 
-import { createAIProvider } from "./src/modules/interview/providers/AIProvider/index.js";
+import { GeminiProvider } from "./src/modules/interview/providers/AIProvider/GeminiProvider.js";
 
 async function runSmokeTest() {
-  console.log("=== AI Provider Smoke Test ===");
+  console.log("=== Gemini AI Provider Smoke Test ===");
   try {
-    const provider = createAIProvider();
-    console.log("✅ Factory instantiated provider successfully:", provider.constructor.name);
+    const provider = new GeminiProvider();
+    console.log("✅ Instantiated provider successfully: GeminiProvider");
+    console.log(`Using Model: ${provider.modelName}`);
     
     console.log("Sending test prompt: 'Hello, respond with the exact word: SUCCESS'");
     

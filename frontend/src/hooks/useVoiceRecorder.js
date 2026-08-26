@@ -11,32 +11,59 @@ export const RECORDING_STATES = {
   ERROR: "ERROR",
 };
 
+/**
+ * Detects the best supported Opus MIME type supported by the browser
+ */
+const getSupportedMimeType = () => {
+  const preferredTypes = [
+    "audio/webm;codecs=opus",
+    "audio/webm",
+    "audio/ogg;codecs=opus",
+    "audio/mp4",
+    "audio/aac",
+  ];
+
+  if (typeof window !== "undefined" && window.MediaRecorder && typeof MediaRecorder.isTypeSupported === "function") {
+    for (const type of preferredTypes) {
+      if (MediaRecorder.isTypeSupported(type)) {
+        return type;
+      }
+    }
+  }
+
+  return "audio/webm";
+};
+
 export const useVoiceRecorder = () => {
   const [recordingState, setRecordingState] = useState(RECORDING_STATES.IDLE);
   const [audioBlob, setAudioBlob] = useState(null);
   const [audioUrl, setAudioUrl] = useState(null);
+  const [audioSizeKB, setAudioSizeKB] = useState(0);
   const [duration, setDuration] = useState(0); // in milliseconds
   const [error, setError] = useState(null);
   const [isSilenceWarning, setIsSilenceWarning] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   const mediaRecorderRef = useRef(null);
   const streamRef = useRef(null);
   const audioChunksRef = useRef([]);
-  
+  const activeMimeTypeRef = useRef("audio/webm");
+
   const startTimeRef = useRef(null);
   const timerIntervalRef = useRef(null);
 
-  // Web Audio API refs for silence detection
+  // Web Audio API refs for Voice Activity Detection (VAD)
   const audioContextRef = useRef(null);
   const analyserRef = useRef(null);
   const sourceRef = useRef(null);
   const silenceStartRef = useRef(null);
   const animationFrameRef = useRef(null);
-  const isRecordingRef = useRef(false); // needed for strict inside-loop checks
+  const isRecordingRef = useRef(false);
   const hasSpokenRef = useRef(false);
 
   const cleanup = useCallback(() => {
     isRecordingRef.current = false;
+
     // 1. Clear timers and animation frames
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
@@ -46,7 +73,7 @@ export const useVoiceRecorder = () => {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
     }
-    
+
     // 2. Stop Web Audio API
     if (audioContextRef.current && audioContextRef.current.state !== "closed") {
       audioContextRef.current.close().catch(console.error);
@@ -56,7 +83,7 @@ export const useVoiceRecorder = () => {
     sourceRef.current = null;
     silenceStartRef.current = null;
 
-    // 3. Stop tracks
+    // 3. Stop media stream tracks
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => {
         track.stop();
@@ -64,29 +91,26 @@ export const useVoiceRecorder = () => {
       });
       streamRef.current = null;
     }
-    
+
     // 4. Revoke Object URL to prevent memory leaks
     if (audioUrl) {
       URL.revokeObjectURL(audioUrl);
     }
-    
+
     setIsSilenceWarning(false);
+    setIsSpeaking(false);
   }, [audioUrl]);
 
   useEffect(() => {
-    // Cleanup on unmount
     return () => cleanup();
   }, [cleanup]);
 
   const stopRecording = useCallback((isAutoStop = false) => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-      const elapsed = Date.now() - startTimeRef.current;
+      const elapsed = Date.now() - (startTimeRef.current || Date.now());
+
       if (!isAutoStop && elapsed < VOICE_CONFIG.MIN_RECORDING_DURATION_MS) {
         toast.error(`Recording must be at least ${VOICE_CONFIG.MIN_RECORDING_DURATION_MS / 1000} second.`);
-        // Note: we don't return here, we still stop, but maybe we should discard it? 
-        // Instructions: "Too short: Recording must be at least X seconds."
-        // We will just let it stop but maybe reject it? We'll stop and let the backend fail it or we just don't set it to RECORDED.
-        // Actually, let's discard it if it's too short, as it's invalid.
         mediaRecorderRef.current.stop();
         cleanup();
         setRecordingState(RECORDING_STATES.IDLE);
@@ -97,6 +121,9 @@ export const useVoiceRecorder = () => {
     }
   }, [cleanup]);
 
+  /**
+   * Real-time Voice Activity Detection (VAD) loop
+   */
   const detectSilence = useCallback(() => {
     if (!analyserRef.current || !isRecordingRef.current) return;
 
@@ -106,7 +133,7 @@ export const useVoiceRecorder = () => {
 
     let isSilent = true;
     for (let i = 0; i < bufferLength; i++) {
-      // Normalize to -1 to 1
+      // Normalize waveform amplitude to 0.0 - 1.0
       const amplitude = Math.abs((dataArray[i] / 128.0) - 1.0);
       if (amplitude > VOICE_CONFIG.VOICE_SILENCE_THRESHOLD) {
         isSilent = false;
@@ -117,23 +144,24 @@ export const useVoiceRecorder = () => {
     const now = Date.now();
 
     if (!isSilent) {
-      // User is speaking, reset silence timer
+      // Candidate is speaking
       hasSpokenRef.current = true;
+      setIsSpeaking(true);
       silenceStartRef.current = now;
       if (isSilenceWarning) setIsSilenceWarning(false);
     } else {
-      // User is silent
+      // Candidate is silent
+      setIsSpeaking(false);
       if (!silenceStartRef.current) silenceStartRef.current = now;
-      
+
       const silenceDuration = now - silenceStartRef.current;
-      
-      const timeout = hasSpokenRef.current 
-        ? VOICE_CONFIG.VOICE_AUTO_STOP_MS 
+      const timeout = hasSpokenRef.current
+        ? VOICE_CONFIG.VOICE_AUTO_STOP_MS
         : VOICE_CONFIG.VOICE_INITIAL_SILENCE_MS;
-      
+
       if (silenceDuration > timeout) {
         stopRecording(true);
-        return; // exit loop
+        return; // Exit VAD loop
       } else if (hasSpokenRef.current && silenceDuration > VOICE_CONFIG.VOICE_SILENCE_WARNING_MS) {
         if (!isSilenceWarning) setIsSilenceWarning(true);
       }
@@ -149,6 +177,7 @@ export const useVoiceRecorder = () => {
     cleanup();
     setAudioBlob(null);
     setAudioUrl(null);
+    setAudioSizeKB(0);
     setDuration(0);
     audioChunksRef.current = [];
 
@@ -160,8 +189,11 @@ export const useVoiceRecorder = () => {
     }
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
+      // 1. Microphone capture constraints (Mono channel, 16 kHz sample rate, echo/noise suppression)
+      const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
+          channelCount: VOICE_CONFIG.CHANNEL_COUNT || 1,
+          sampleRate: VOICE_CONFIG.SAMPLE_RATE || 16000,
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
@@ -169,11 +201,21 @@ export const useVoiceRecorder = () => {
       });
       streamRef.current = stream;
 
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      // 2. Select optimal Opus codec with 32 kbps compression
+      const mimeType = getSupportedMimeType();
+      activeMimeTypeRef.current = mimeType;
+
+      const mediaRecorderOptions = {
+        mimeType,
+        audioBitsPerSecond: VOICE_CONFIG.AUDIO_BITRATE || 32000, // 32 kbps
+      };
+
+      const mediaRecorder = new MediaRecorder(stream, mediaRecorderOptions);
       mediaRecorderRef.current = mediaRecorder;
 
+      // 3. Audio chunk buffering - preserve all chunks so EBML container headers remain intact
       mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
+        if (event.data && event.data.size > 0) {
           audioChunksRef.current.push(event.data);
         }
       };
@@ -186,15 +228,20 @@ export const useVoiceRecorder = () => {
 
       mediaRecorder.onstop = () => {
         if (audioChunksRef.current.length > 0) {
-          const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+          // Normalize MIME type to base type without extra codec params for blob instantiation
+          const blobType = activeMimeTypeRef.current ? activeMimeTypeRef.current.split(";")[0] : "audio/webm";
+          const blob = new Blob(audioChunksRef.current, { type: blobType });
           const url = URL.createObjectURL(blob);
+          const sizeKb = Number((blob.size / 1024).toFixed(1));
+
           setAudioBlob(blob);
           setAudioUrl(url);
+          setAudioSizeKB(sizeKb);
           setRecordingState(RECORDING_STATES.RECORDED);
         } else {
           setRecordingState(RECORDING_STATES.IDLE);
         }
-        
+
         isRecordingRef.current = false;
         if (timerIntervalRef.current) {
           clearInterval(timerIntervalRef.current);
@@ -205,20 +252,21 @@ export const useVoiceRecorder = () => {
           animationFrameRef.current = null;
         }
 
-        // Release mic resources
+        // Release microphone resources
         if (streamRef.current) {
-          streamRef.current.getTracks().forEach(track => track.stop());
+          streamRef.current.getTracks().forEach((track) => track.stop());
         }
         if (audioContextRef.current && audioContextRef.current.state !== "closed") {
           audioContextRef.current.close().catch(console.error);
         }
         setIsSilenceWarning(false);
+        setIsSpeaking(false);
       };
 
-      // Set up Web Audio API for silence detection
+      // 4. Initialize Web Audio API Analyser for VAD
       const initAudioContext = () => {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        const audioCtx = new AudioContext();
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContextClass();
         audioContextRef.current = audioCtx;
         analyserRef.current = audioCtx.createAnalyser();
         analyserRef.current.fftSize = 2048;
@@ -231,31 +279,30 @@ export const useVoiceRecorder = () => {
       } catch (audioCtxError) {
         runtimeDiagnostics("RecoveryStarted", { context: "AUDIO_CONTEXT_FAILED", error: audioCtxError.message });
         try {
-          // Attempt recovery once
           initAudioContext();
           runtimeDiagnostics("RecoverySucceeded", { context: "AUDIO_CONTEXT_FAILED" });
         } catch (retryError) {
           runtimeDiagnostics("RecoveryFailed", { context: "AUDIO_CONTEXT_FAILED", error: retryError.message });
-          // Terminate gracefully rather than falling back to manual
           toast.error("Silence detection failed. Please refresh the page.");
           setRecordingState(RECORDING_STATES.ERROR);
-          return; // Abort recording setup
+          return;
         }
       }
 
-      mediaRecorder.start();
+      // Start recorder with 250ms timeslices for smooth chunking
+      mediaRecorder.start(250);
       isRecordingRef.current = true;
       hasSpokenRef.current = false;
       setRecordingState(RECORDING_STATES.RECORDING);
       startTimeRef.current = Date.now();
       silenceStartRef.current = Date.now();
 
-      // Start detect silence loop if available
+      // Start VAD silence detection loop
       if (analyserRef.current) {
         detectSilence();
       }
 
-      // Start timer using timestamps to avoid drift
+      // Start duration ticker using timestamps to avoid timer drift
       timerIntervalRef.current = setInterval(() => {
         const elapsed = Date.now() - startTimeRef.current;
         setDuration(elapsed);
@@ -268,7 +315,7 @@ export const useVoiceRecorder = () => {
     } catch (err) {
       runtimeDiagnostics("RecoveryFailed", { context: "MIC_PERMISSION_ERROR", error: err.name });
       setRecordingState(RECORDING_STATES.ERROR);
-      
+
       if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
         setError(VoiceErrors.PERMISSION_DENIED);
         toast.error("Microphone access denied. Please allow permissions in your browser.");
@@ -287,10 +334,12 @@ export const useVoiceRecorder = () => {
     cleanup();
     setAudioBlob(null);
     setAudioUrl(null);
+    setAudioSizeKB(0);
     setDuration(0);
     setRecordingState(RECORDING_STATES.IDLE);
     setError(null);
     setIsSilenceWarning(false);
+    setIsSpeaking(false);
   }, [cleanup]);
 
   // Handle visibility change to prevent background throttling issues
@@ -310,9 +359,11 @@ export const useVoiceRecorder = () => {
     recordingState,
     audioBlob,
     audioUrl,
+    audioSizeKB,
     duration,
     error,
     isSilenceWarning,
+    isSpeaking,
     startRecording,
     stopRecording,
     deleteRecording,

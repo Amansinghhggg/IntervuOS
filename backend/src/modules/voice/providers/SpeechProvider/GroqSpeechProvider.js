@@ -16,9 +16,22 @@ export class GroqSpeechProvider extends BaseSpeechProvider {
 
   async transcribe(audio) {
     try {
+      let filename = audio.originalname || "recording.webm";
+      if (!filename.includes(".")) {
+        const ext = audio.mimetype?.includes("ogg")
+          ? "ogg"
+          : audio.mimetype?.includes("mp4")
+          ? "mp4"
+          : audio.mimetype?.includes("wav")
+          ? "wav"
+          : "webm";
+        filename = `${filename}.${ext}`;
+      }
+
+      const mimeType = audio.mimetype ? audio.mimetype.split(";")[0].trim() : "audio/webm";
+
       // groq-sdk needs a File-like object. toFile converts a buffer.
-      // We pass the filename so it knows the format.
-      const file = await toFile(audio.buffer, audio.originalname, { type: audio.mimetype });
+      const file = await toFile(audio.buffer, filename, { type: mimeType });
 
       const transcription = await this.groq.audio.transcriptions.create(
         {

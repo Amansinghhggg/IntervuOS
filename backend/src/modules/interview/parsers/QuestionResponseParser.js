@@ -3,9 +3,8 @@ import { ParsingError } from "../errors/ParsingError.js";
 /**
  * QuestionResponseParser
  * 
- * Responsible STRICTLY for parsing raw AI text into Javascript objects.
- * It trims whitespace, removes markdown code blocks, and runs JSON.parse().
- * It does NOT validate the schema.
+ * Responsible for reliably parsing raw AI text into Javascript objects,
+ * extracting JSON from code fences or surrounding text with resilient parsing.
  */
 export class QuestionResponseParser {
   /**
@@ -22,24 +21,34 @@ export class QuestionResponseParser {
 
     let text = response.text.trim();
 
-    // Strip out markdown formatting (e.g. ```json ... ```)
-    if (text.startsWith("```")) {
-      // Find the end of the first line (e.g. ```json)
-      const firstNewline = text.indexOf("\n");
-      if (firstNewline !== -1) {
-        text = text.substring(firstNewline).trim();
-      }
-      
-      // Remove trailing ```
-      if (text.endsWith("```")) {
-        text = text.substring(0, text.length - 3).trim();
-      }
-    }
+    // 1. Strip markdown code fences (```json ... ```)
+    text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
 
+    // 2. Try direct parsing
     try {
       return JSON.parse(text);
-    } catch (error) {
-      throw new ParsingError(`Failed to parse AI response as JSON: ${error.message}`, response.text);
+    } catch (err) {
+      // 3. Extract bracketed JSON { ... } or [ ... ]
+      const jsonMatch = text.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+      if (jsonMatch) {
+        try {
+          return JSON.parse(jsonMatch[0]);
+        } catch (innerErr) {
+          // Attempt simple JSON recovery if truncated
+          let fixed = jsonMatch[0].trim();
+          if (fixed.endsWith('"')) {
+            fixed += "}";
+          } else if (!fixed.endsWith("}") && !fixed.endsWith("]")) {
+            fixed += '"}';
+          }
+          try {
+            return JSON.parse(fixed);
+          } catch (fixErr) {
+            // Fall through
+          }
+        }
+      }
+      throw new ParsingError(`Failed to parse AI response as JSON: ${err.message}`, response.text);
     }
   }
 }

@@ -6,12 +6,7 @@ import { AIProviderResponse } from "./AIProviderResponse.js";
 /**
  * GroqProvider
  *
- * Implements the AI Provider contract using the groq-sdk.
- * Responsibilities:
- * - Initialize client
- * - Send prompt
- * - Receive and return raw text
- * - Handle provider errors cleanly
+ * Implements high-speed AI generation (< 800ms) with automated fallback.
  */
 export class GroqProvider extends BaseAIProvider {
   constructor() {
@@ -35,8 +30,9 @@ export class GroqProvider extends BaseAIProvider {
    */
   async generate(prompt, options = {}) {
     const startTime = Date.now();
-    const maxRetries = options.maxRetries || 3;
-    const maxTokens = options.maxTokens || Math.max(AIConfig.maxOutputTokens || 2048, 4096);
+    const maxRetries = options.maxRetries || 2;
+    const maxTokens = options.maxTokens || (AIConfig.maxOutputTokens ? Math.min(AIConfig.maxOutputTokens, 2048) : 2048);
+    const temperature = options.temperature !== undefined ? options.temperature : 0.4;
     
     // Model candidates: Primary followed by Fallback
     const modelsToTry = [this.modelName];
@@ -52,7 +48,7 @@ export class GroqProvider extends BaseAIProvider {
           const response = await this.ai.chat.completions.create({
             messages: [{ role: "user", content: prompt }],
             model: currentModel,
-            temperature: options.temperature !== undefined ? options.temperature : AIConfig.temperature,
+            temperature,
             max_tokens: maxTokens,
           });
 
@@ -78,11 +74,10 @@ export class GroqProvider extends BaseAIProvider {
             ));
 
           if (isRetryable && attempt < maxRetries) {
-            const backoffMs = Math.min(attempt * 1500, 5000);
+            const backoffMs = Math.min(attempt * 500, 1500);
             console.warn(`[AI Provider] Retrying ${currentModel} (attempt ${attempt}/${maxRetries}) after ${backoffMs}ms due to: ${error.message}`);
             await new Promise((resolve) => setTimeout(resolve, backoffMs));
           } else {
-            // Move to fallback model if available
             break;
           }
         }

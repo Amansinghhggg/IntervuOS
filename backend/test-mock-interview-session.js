@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import interviewSessionService from './src/modules/interview/services/InterviewSessionService.js';
 import { voiceSessionCache } from './src/modules/interview/services/voiceSessionCache.service.js';
 import { redisClient, isRedisReady } from './src/config/redis.js';
+import InterviewSession from './src/modules/interview/models/InterviewSession.js';
 
 dotenv.config();
 
@@ -11,15 +12,16 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/ForkTa
 async function runMockInterviewTest() {
   console.log('\n🚀 [Mock Interview Test] Initializing End-to-End Interview Simulation...\n');
 
-  // 1. Connect MongoDB
+  let hasMongo = false;
   try {
     await mongoose.connect(MONGODB_URI);
+    hasMongo = true;
     console.log('✅ Connected to MongoDB');
   } catch (err) {
     console.warn('⚠️ MongoDB not connected locally. Testing Redis Session Cache standalone.');
   }
 
-  // 2. Wait for Redis connection
+  // Wait for Redis connection
   await new Promise((resolve) => setTimeout(resolve, 500));
   console.log(`📡 Redis Connection Status: ${isRedisReady() ? 'ONLINE (Sub-ms Cache Enabled)' : 'OFFLINE (Fallback Mode)'}`);
 
@@ -27,7 +29,7 @@ async function runMockInterviewTest() {
   const mockCandidateId = new mongoose.Types.ObjectId().toString();
 
   console.log('\n---------------------------------------------------');
-  console.log('STEP 1: Starting Mock Interview Session...');
+  console.log('STEP 1: Starting Mock Interview Session (MongoDB Init + Redis Seed)...');
   console.log('---------------------------------------------------');
 
   const firstQuestion = {
@@ -38,13 +40,11 @@ async function runMockInterviewTest() {
     type: 'conceptual',
   };
 
-  // Create temporary mock session object if Mongo is offline for quick verification
   let session;
-  try {
+  if (hasMongo) {
     const existing = await interviewSessionService.getOrCreateSession(mockInterviewId, mockCandidateId);
     session = await interviewSessionService.startSession(existing._id, firstQuestion, 30);
-  } catch (dbErr) {
-    console.warn('⚠️ Database query bypassed (Mock mode): Testing direct Redis Cache lifecycle...');
+  } else {
     session = {
       _id: 'mock_session_id_999',
       interviewId: mockInterviewId,
@@ -53,7 +53,7 @@ async function runMockInterviewTest() {
       currentQuestionIndex: 0,
       startedAt: new Date(),
       expiresAt: new Date(Date.now() + 1800000),
-      questions: [{ ...firstQuestion, id: 1, askedAt: new Date(), answer: null }],
+      questions: [{ ...firstQuestion, id: 1, askedAt: new Date(), answer: null, answeredAt: null }],
     };
     await voiceSessionCache.setSession(mockInterviewId, mockCandidateId, session);
   }
@@ -61,7 +61,7 @@ async function runMockInterviewTest() {
   console.log(`✅ Session Started! ID: ${session._id}`);
 
   console.log('\n---------------------------------------------------');
-  console.log('STEP 2: Fetching Active Session (Testing Redis Sub-ms Read)...');
+  console.log('STEP 2: Fetching Active Session (Testing Sub-ms Read)...');
   console.log('---------------------------------------------------');
 
   const startRead = performance.now();
@@ -73,7 +73,7 @@ async function runMockInterviewTest() {
   console.log(`❓ Current Question [1]: ${cachedActive?.questions?.[0]?.question}`);
 
   console.log('\n---------------------------------------------------');
-  console.log('STEP 3: Submitting Candidate Answer & Next Question...');
+  console.log('STEP 3: Submitting Candidate Answer & Next Question (Write-Behind)...');
   console.log('---------------------------------------------------');
 
   const candidateAnswer = 'Redis provides in-memory key-value storage with sub-millisecond latency for session state and BullMQ queues.';
@@ -85,42 +85,62 @@ async function runMockInterviewTest() {
     type: 'conceptual',
   };
 
-  if (cachedActive?._id && cachedActive._id !== 'mock_session_id_999') {
-    await interviewSessionService.saveAnswerAndNextQuestion(cachedActive._id, candidateAnswer, nextQuestion);
-  } else {
-    // Update mock session in cache
-    session.questions[0].answer = candidateAnswer;
-    session.questions.push({ ...nextQuestion, id: 2, askedAt: new Date() });
-    session.currentQuestionIndex = 1;
-    await voiceSessionCache.setSession(mockInterviewId, mockCandidateId, session);
+  const startTurn = performance.now();
+  const updatedSession = await interviewSessionService.saveAnswerAndNextQuestion(
+    cachedActive,
+    candidateAnswer,
+    nextQuestion
+  );
+  const endTurn = performance.now();
+
+  console.log(`⚡ Turn Saved & Synced in ${(endTurn - startTurn).toFixed(3)} ms`);
+  console.log(`🎯 Total Questions in Session: ${updatedSession?.questions?.length}`);
+  console.log(`💬 Candidate Answer 1: "${updatedSession?.questions?.[0]?.answer}"`);
+  console.log(`❓ Question 2: "${updatedSession?.questions?.[1]?.question}"`);
+
+  console.log('\n---------------------------------------------------');
+  console.log('STEP 4: Fetching by Secondary SessionId Index...');
+  console.log('---------------------------------------------------');
+
+  const byIdSession = await interviewSessionService.getActiveSessionById(session._id);
+  console.log(`🔍 Secondary Index Lookup Success: ${byIdSession ? 'YES' : 'NO'}`);
+  console.log(`📦 Status: ${byIdSession?.status}, Current Q Index: ${byIdSession?.currentQuestionIndex}`);
+
+  console.log('\n---------------------------------------------------');
+  console.log('STEP 5: Completing Session & Flushing to MongoDB...');
+  console.log('---------------------------------------------------');
+
+  const completedSession = await interviewSessionService.completeSession(
+    session._id,
+    mockInterviewId,
+    mockCandidateId
+  );
+  console.log(`🏁 Completed Session Status: ${completedSession?.status}`);
+
+  if (hasMongo) {
+    // Wait brief moment for asynchronous operations
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    const dbFinal = await InterviewSession.findById(session._id);
+    console.log(`💾 MongoDB Persisted Status: ${dbFinal?.status}`);
+    console.log(`💾 MongoDB Question Count: ${dbFinal?.questions?.length}`);
+    console.log(`💾 MongoDB Q1 Answer Present: ${Boolean(dbFinal?.questions?.[0]?.answer)}`);
   }
 
-  console.log('✅ Candidate Answer & Question #2 Saved');
-
-  console.log('\n---------------------------------------------------');
-  console.log('STEP 4: Fetching Updated Session from Redis RAM...');
-  console.log('---------------------------------------------------');
-
-  const updatedCached = await voiceSessionCache.getSession(mockInterviewId, mockCandidateId);
-  console.log(`🎯 Total Questions in Cache: ${updatedCached?.questions?.length}`);
-  console.log(`💬 Candidate Answer 1: "${updatedCached?.questions?.[0]?.answer}"`);
-  console.log(`❓ Question 2: "${updatedCached?.questions?.[1]?.question}"`);
-
-  console.log('\n---------------------------------------------------');
-  console.log('STEP 5: Completing Session & Cleaning Up RAM Cache...');
-  console.log('---------------------------------------------------');
-
-  await voiceSessionCache.clearSession(mockInterviewId, mockCandidateId);
   const afterClear = await voiceSessionCache.getSession(mockInterviewId, mockCandidateId);
-
-  console.log(`🧹 Cache cleared on completion? ${afterClear === null ? 'YES (RAM Clean)' : 'NO'}`);
+  console.log(`🧹 Redis RAM Cache cleared on completion? ${afterClear === null ? 'YES (RAM Clean)' : 'NO'}`);
 
   console.log('\n🎉 [SUCCESS] Mock Interview Session Lifecycle Completed Perfectly!\n');
+
+  if (hasMongo && session._id && session._id !== 'mock_session_id_999') {
+    await InterviewSession.findByIdAndDelete(session._id).catch(() => null);
+  }
 
   if (mongoose.connection.readyState !== 0) {
     await mongoose.disconnect();
   }
-  await redisClient.quit();
+  if (isRedisReady()) {
+    await redisClient.quit();
+  }
   process.exit(0);
 }
 

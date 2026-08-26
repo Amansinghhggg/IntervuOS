@@ -4,7 +4,8 @@ import { redisClient, isRedisReady } from '../../../config/redis.js';
  * VoiceSessionCacheService
  * 
  * Provides sub-millisecond Redis RAM caching for real-time interview sessions,
- * voice transcript buffers, dynamic timer countdowns, and avatar expressions.
+ * voice transcript buffers, dynamic timer countdowns, avatar expressions,
+ * and write-behind state synchronization.
  */
 class VoiceSessionCacheService {
   /**
@@ -12,6 +13,13 @@ class VoiceSessionCacheService {
    */
   getCacheKey(interviewId, candidateId) {
     return `voice:session:${String(interviewId || '')}:${String(candidateId || '')}`;
+  }
+
+  /**
+   * Generates a secondary index key to lookup (interviewId, candidateId) by sessionId
+   */
+  getSessionIdIndexKey(sessionId) {
+    return `voice:session:id:${String(sessionId || '')}`;
   }
 
   /**
@@ -28,10 +36,14 @@ class VoiceSessionCacheService {
 
     try {
       const key = this.getCacheKey(interviewId, candidateId);
-      
-      // Serialize nested objects (like questions array or conversation history) to JSON strings for HASH
+      const sessionIdStr = String(sessionData._id || sessionData.sessionId || '');
+
+      // Normalize questions array with preserved structure
+      const questions = Array.isArray(sessionData.questions) ? sessionData.questions : [];
+
+      // Serialize nested objects (like questions array) to JSON string for HASH
       const serializedData = {
-        sessionId: String(sessionData._id || sessionData.sessionId || ''),
+        sessionId: sessionIdStr,
         interviewId: String(interviewId),
         candidateId: String(candidateId),
         status: String(sessionData.status || 'ACTIVE'),
@@ -40,12 +52,19 @@ class VoiceSessionCacheService {
         expiresAt: sessionData.expiresAt ? new Date(sessionData.expiresAt).toISOString() : '',
         lastTranscriptSnippet: sessionData.lastTranscriptSnippet || '',
         avatarExpression: sessionData.avatarExpression || 'neutral',
-        questionsJson: JSON.stringify(sessionData.questions || []),
+        questionsJson: JSON.stringify(questions),
         updatedAt: String(Date.now()),
       };
 
       await redisClient.hset(key, serializedData);
       await redisClient.expire(key, ttlSeconds);
+
+      // Store secondary index by sessionId for reverse lookup
+      if (sessionIdStr) {
+        const idIndexKey = this.getSessionIdIndexKey(sessionIdStr);
+        await redisClient.set(idIndexKey, `${interviewId}:${candidateId}`, 'EX', ttlSeconds);
+      }
+
       return true;
     } catch (err) {
       console.warn('⚠️ [VoiceSessionCache] Error writing to Redis:', err.message);
@@ -74,7 +93,15 @@ class VoiceSessionCacheService {
       let parsedQuestions = [];
       if (data.questionsJson) {
         try {
-          parsedQuestions = JSON.parse(data.questionsJson);
+          const rawQuestions = JSON.parse(data.questionsJson);
+          if (Array.isArray(rawQuestions)) {
+            parsedQuestions = rawQuestions.map((q, idx) => ({
+              ...q,
+              id: q.id !== undefined ? q.id : idx + 1,
+              askedAt: q.askedAt ? new Date(q.askedAt) : null,
+              answeredAt: q.answeredAt ? new Date(q.answeredAt) : null,
+            }));
+          }
         } catch {
           parsedQuestions = [];
         }
@@ -98,6 +125,31 @@ class VoiceSessionCacheService {
     } catch (err) {
       console.warn('⚠️ [VoiceSessionCache] Error reading from Redis:', err.message);
       return null; // Fallback to DB
+    }
+  }
+
+  /**
+   * Retrieves active session state by sessionId using secondary index key (<1ms)
+   * 
+   * @param {string} sessionId 
+   * @returns {Promise<Object|null>}
+   */
+  async getSessionById(sessionId) {
+    if (!sessionId || !isRedisReady()) return null;
+
+    try {
+      const idIndexKey = this.getSessionIdIndexKey(sessionId);
+      const mapped = await redisClient.get(idIndexKey);
+
+      if (!mapped) return null;
+
+      const [interviewId, candidateId] = mapped.split(':');
+      if (!interviewId || !candidateId) return null;
+
+      return await this.getSession(interviewId, candidateId);
+    } catch (err) {
+      console.warn('⚠️ [VoiceSessionCache] Error looking up session by ID:', err.message);
+      return null;
     }
   }
 
@@ -133,18 +185,30 @@ class VoiceSessionCacheService {
   }
 
   /**
-   * Deletes session state from Redis RAM upon interview completion or cancellation
+   * Deletes session state and index from Redis RAM upon interview completion or cancellation
    * 
    * @param {string} interviewId 
    * @param {string} candidateId 
+   * @param {string} [sessionId]
    * @returns {Promise<boolean>}
    */
-  async clearSession(interviewId, candidateId) {
-    if (!interviewId || !candidateId || !isRedisReady()) return false;
+  async clearSession(interviewId, candidateId, sessionId = null) {
+    if (!isRedisReady()) return false;
 
     try {
-      const key = this.getCacheKey(interviewId, candidateId);
-      await redisClient.del(key);
+      const keysToDelete = [];
+
+      if (interviewId && candidateId) {
+        keysToDelete.push(this.getCacheKey(interviewId, candidateId));
+      }
+
+      if (sessionId) {
+        keysToDelete.push(this.getSessionIdIndexKey(sessionId));
+      }
+
+      if (keysToDelete.length > 0) {
+        await redisClient.del(...keysToDelete);
+      }
       return true;
     } catch (err) {
       console.warn('⚠️ [VoiceSessionCache] Error deleting Redis key:', err.message);

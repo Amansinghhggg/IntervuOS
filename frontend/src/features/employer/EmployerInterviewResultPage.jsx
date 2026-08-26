@@ -1,12 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../../services/api";
-import { ArrowLeft, Loader2, AlertCircle, RefreshCw, Clock, FileQuestion } from "lucide-react";
+import { ArrowLeft, Loader2, AlertCircle, RefreshCw, Clock, FileQuestion, Sparkles, CheckCircle2, Brain, Activity } from "lucide-react";
 
 import { CandidateWorkspace } from "../../modules/candidate-workspace/index";
 import PDFPreviewModal from "../shared/components/PDFPreviewModal";
 import profileService from "../../services/profile.service";
+
+const EVALUATION_STAGES = [
+  { id: 1, label: "Ingesting audio transcripts & question responses", icon: Brain },
+  { id: 2, label: "Evaluating technical depth & architectural accuracy", icon: Sparkles },
+  { id: 3, label: "Scoring communication, problem solving & confidence", icon: Activity },
+  { id: 4, label: "Synthesizing executive recommendation & strengths", icon: CheckCircle2 },
+];
 
 export default function EmployerInterviewResultPage() {
   const { id: interviewId, resultId } = useParams();
@@ -20,22 +27,24 @@ export default function EmployerInterviewResultPage() {
   const [showReEnrollModal, setShowReEnrollModal] = useState(false);
   const [isReEnrolling, setIsReEnrolling] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [activeStage, setActiveStage] = useState(0);
 
-  useEffect(() => {
-    fetchResult();
-  }, [interviewId, resultId]);
+  const pollIntervalRef = useRef(null);
 
-  const fetchResult = async () => {
-    setLoading(true);
-    setError(null);
-    setErrorStatus(null);
+  const fetchResult = useCallback(async (silent = false) => {
+    if (!silent) {
+      setLoading(true);
+      setError(null);
+      setErrorStatus(null);
+    }
+
     try {
       const { data } = await api.get(
         `/interviews/${interviewId}/results/${resultId}`
       );
       setResultData(data.result);
 
-      if (data.result?.candidate?.id) {
+      if (data.result?.candidate?.id && !resume) {
         try {
           const res = await profileService.getCandidateResume(interviewId, data.result.candidate.id);
           setResume(res.data);
@@ -52,9 +61,44 @@ export default function EmployerInterviewResultPage() {
         setError("Unable to load evaluation. Please try again.");
       }
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
-  };
+  }, [interviewId, resultId, resume]);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchResult(false);
+  }, [fetchResult]);
+
+  // Real-time automatic polling when evaluation is in progress
+  useEffect(() => {
+    const status = resultData?.evaluation?.status;
+    const isProcessing = status === "PENDING" || status === "PROCESSING" || status === "RETRYING";
+
+    if (isProcessing) {
+      // Auto-poll backend every 3 seconds until completed or failed
+      pollIntervalRef.current = setInterval(() => {
+        fetchResult(true);
+      }, 3000);
+
+      // Cycle animated progress stages for engaging visual feedback
+      const stageTimer = setInterval(() => {
+        setActiveStage((prev) => (prev + 1) % EVALUATION_STAGES.length);
+      }, 2500);
+
+      return () => {
+        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+        clearInterval(stageTimer);
+      };
+    } else {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+    }
+  }, [resultData?.evaluation?.status, fetchResult]);
 
   const handleReEnrollConfirm = async () => {
     setIsReEnrolling(true);
@@ -76,7 +120,6 @@ export default function EmployerInterviewResultPage() {
   const handleErrorReEnroll = async () => {
     setIsReEnrolling(true);
     try {
-      // Call the API endpoint that resolves candidate purely by resultId and clears their data
       await api.post(`/interviews/${interviewId}/results/${resultId}/re-enroll`);
       toast.success("Candidate re-enrolled successfully");
       navigate(`/employer/interviews/${interviewId}`);
@@ -88,14 +131,14 @@ export default function EmployerInterviewResultPage() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-transparent relative font-['Inter'] pb-16 text-[var(--color-text-primary)]">
+    <div className="w-full min-h-screen bg-transparent relative font-sans pb-16 text-[var(--color-text-primary)]">
       {/* Background Noise */}
       <div className="absolute inset-0 noise pointer-events-none z-0"></div>
 
       {loading && (
         <div className="min-h-[80vh] flex flex-col items-center justify-center gap-4 relative z-10">
-          <Loader2 className="w-10 h-10 animate-spin text-[var(--primary)]" />
-          <p className="text-[var(--text-secondary)] font-medium animate-pulse text-xs">Loading evaluation dashboard...</p>
+          <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
+          <p className="text-[var(--color-text-secondary)] font-medium text-xs">Loading evaluation dashboard...</p>
         </div>
       )}
 
@@ -113,20 +156,20 @@ export default function EmployerInterviewResultPage() {
           <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-12 flex flex-col items-center text-center shadow-sm">
             {errorStatus === 404 ? (
               <>
-                <FileQuestion className="w-16 h-16 text-[var(--color-text-muted)] opacity-50 mb-6" />
+                <FileQuestion className="w-14 h-14 text-[var(--color-text-muted)] opacity-50 mb-6" />
                 <h2 className="text-xl font-medium text-[var(--color-text-primary)] mb-2 tracking-tight">No result found</h2>
                 <p className="text-[var(--color-text-secondary)] max-w-md text-xs">{error}</p>
               </>
             ) : (
               <>
-                <AlertCircle className="w-16 h-16 text-[var(--color-danger)] mb-6" />
+                <AlertCircle className="w-14 h-14 text-[var(--color-danger)] mb-6" />
                 <h2 className="text-xl font-medium text-[var(--color-text-primary)] mb-2 tracking-tight">Evaluation error</h2>
                 <p className="text-[var(--color-danger)] max-w-md text-xs opacity-80 mb-6">{error}</p>
                 <div className="flex items-center gap-3">
                   <button
                     onClick={handleErrorReEnroll}
                     disabled={isReEnrolling}
-                    className="px-5 py-2.5 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white font-medium rounded-xl transition-all shadow-sm text-xs flex items-center gap-2 disabled:opacity-50"
+                    className="px-5 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-medium rounded-xl transition-all shadow-sm text-xs flex items-center gap-2 disabled:opacity-50"
                   >
                     <RefreshCw className={`w-4 h-4 ${isReEnrolling ? 'animate-spin' : ''}`} />
                     {isReEnrolling ? "Re-enrolling..." : "Re-enroll candidate"}
@@ -150,49 +193,88 @@ export default function EmployerInterviewResultPage() {
             </Link>
           </div>
 
-          <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-12 flex flex-col items-center text-center shadow-sm relative overflow-hidden">
-            <div className="relative z-10 flex flex-col items-center">
+          <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-8 sm:p-12 flex flex-col items-center text-center shadow-sm relative overflow-hidden max-w-2xl mx-auto">
+            <div className="relative z-10 flex flex-col items-center w-full">
               {resultData.evaluation.status === "PENDING" && (
                 <>
-                  <Clock className="w-16 h-16 text-[var(--color-text-muted)] opacity-50 mb-6" />
-                  <h2 className="text-xl font-medium text-[var(--color-text-primary)] mb-2 tracking-tight">Evaluation queued</h2>
-                  <p className="text-[var(--color-text-secondary)] text-xs max-w-md">
-                    The AI evaluation has been queued and will begin shortly. Please check back later.
+                  <div className="w-14 h-14 rounded-2xl bg-[var(--color-primary-tint)] border border-[var(--color-border-active)] flex items-center justify-center mb-5">
+                    <Clock className="w-7 h-7 text-[var(--color-text-accent)]" />
+                  </div>
+                  <h2 className="text-xl font-medium text-[var(--color-text-primary)] mb-2 tracking-tight">Evaluation queued in BullMQ</h2>
+                  <p className="text-[var(--color-text-secondary)] text-xs max-w-md mb-8">
+                    The interview analysis job has been dispatched to background AI workers and will process shortly.
                   </p>
                 </>
               )}
-              {resultData.evaluation.status === "PROCESSING" && (
+
+              {(resultData.evaluation.status === "PROCESSING" || resultData.evaluation.status === "RETRYING") && (
                 <>
-                  <Loader2 className="w-16 h-16 text-[var(--primary)] mb-6 animate-spin" />
-                  <h2 className="text-xl font-medium text-[var(--color-text-primary)] mb-2 tracking-tight">Evaluation in progress</h2>
-                  <p className="text-[var(--color-text-secondary)] text-xs max-w-md">
-                    Our AI is currently analyzing the transcript and generating a detailed evaluation.
+                  <div className="w-14 h-14 rounded-2xl bg-[var(--color-primary-tint)] border border-[var(--color-border-active)] flex items-center justify-center mb-5">
+                    <Loader2 className="w-7 h-7 text-[var(--color-text-accent)] animate-spin" />
+                  </div>
+                  <h2 className="text-xl font-medium text-[var(--color-text-primary)] mb-2 tracking-tight">AI evaluation in progress</h2>
+                  <p className="text-[var(--color-text-secondary)] text-xs max-w-md mb-8">
+                    Our AI models are performing multidimensional scoring across technical depth, communication, and topic mastery.
                   </p>
                 </>
               )}
-              {resultData.evaluation.status === "RETRYING" && (
-                <>
-                  <RefreshCw className="w-16 h-16 text-[var(--color-warning)] mb-6 animate-spin" />
-                  <h2 className="text-xl font-medium text-[var(--color-text-primary)] mb-2 tracking-tight">Retrying evaluation</h2>
-                  <p className="text-[var(--color-text-secondary)] text-xs max-w-md">
-                    A previous evaluation attempt failed. We are automatically retrying it now.
-                  </p>
-                </>
-              )}
+
               {resultData.evaluation.status === "FAILED" && (
                 <>
-                  <AlertCircle className="w-16 h-16 text-[var(--color-danger)] mb-6" />
+                  <div className="w-14 h-14 rounded-2xl bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/30 flex items-center justify-center mb-5">
+                    <AlertCircle className="w-7 h-7 text-[var(--color-danger)]" />
+                  </div>
                   <h2 className="text-xl font-medium text-[var(--color-text-primary)] mb-2 tracking-tight">Evaluation failed</h2>
                   <p className="text-[var(--color-danger)] opacity-80 text-xs max-w-md mb-6">
-                    We encountered an error while evaluating this interview.
+                    We encountered an issue generating the automated evaluation report.
                   </p>
                   <button
                     onClick={() => setShowReEnrollModal(true)}
-                    className="px-5 py-2.5 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white font-medium rounded-xl transition-all shadow-sm text-xs flex items-center gap-2"
+                    className="px-5 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-medium rounded-xl transition-all shadow-sm text-xs flex items-center gap-2"
                   >
                     <RefreshCw className="w-4 h-4" /> Re-enroll candidate
                   </button>
                 </>
+              )}
+
+              {/* Animated Evaluation Stages Indicator */}
+              {(resultData.evaluation.status === "PROCESSING" || resultData.evaluation.status === "PENDING" || resultData.evaluation.status === "RETRYING") && (
+                <div className="w-full bg-[var(--color-canvas)] border border-[var(--color-border)] rounded-xl p-4 sm:p-5 text-left space-y-3">
+                  <div className="flex items-center justify-between text-xs text-[var(--color-text-muted)] font-medium mb-1">
+                    <span>Analysis Pipeline</span>
+                    <span className="text-[var(--color-text-accent)] font-mono">Live auto-polling...</span>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    {EVALUATION_STAGES.map((stage, idx) => {
+                      const isCurrent = activeStage === idx;
+                      const isDone = activeStage > idx;
+                      const StageIcon = stage.icon;
+
+                      return (
+                        <div
+                          key={stage.id}
+                          className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs transition-all duration-300 ${
+                            isCurrent
+                              ? "bg-[var(--color-primary-tint)] text-[var(--color-text-accent)] border border-[var(--color-border-active)]"
+                              : isDone
+                              ? "text-[var(--color-text-secondary)] opacity-70"
+                              : "text-[var(--color-text-muted)] opacity-40"
+                          }`}
+                        >
+                          {isCurrent ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-[var(--color-text-accent)] shrink-0" />
+                          ) : isDone ? (
+                            <CheckCircle2 className="w-4 h-4 text-[var(--color-success)] shrink-0" />
+                          ) : (
+                            <StageIcon className="w-4 h-4 shrink-0" />
+                          )}
+                          <span className="truncate">{stage.label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -231,14 +313,14 @@ export default function EmployerInterviewResultPage() {
               <button
                 onClick={() => setShowReEnrollModal(false)}
                 disabled={isReEnrolling}
-                className="px-4 py-2 text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)] rounded-xl transition-colors border border-transparent"
+                className="px-4 py-2 text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)] rounded-xl transition-colors border border-transparent cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleReEnrollConfirm}
                 disabled={isReEnrolling}
-                className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-white bg-[var(--color-danger)] hover:bg-[var(--color-danger)]/90 rounded-xl transition-all shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-white bg-[var(--color-danger)] hover:bg-[var(--color-danger)]/90 rounded-xl transition-all shadow-sm disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isReEnrolling ? (
                   <>

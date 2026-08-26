@@ -448,12 +448,12 @@ const submitInterview = async (req, res, next) => {
         );
 
         if (interviewDoc && freshSession && freshSession.questions?.length > 0) {
-          // Do NOT await — let this run in the background
-          InterviewSessionService.evaluateAndSaveResult(
+          // Delegate evaluation to BullMQ queue (< 5ms) or fallback runner
+          InterviewSessionService.queueOrRunEvaluation(
             freshSession,
-            interviewDoc
-          ).then(evalResult => {
-            console.log(`[Evaluation] Background evaluation ${evalResult.success ? "succeeded" : "failed"} for interview ${req.params.id}`);
+            interviewDoc?.interview || interviewDoc
+          ).then(queueResult => {
+            console.log(`[Evaluation] Background evaluation delegated (${queueResult.enqueued ? "BullMQ Queue" : "Direct Runner"}) for interview ${req.params.id}`);
           }).catch(err => {
             console.error(`[Evaluation] Background evaluation error for interview ${req.params.id}:`, err.message);
           });

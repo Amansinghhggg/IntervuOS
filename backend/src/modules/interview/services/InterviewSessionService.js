@@ -9,14 +9,14 @@ import { createInterviewEngine } from "./interviewEngine.js";
 import { AIConfig } from "../providers/AIProvider/config/ai.config.js";
 import { voiceSessionCache } from "./voiceSessionCache.service.js";
 import { cacheService } from "../../../shared/services/cacheService.js";
-
-const sessionLocks = new Map();
+import { distributedLockService } from "../../../shared/services/distributedLock.service.js";
 
 /**
  * InterviewSessionService
  * 
- * Responsible exclusively for the database lifecycle of an InterviewSession.
- * This separates persistence from the AI orchestration in the InterviewEngine.
+ * Responsible for the lifecycle, state persistence, and write-behind caching
+ * of InterviewSession documents. Separates sub-millisecond RAM caching from
+ * post-interview AI evaluation and durable database persistence.
  */
 class InterviewSessionService {
   /**
@@ -43,7 +43,7 @@ class InterviewSessionService {
   }
 
   /**
-   * Marks a session as ACTIVE, setting the timer and pushing the first question.
+   * Marks a session as ACTIVE, setting the timer, initializing questions, and caching to Redis.
    * 
    * @param {string} sessionId 
    * @param {Object} firstQuestion 
@@ -69,7 +69,7 @@ class InterviewSessionService {
         startedAt,
         expiresAt,
         currentQuestionIndex: 0,
-        $push: { questions: newQuestion }
+        questions: [newQuestion]
       },
       { returnDocument: 'after' }
     );
@@ -112,6 +112,32 @@ class InterviewSessionService {
   }
 
   /**
+   * Retrieves an active session by its sessionId, checking Redis RAM secondary index first.
+   * 
+   * @param {string} sessionId 
+   */
+  async getActiveSessionById(sessionId) {
+    if (!sessionId) return null;
+
+    // 1. Try fetching from Redis RAM index (<1ms)
+    const cachedSession = await voiceSessionCache.getSessionById(sessionId);
+    if (cachedSession) {
+      return cachedSession;
+    }
+
+    // 2. Fallback to MongoDB
+    const session = await InterviewSession.findById(sessionId);
+    if (session) {
+      voiceSessionCache.setSession(
+        session.interviewId,
+        session.candidateId,
+        session.toObject ? session.toObject() : session
+      );
+    }
+    return session;
+  }
+
+  /**
    * Checks if a session has passed its expiration time.
    * 
    * @param {Object} session 
@@ -119,7 +145,7 @@ class InterviewSessionService {
    */
   isSessionExpired(session) {
     if (!session || !session.expiresAt) return false;
-    return new Date() >= session.expiresAt;
+    return new Date() >= new Date(session.expiresAt);
   }
 
   /**
@@ -130,7 +156,8 @@ class InterviewSessionService {
    */
   buildConversationHistory(session) {
     const history = new ConversationHistory();
-    for (const q of session.questions) {
+    const questions = session.questions || [];
+    for (const q of questions) {
       history.addAIQuestion(q.question, q.topic, q.concept, q.difficulty);
       if (q.answer) {
         history.addCandidateAnswer(q.answer);
@@ -147,18 +174,19 @@ class InterviewSessionService {
    * @returns {InterviewState}
    */
   buildInterviewState(session, config) {
-    const rawCovered = session.questions.map(q => q.topic?.trim()).filter(Boolean);
+    const questions = session.questions || [];
+    const rawCovered = questions.map(q => q.topic?.trim()).filter(Boolean);
     const coveredTopics = [...new Set(rawCovered)];
 
     // Robust case-insensitive topic remaining filter
     const coveredLower = new Set(rawCovered.map(t => t.toLowerCase()));
     const remainingTopics = config.topics.filter(t => !coveredLower.has(t.trim().toLowerCase()));
-    const currentQuestion = session.questions.length + 1;
+    const currentQuestion = questions.length + 1;
 
     // Advanced Context for AI Intelligence
     const topicDistribution = {};
     config.topics.forEach(t => topicDistribution[t] = 0);
-    session.questions.forEach(q => {
+    questions.forEach(q => {
       const match = config.topics.find(t => t.trim().toLowerCase() === q.topic?.trim()?.toLowerCase());
       if (match) {
         topicDistribution[match]++;
@@ -167,12 +195,12 @@ class InterviewSessionService {
       }
     });
 
-    const coveredConcepts = [...new Set(session.questions.map(q => q.concept).filter(Boolean))];
-    const difficultyHistory = session.questions.map(q => q.difficulty);
+    const coveredConcepts = [...new Set(questions.map(q => q.concept).filter(Boolean))];
+    const difficultyHistory = questions.map(q => q.difficulty);
 
     let remainingTime = 0;
     if (session.expiresAt) {
-      remainingTime = Math.max(0, Math.floor((session.expiresAt - new Date()) / 60000));
+      remainingTime = Math.max(0, Math.floor((new Date(session.expiresAt) - new Date()) / 60000));
     }
 
     // We assume 10 questions max unless configured differently
@@ -183,7 +211,7 @@ class InterviewSessionService {
       coveredTopics,
       remainingTopics,
       remainingTime,
-      interviewStartedAt: session.startedAt || new Date(),
+      interviewStartedAt: session.startedAt ? new Date(session.startedAt) : new Date(),
       maxQuestions,
       topicDistribution,
       coveredConcepts,
@@ -192,49 +220,88 @@ class InterviewSessionService {
   }
 
   /**
-   * Saves a candidate's answer for the current question and pushes the newly generated next question.
+   * Saves a candidate's answer for the current question and pushes the newly generated next question
+   * using sub-millisecond Redis Write-Behind Session Caching.
    * 
-   * @param {string} sessionId 
+   * @param {Object|string} sessionOrId 
    * @param {string} answerText 
-   * @param {Object} nextQuestion 
+   * @param {Object} [nextQuestion] 
    */
-  async saveAnswerAndNextQuestion(sessionId, answerText, nextQuestion) {
-    const session = await InterviewSession.findById(sessionId);
-    if (!session) throw new Error("Session not found");
-    if (session.status !== "ACTIVE") throw new Error("Session is not active");
+  async saveAnswerAndNextQuestion(sessionOrId, answerText, nextQuestion = null) {
+    let sessionData = null;
 
-    const currentIndex = session.currentQuestionIndex;
-
-    // 1. Save the answer on the current question
-    if (session.questions[currentIndex]) {
-      session.questions[currentIndex].answer = answerText;
-      session.questions[currentIndex].answeredAt = new Date();
+    if (typeof sessionOrId === 'object' && sessionOrId !== null) {
+      sessionData = sessionOrId.toObject ? sessionOrId.toObject() : { ...sessionOrId };
+    } else {
+      sessionData = await this.getActiveSessionById(sessionOrId);
+      if (!sessionData) {
+        const dbDoc = await InterviewSession.findById(sessionOrId);
+        if (!dbDoc) throw new Error("Session not found");
+        sessionData = dbDoc.toObject ? dbDoc.toObject() : dbDoc;
+      }
     }
 
-    // 2. Append the next question
+    if (!sessionData) throw new Error("Session not found");
+    if (sessionData.status !== "ACTIVE") throw new Error("Session is not active");
+
+    const currentIndex = Number(sessionData.currentQuestionIndex || 0);
+    if (!Array.isArray(sessionData.questions)) {
+      sessionData.questions = [];
+    }
+
+    // 1. Save the candidate answer on the current question
+    if (sessionData.questions[currentIndex]) {
+      sessionData.questions[currentIndex].answer = answerText;
+      sessionData.questions[currentIndex].answeredAt = new Date();
+    }
+
+    // 2. Append the newly generated next question
     if (nextQuestion) {
       const newQuestion = {
         ...nextQuestion,
-        id: session.questions.length + 1,
+        id: sessionData.questions.length + 1,
         askedAt: new Date(),
         answer: null,
         answeredAt: null
       };
-      session.questions.push(newQuestion);
-      session.currentQuestionIndex = currentIndex + 1;
+      sessionData.questions.push(newQuestion);
+      sessionData.currentQuestionIndex = currentIndex + 1;
     }
 
-    await session.save();
-    console.log("InterviewSession\n→ Question Saved\n");
+    const sessionId = sessionData._id || sessionData.sessionId;
 
-    // Sync to Redis RAM asynchronously
-    voiceSessionCache.setSession(
-      session.interviewId,
-      session.candidateId,
-      session.toObject ? session.toObject() : session
+    // 3. Write immediately to Redis RAM (< 1ms write)
+    const cachedInRedis = await voiceSessionCache.setSession(
+      sessionData.interviewId,
+      sessionData.candidateId,
+      sessionData
     );
 
-    return session;
+    if (cachedInRedis) {
+      // 4. True Write-Behind: Dispatch non-blocking asynchronous persistence to MongoDB
+      InterviewSession.findByIdAndUpdate(sessionId, {
+        currentQuestionIndex: sessionData.currentQuestionIndex,
+        questions: sessionData.questions,
+        updatedAt: new Date(),
+      }).catch((err) => {
+        console.warn('⚠️ [InterviewSessionService] Non-blocking write-behind DB sync warning:', err.message);
+      });
+
+      return sessionData;
+    }
+
+    // 5. Fallback Mode (Redis Offline): Synchronous database write
+    const updatedMongoSession = await InterviewSession.findByIdAndUpdate(
+      sessionId,
+      {
+        currentQuestionIndex: sessionData.currentQuestionIndex,
+        questions: sessionData.questions,
+        updatedAt: new Date(),
+      },
+      { returnDocument: 'after' }
+    );
+
+    return updatedMongoSession ? (updatedMongoSession.toObject ? updatedMongoSession.toObject() : updatedMongoSession) : sessionData;
   }
 
   /**
@@ -245,14 +312,15 @@ class InterviewSessionService {
    * @returns {boolean}
    */
   shouldGenerateNextQuestion(session, interviewConfig) {
+    const questions = session.questions || [];
     return (
       !this.isSessionExpired(session) &&
-      session.questions.length < (interviewConfig.maxQuestions || 10)
+      questions.length < (interviewConfig.maxQuestions || 10)
     );
   }
 
   /**
-   * Handles the answer submission lifecycle.
+   * Handles the answer submission lifecycle with sub-millisecond RAM caching.
    * 
    * @param {Object} params
    * @param {Object} params.session
@@ -261,98 +329,109 @@ class InterviewSessionService {
    * @param {Object} params.interviewEngine
    */
   async submitAnswer({ session, answer, interviewConfig, interviewEngine }) {
-    const sessionIdStr = session._id.toString();
+    const sessionIdStr = String(session._id || session.sessionId);
 
-    // 1. If an answer submission for this session is already in-flight, wait for it
-    if (sessionLocks.has(sessionIdStr)) {
-      console.log(`[InterviewSessionService] Submission already in flight for session ${sessionIdStr}, waiting...`);
-      try {
-        await sessionLocks.get(sessionIdStr);
-      } catch (err) {
-        // Ignore error from locked promise
-      }
-      const freshSession = await this.getActiveSession(session.interviewId, session.candidateId);
-      if (freshSession) {
-        const currentQIndex = freshSession.currentQuestionIndex;
-        const nextQ = freshSession.questions[currentQIndex];
-        const isFinished = freshSession.status === "COMPLETED" || (!nextQ && currentQIndex >= freshSession.questions.length - 1);
+    return await distributedLockService.withLock(
+      sessionIdStr,
+      async () => {
+        // Fetch active session from RAM cache first (< 1ms)
+        const freshSession = await this.getActiveSession(session.interviewId, session.candidateId);
+        if (!freshSession || freshSession.status !== "ACTIVE") {
+          throw new Error("No active session found.");
+        }
+
+        const currentIndex = Number(freshSession.currentQuestionIndex || 0);
+        const currentQ = freshSession.questions?.[currentIndex];
+
+        // Idempotency check: If current question already has an answer saved,
+        // a previous attempt succeeded! Do NOT re-generate or overwrite.
+        if (currentQ && currentQ.answer !== null && currentQ.answer !== undefined) {
+          const nextQ = freshSession.questions[currentIndex + 1];
+          console.log(`[InterviewSessionService] Question ${currentIndex + 1} already answered. Returning existing next question.`);
+          return {
+            success: true,
+            isFinished: !nextQ,
+            nextQuestion: nextQ || null,
+            session: freshSession
+          };
+        }
+
+        const history = this.buildConversationHistory(freshSession);
+        const state = this.buildInterviewState(freshSession, interviewConfig);
+
+        // We add the incoming answer manually for this turn because it hasn't been saved yet
+        history.addCandidateAnswer(answer);
+
+        let nextQuestion = null;
+
+        if (this.shouldGenerateNextQuestion(freshSession, interviewConfig)) {
+          const generated = await interviewEngine.generateNextQuestion(interviewConfig, state, history);
+          nextQuestion = generated[0] || null;
+        }
+
+        const updatedSession = await this.saveAnswerAndNextQuestion(freshSession, answer, nextQuestion);
+
         return {
           success: true,
-          isFinished,
-          nextQuestion: nextQ || null,
-          session: freshSession
+          isFinished: !nextQuestion,
+          nextQuestion,
+          session: updatedSession
         };
-      }
-    }
-
-    // 2. Acquire in-flight lock
-    let resolveLock;
-    const lockPromise = new Promise((resolve) => { resolveLock = resolve; });
-    sessionLocks.set(sessionIdStr, lockPromise);
-
-    try {
-      // Re-fetch fresh session from DB to ensure accurate state
-      const freshSession = await InterviewSession.findById(session._id);
-      if (!freshSession || freshSession.status !== "ACTIVE") {
-        throw new Error("No active session found.");
-      }
-
-      const currentIndex = freshSession.currentQuestionIndex;
-      const currentQ = freshSession.questions[currentIndex];
-
-      // Idempotency check: If current question already has an answer saved,
-      // a previous attempt succeeded! Do NOT re-generate or overwrite.
-      if (currentQ && currentQ.answer !== null && currentQ.answer !== undefined) {
-        const nextQ = freshSession.questions[currentIndex + 1];
-        console.log(`[InterviewSessionService] Question ${currentIndex + 1} already answered. Returning existing next question.`);
-        return {
-          success: true,
-          isFinished: !nextQ,
-          nextQuestion: nextQ || null,
-          session: freshSession
-        };
-      }
-
-      const history = this.buildConversationHistory(freshSession);
-      const state = this.buildInterviewState(freshSession, interviewConfig);
-
-      // We add the incoming answer manually for this turn because it hasn't been saved yet
-      history.addCandidateAnswer(answer);
-
-      let nextQuestion = null;
-
-      if (this.shouldGenerateNextQuestion(freshSession, interviewConfig)) {
-        const generated = await interviewEngine.generateNextQuestion(interviewConfig, state, history);
-        nextQuestion = generated[0] || null;
-      }
-
-      const updatedSession = await this.saveAnswerAndNextQuestion(freshSession._id, answer, nextQuestion);
-
-      return {
-        success: true,
-        isFinished: !nextQuestion,
-        nextQuestion,
-        session: updatedSession
-      };
-    } finally {
-      sessionLocks.delete(sessionIdStr);
-      if (resolveLock) resolveLock();
-    }
+      },
+      { ttlMs: 15000, maxWaitMs: 8000, retryIntervalMs: 120 }
+    );
   }
 
   /**
-   * Marks the session as completed and clears RAM cache.
+   * Marks the session as completed, flushes all in-memory/Redis conversation history
+   * to MongoDB, and cleanly purges the RAM cache.
+   * 
    * @param {string} sessionId 
+   * @param {string} [interviewId]
+   * @param {string} [candidateId]
    */
-  async completeSession(sessionId) {
+  async completeSession(sessionId, interviewId = null, candidateId = null) {
+    let cachedSession = null;
+
+    if (interviewId && candidateId) {
+      cachedSession = await voiceSessionCache.getSession(interviewId, candidateId);
+    } else if (sessionId) {
+      cachedSession = await voiceSessionCache.getSessionById(sessionId);
+    }
+
+    if (cachedSession && Array.isArray(cachedSession.questions)) {
+      // Flush full accumulated questions & answers from Redis RAM to MongoDB
+      const updated = await InterviewSession.findByIdAndUpdate(
+        sessionId,
+        {
+          status: "COMPLETED",
+          questions: cachedSession.questions,
+          currentQuestionIndex: cachedSession.currentQuestionIndex,
+          completedAt: new Date(),
+        },
+        { returnDocument: 'after' }
+      );
+
+      await voiceSessionCache.clearSession(
+        cachedSession.interviewId,
+        cachedSession.candidateId,
+        sessionId
+      );
+
+      return updated || cachedSession;
+    }
+
+    // Direct MongoDB completion if cache was empty or already flushed
     const updated = await InterviewSession.findByIdAndUpdate(
       sessionId,
-      { status: "COMPLETED" },
+      { status: "COMPLETED", completedAt: new Date() },
       { returnDocument: 'after' }
     );
+
     if (updated) {
-      await voiceSessionCache.clearSession(updated.interviewId, updated.candidateId);
+      await voiceSessionCache.clearSession(updated.interviewId, updated.candidateId, sessionId);
     }
+
     return updated;
   }
 
@@ -394,26 +473,27 @@ class InterviewSessionService {
     const startTime = Date.now();
     console.log("\n[Evaluation] Starting post-interview evaluation");
     console.log(`  Interview: ${session.interviewId}`);
-    console.log(`  Session: ${session._id}`);
+    console.log(`  Session: ${session._id || session.sessionId}`);
 
     let interviewResult = null;
 
     try {
       const config = InterviewConfig.fromInterview(interviewDoc);
       const mode = config.mode || "EMPLOYER";
+      const targetSessionId = session._id || session.sessionId;
 
       // 1. Check for existing result or initialize PENDING result
       interviewResult = await InterviewResult.findOne({
         interviewId: session.interviewId,
         candidateId: session.candidateId,
-        sessionId: session._id,
+        sessionId: targetSessionId,
       });
 
       if (!interviewResult) {
         interviewResult = new InterviewResult({
           interviewId: session.interviewId,
           candidateId: session.candidateId,
-          sessionId: session._id,
+          sessionId: targetSessionId,
           status: "PENDING",
           mode,
           interviewSnapshot: {
@@ -471,7 +551,7 @@ class InterviewSessionService {
 
       // Map question, answer, topic, and difficulty from session.questions
       interviewResult.questionEvaluations = (evaluationResult.questionEvaluations || []).map(qe => {
-        const sessionQ = session.questions.find(
+        const sessionQ = (session.questions || []).find(
           q => q.id === qe.questionId || q.id === parseInt(qe.questionId, 10)
         );
         return {

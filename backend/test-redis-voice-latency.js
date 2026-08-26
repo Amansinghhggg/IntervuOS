@@ -12,8 +12,10 @@ async function testVoiceLatency() {
 
   const mockInterviewId = 'test_interview_123';
   const mockCandidateId = 'test_candidate_456';
+  const mockSessionId = 'session_789';
   const mockSessionData = {
-    _id: 'session_789',
+    _id: mockSessionId,
+    sessionId: mockSessionId,
     interviewId: mockInterviewId,
     candidateId: mockCandidateId,
     status: 'ACTIVE',
@@ -35,21 +37,30 @@ async function testVoiceLatency() {
     const endWrite = performance.now();
     const writeTime = (endWrite - startWrite).toFixed(3);
 
-    console.log(`\n⚡ [1/4] Redis Session Write: ${setSuccess ? 'SUCCESS' : 'FAILED'}`);
+    console.log(`\n⚡ [1/5] Redis Session Write: ${setSuccess ? 'SUCCESS' : 'FAILED'}`);
     console.log(`⏱️ Write Latency: ${writeTime} ms`);
 
-    // Benchmark 2: Read Speed
+    // Benchmark 2: Read Speed by (interviewId, candidateId)
     const startRead = performance.now();
     const cachedSession = await voiceSessionCache.getSession(mockInterviewId, mockCandidateId);
     const endRead = performance.now();
     const readTime = (endRead - startRead).toFixed(3);
 
-    console.log(`\n⚡ [2/4] Redis Session Read: ${cachedSession ? 'SUCCESS' : 'FAILED'}`);
+    console.log(`\n⚡ [2/5] Redis Session Read: ${cachedSession ? 'SUCCESS' : 'FAILED'}`);
     console.log(`⏱️ Read Latency: ${readTime} ms`);
     console.log(`📦 Cached Session ID: ${cachedSession?._id}`);
     console.log(`🎯 Candidate Answer Count: ${cachedSession?.questions?.length}`);
 
-    // Benchmark 3: Atomic Field Update Speed
+    // Benchmark 3: Secondary Index Lookup by sessionId
+    const startIdRead = performance.now();
+    const sessionById = await voiceSessionCache.getSessionById(mockSessionId);
+    const endIdRead = performance.now();
+    const idReadTime = (endIdRead - startIdRead).toFixed(3);
+
+    console.log(`\n⚡ [3/5] Redis Secondary Index Read (by sessionId): ${sessionById ? 'SUCCESS' : 'FAILED'}`);
+    console.log(`⏱️ Secondary Index Latency: ${idReadTime} ms`);
+
+    // Benchmark 4: Atomic Field Update Speed
     const startUpdate = performance.now();
     const updateSuccess = await voiceSessionCache.updateSessionFields(mockInterviewId, mockCandidateId, {
       avatarExpression: 'speaking',
@@ -58,16 +69,16 @@ async function testVoiceLatency() {
     const endUpdate = performance.now();
     const updateTime = (endUpdate - startUpdate).toFixed(3);
 
-    console.log(`\n⚡ [3/4] Redis Atomic Field Update: ${updateSuccess ? 'SUCCESS' : 'FAILED'}`);
+    console.log(`\n⚡ [4/5] Redis Atomic Field Update: ${updateSuccess ? 'SUCCESS' : 'FAILED'}`);
     console.log(`⏱️ Update Latency: ${updateTime} ms`);
 
-    // Benchmark 4: Cache Clear
+    // Benchmark 5: Cache Clear
     const startClear = performance.now();
-    const clearSuccess = await voiceSessionCache.clearSession(mockInterviewId, mockCandidateId);
+    const clearSuccess = await voiceSessionCache.clearSession(mockInterviewId, mockCandidateId, mockSessionId);
     const endClear = performance.now();
     const clearTime = (endClear - startClear).toFixed(3);
 
-    console.log(`\n⚡ [4/4] Redis Session Cleanup: ${clearSuccess ? 'SUCCESS' : 'FAILED'}`);
+    console.log(`\n⚡ [5/5] Redis Session Cleanup: ${clearSuccess ? 'SUCCESS' : 'FAILED'}`);
     console.log(`⏱️ Cleanup Latency: ${clearTime} ms`);
 
     console.log('\n🎉 ALL VOICE LATENCY BENCHMARKS PASSED!');
@@ -77,7 +88,9 @@ async function testVoiceLatency() {
   }
 
   // Gracefully close Redis connection
-  await redisClient.quit();
+  if (isRedisReady()) {
+    await redisClient.quit();
+  }
   process.exit(0);
 }
 

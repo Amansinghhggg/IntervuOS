@@ -2,14 +2,22 @@ import api from "./api";
 
 export const voiceService = {
   /**
-   * Upload an audio blob and get the transcription
+   * Upload a compressed audio blob and get the transcription
    * @param {Blob} audioBlob 
    * @returns {Promise<{ transcript: string, metadata: object }>}
    */
   transcribe: async (audioBlob) => {
     const formData = new FormData();
-    // Defaulting to webm as that's what MediaRecorder typically outputs in Chrome/Firefox
-    formData.append("audio", audioBlob, "recording.webm");
+    const mime = audioBlob.type || "audio/webm";
+    const extension = mime.includes("ogg")
+      ? "ogg"
+      : mime.includes("mp4")
+      ? "mp4"
+      : mime.includes("aac")
+      ? "aac"
+      : "webm";
+
+    formData.append("audio", audioBlob, `recording.${extension}`);
 
     try {
       const response = await api.post("/voice/transcribe", formData, {
